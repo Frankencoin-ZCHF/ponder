@@ -4,6 +4,7 @@ export default createSchema((p) => ({
   Position: p.createTable({
     id: p.string(),
     position: p.string(),
+    original: p.string(),
     owner: p.string(),
     zchf: p.string(),
     collateral: p.string(),

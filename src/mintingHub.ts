@@ -5,6 +5,8 @@ ponder.on("MintingHub:PositionOpened", async ({ event, context }) => {
   const { client } = context;
   const { Position, ActiveUser } = context.db;
 
+  let original = event.args.position;
+
   const limitForClones = await client.readContract({
     abi: PositionABI,
     address: event.args.position,
@@ -13,26 +15,28 @@ ponder.on("MintingHub:PositionOpened", async ({ event, context }) => {
 
   if (event.transaction.input.includes("0x5cb47919")) {
     // Cloning, Update original positions limit
-    const originalPosition = event.transaction.input.slice(34, 74);
+    original = `0x${event.transaction.input.slice(34, 74).toLowerCase()}`;
 
     const originalLimitForClones = await client.readContract({
       abi: PositionABI,
-      address: `0x${originalPosition}`,
+      address: original,
       functionName: "limitForClones",
     });
 
     await Position.update({
-      id: `0x${originalPosition.toLowerCase()}`,
+      id: original,
       data: {
         limitForClones: originalLimitForClones,
       },
     });
   }
+
   await Position.create({
     id: event.args.position.toLowerCase(),
     data: {
       position: event.args.position,
       owner: event.args.owner,
+      original: original,
       zchf: event.args.zchf,
       collateral: event.args.collateral,
       price: event.args.price,
