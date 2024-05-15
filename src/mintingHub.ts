@@ -59,6 +59,12 @@ ponder.on('MintingHub:PositionOpened', async ({ event, context }) => {
 
 	// ------------------------------------------------------------------
 	// ZCHF ERC20
+	const zchfName = await client.readContract({
+		abi: ERC20ABI,
+		address: zchf,
+		functionName: 'name',
+	});
+
 	const zchfSymbol = await client.readContract({
 		abi: ERC20ABI,
 		address: zchf,
@@ -73,11 +79,10 @@ ponder.on('MintingHub:PositionOpened', async ({ event, context }) => {
 
 	// ------------------------------------------------------------------
 	// COLLATERAL ERC20
-	const collateralBalance = await client.readContract({
+	const collateralName = await client.readContract({
 		abi: ERC20ABI,
 		address: collateral,
-		functionName: 'balanceOf',
-		args: [event.args.position],
+		functionName: 'name',
 	});
 
 	const collateralSymbol = await client.readContract({
@@ -90,6 +95,13 @@ ponder.on('MintingHub:PositionOpened', async ({ event, context }) => {
 		abi: ERC20ABI,
 		address: collateral,
 		functionName: 'decimals',
+	});
+
+	const collateralBalance = await client.readContract({
+		abi: ERC20ABI,
+		address: collateral,
+		functionName: 'balanceOf',
+		args: [event.args.position],
 	});
 
 	// ------------------------------------------------------------------
@@ -171,9 +183,11 @@ ponder.on('MintingHub:PositionOpened', async ({ event, context }) => {
 			expiration,
 			challengePeriod,
 
+			zchfName,
 			zchfSymbol,
 			zchfDecimals,
 
+			collateralName,
 			collateralSymbol,
 			collateralDecimals,
 			collateralBalance,
