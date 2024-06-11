@@ -6,7 +6,7 @@ import { MintingHub } from "./abis/MintingHub";
 import { Frankencoin } from "./abis/Frankencoin";
 import { Position } from "./abis/Position";
 
-const transport = http("https://rpc.ankr.com/eth");
+const transport = http(process.env.PONDER_RPC_URL_1);
 
 const openPositionEvent = parseAbiItem(
   "event PositionOpened(address indexed owner,address indexed position,address zchf,address collateral,uint256 price)"
