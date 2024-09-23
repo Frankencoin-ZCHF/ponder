@@ -1,8 +1,8 @@
 import { ponder } from '@/generated';
-import { Position as PositionABI } from '../abis/Position';
+import { Position as PositionABI } from '../abis/PositionV1';
 import { ERC20 as ERC20ABI } from '../abis/ERC20';
 
-ponder.on('Position:MintingUpdate', async ({ event, context }) => {
+ponder.on('PositionV1:MintingUpdate', async ({ event, context }) => {
 	const { client } = context;
 	const { Position, MintingUpdate, Ecosystem, ActiveUser } = context.db;
 
@@ -259,7 +259,7 @@ ponder.on('Position:MintingUpdate', async ({ event, context }) => {
 	});
 });
 
-ponder.on('Position:PositionDenied', async ({ event, context }) => {
+ponder.on('PositionV1:PositionDenied', async ({ event, context }) => {
 	const { Position, ActiveUser, Ecosystem } = context.db;
 	const { client } = context;
 
@@ -294,7 +294,7 @@ ponder.on('Position:PositionDenied', async ({ event, context }) => {
 	});
 });
 
-ponder.on('Position:OwnershipTransferred', async ({ event, context }) => {
+ponder.on('PositionV1:OwnershipTransferred', async ({ event, context }) => {
 	const { Position, ActiveUser } = context.db;
 
 	const position = await Position.findUnique({
