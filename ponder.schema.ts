@@ -2,7 +2,85 @@ import { createSchema } from '@ponder/core';
 
 export default createSchema((p) => ({
 	// -------------------------------------------------------------------------
-	// MINTINGHUB
+	// FRANKENCOIN
+	// -------------------------------------------------------------------------
+	Mint: p.createTable({
+		id: p.string(),
+		to: p.string(),
+		value: p.bigint(),
+		blockheight: p.bigint(),
+		timestamp: p.bigint(),
+	}),
+
+	Burn: p.createTable({
+		id: p.string(),
+		from: p.string(),
+		value: p.bigint(),
+		blockheight: p.bigint(),
+		timestamp: p.bigint(),
+	}),
+
+	MintBurnAddressMapper: p.createTable({
+		id: p.string(),
+		mint: p.bigint(),
+		burn: p.bigint(),
+	}),
+
+	Minter: p.createTable({
+		id: p.string(),
+		txHash: p.string(),
+		minter: p.string(),
+		applicationPeriod: p.bigint(),
+		applicationFee: p.bigint(),
+		applyMessage: p.string(),
+		applyDate: p.bigint(),
+		suggestor: p.string(),
+		denyMessage: p.string().optional(),
+		denyDate: p.bigint().optional(),
+		denyTxHash: p.string().optional(),
+		vetor: p.string().optional(),
+	}),
+
+	// -------------------------------------------------------------------------
+	// FPS
+	// -------------------------------------------------------------------------
+	VotingPower: p.createTable({
+		id: p.string(),
+		address: p.string(),
+		votingPower: p.bigint(),
+	}),
+
+	FPS: p.createTable({
+		id: p.string(),
+		profits: p.bigint(),
+		loss: p.bigint(),
+		reserve: p.bigint(),
+	}),
+
+	Delegation: p.createTable({
+		id: p.string(),
+		owner: p.string(),
+		delegatedTo: p.string(),
+	}),
+
+	Trade: p.createTable({
+		id: p.string(),
+		trader: p.string(),
+		amount: p.bigint(),
+		shares: p.bigint(),
+		price: p.bigint(),
+		time: p.bigint(),
+	}),
+
+	TradeChart: p.createTable({
+		id: p.string(),
+		time: p.bigint(),
+		lastPrice: p.bigint(),
+	}),
+
+	// -------------------------------------------------------------------------
+	// MINTINGHUB >>> V1 <<<
+	// -------------------------------------------------------------------------
 	Position: p.createTable({
 		id: p.string(),
 		position: p.string(),
@@ -93,82 +171,25 @@ export default createSchema((p) => ({
 	}),
 
 	// -------------------------------------------------------------------------
-	// FRANKENCOIN
-	Mint: p.createTable({
-		id: p.string(),
-		to: p.string(),
-		value: p.bigint(),
-		blockheight: p.bigint(),
-		timestamp: p.bigint(),
-	}),
-
-	Burn: p.createTable({
-		id: p.string(),
-		from: p.string(),
-		value: p.bigint(),
-		blockheight: p.bigint(),
-		timestamp: p.bigint(),
-	}),
-
-	MintBurnAddressMapper: p.createTable({
-		id: p.string(),
-		mint: p.bigint(),
-		burn: p.bigint(),
-	}),
-
-	Minter: p.createTable({
-		id: p.string(),
-		txHash: p.string(),
-		minter: p.string(),
-		applicationPeriod: p.bigint(),
-		applicationFee: p.bigint(),
-		applyMessage: p.string(),
-		applyDate: p.bigint(),
-		suggestor: p.string(),
-		denyMessage: p.string().optional(),
-		denyDate: p.bigint().optional(),
-		denyTxHash: p.string().optional(),
-		vetor: p.string().optional(),
-	}),
-
+	// MINTINGHUB >>> V2 <<<
 	// -------------------------------------------------------------------------
-	// FPS
-	VotingPower: p.createTable({
+	SavingsRateProposed: p.createTable({
 		id: p.string(),
-		address: p.string(),
-		votingPower: p.bigint(),
+		created: p.bigint(),
+		proposer: p.string(),
+		nextRate: p.int(),
+		nextChange: p.int(),
 	}),
 
-	FPS: p.createTable({
+	SavingsRateChanged: p.createTable({
 		id: p.string(),
-		profits: p.bigint(),
-		loss: p.bigint(),
-		reserve: p.bigint(),
-	}),
-
-	Delegation: p.createTable({
-		id: p.string(),
-		owner: p.string(),
-		delegatedTo: p.string(),
-	}),
-
-	Trade: p.createTable({
-		id: p.string(),
-		trader: p.string(),
-		amount: p.bigint(),
-		shares: p.bigint(),
-		price: p.bigint(),
-		time: p.bigint(),
-	}),
-
-	TradeChart: p.createTable({
-		id: p.string(),
-		time: p.bigint(),
-		lastPrice: p.bigint(),
+		created: p.bigint(),
+		approvedRate: p.int(),
 	}),
 
 	// -------------------------------------------------------------------------
 	// COMMON
+	// -------------------------------------------------------------------------
 	ActiveUser: p.createTable({
 		id: p.string(),
 		lastActiveTime: p.bigint(),

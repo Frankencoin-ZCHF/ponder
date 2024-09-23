@@ -1,96 +1,124 @@
 import { createConfig } from '@ponder/core';
-import { Address, http, parseAbiItem } from 'viem';
+import { Address, http } from 'viem';
 
-import { Equity } from './abis/Equity';
-import { MintingHub } from './abis/MintingHub';
-import { Frankencoin } from './abis/Frankencoin';
-import { Position } from './abis/Position';
-import { ADDRESS } from './ponder.address';
 import { mainnet, polygon } from 'viem/chains';
-import { ethereum3 } from './ponder.chains';
-import { exit } from 'process';
+import { ADDRESS } from './ponder.address';
 
-// (add custom chain in ./ponder.address.ts)
-// mainnet (default), ethereum3, polygon
-const chain =
-	(process.env.PONDER_PROFILE as string) == 'polygon'
-		? polygon
-		: (process.env.PONDER_PROFILE as string) == 'ethereum3'
-		? ethereum3
-		: mainnet;
+import { Frankencoin } from './abis/Frankencoin';
+import { Equity } from './abis/Equity';
+import { MintingHub as MintingHubV1 } from './abis/MintingHubV1';
+import { MintingHub as MintingHubV2 } from './abis/MintingHubV2';
+import { Position as PositionV1 } from './abis/PositionV1';
+import { Position as PositionV2 } from './abis/PositionV2';
+import { Savings } from './abis/Savings';
+
+// mainnet (default) or polygon
+const chain = (process.env.PONDER_PROFILE as string) == 'polygon' ? polygon : mainnet;
+const chainId = chain.id!;
+const chainAddr = ADDRESS[chain.id]!;
 
 const CONFIG = {
 	[mainnet.id]: {
 		rpc: process.env.RPC_URL_MAINNET ?? mainnet.rpcUrls.default.http[0],
-		startBlockA: 18451518,
-		startBlockB: 18451536,
+		startFrankencoin: 18451518,
+		startMintingHubV1: 18451536,
+		startMintingHubV2: 18451536,
 		blockrange: undefined,
 		maxRequestsPerSecond: 5,
 		pollingInterval: 5_000,
 	},
 	[polygon.id]: {
 		rpc: process.env.RPC_URL_POLYGON ?? polygon.rpcUrls.default.http[0],
-		startBlockA: 58907600,
-		startBlockB: 58907700,
+		startFrankencoin: 62171447,
+		startMintingHubV1: 62171450,
+		startMintingHubV2: 62171450,
 		blockrange: undefined,
 		maxRequestsPerSecond: 5,
 		pollingInterval: 5_000,
 	},
-	[ethereum3.id]: {
-		rpc: ethereum3.rpcUrls.default.http[0],
-		startBlockA: 0,
-		startBlockB: 80,
-		blockrange: undefined,
-		maxRequestsPerSecond: 5, // e.g. 5
-		pollingInterval: 5_000, // e.g. 10_000
-	},
 };
 
-const openPositionEvent = parseAbiItem(
-	'event PositionOpened(address indexed owner,address indexed position,address zchf,address collateral,uint256 price)'
-);
+const config = CONFIG[chainId];
+
+const openPositionEventV1 = MintingHubV1.find((a) => a.type === 'event' && a.name === 'PositionOpened');
+if (openPositionEventV1 === undefined) throw new Error('openPositionEventV1 not found.');
+
+const openPositionEventV2 = MintingHubV2.find((a) => a.type === 'event' && a.name === 'PositionOpened');
+if (openPositionEventV2 === undefined) throw new Error('openPositionEventV2 not found.');
 
 export default createConfig({
 	networks: {
 		[chain.name]: {
-			chainId: chain.id,
-			maxRequestsPerSecond: CONFIG[chain.id].maxRequestsPerSecond,
-			pollingInterval: CONFIG[chain.id].pollingInterval,
-			transport: http(CONFIG[chain!.id].rpc),
+			chainId,
+			maxRequestsPerSecond: config.maxRequestsPerSecond,
+			pollingInterval: config.pollingInterval,
+			transport: http(config.rpc),
 		},
 	},
 	contracts: {
 		Frankencoin: {
+			// Native
 			network: chain.name,
 			abi: Frankencoin,
-			address: ADDRESS[chain!.id]!.frankenCoin as Address,
-			startBlock: CONFIG[chain!.id].startBlockA,
-			maxBlockRange: CONFIG[chain!.id].blockrange,
+			address: chainAddr.frankenCoin as Address,
+			startBlock: config.startFrankencoin,
+			maxBlockRange: config.blockrange,
 		},
 		Equity: {
+			// Native
 			network: chain.name,
 			abi: Equity,
-			address: ADDRESS[chain!.id]!.equity as Address,
-			startBlock: CONFIG[chain!.id].startBlockA,
-			maxBlockRange: CONFIG[chain!.id].blockrange,
+			address: chainAddr.equity as Address,
+			startBlock: config.startFrankencoin,
+			maxBlockRange: config.blockrange,
 		},
-		MintingHub: {
+		MintingHubV1: {
+			// V1
 			network: chain.name,
-			abi: MintingHub,
-			address: ADDRESS[chain!.id]!.mintingHub as Address,
-			startBlock: CONFIG[chain!.id].startBlockB,
-			maxBlockRange: CONFIG[chain!.id].blockrange,
+			abi: MintingHubV1,
+			address: chainAddr.mintingHubV1 as Address,
+			startBlock: config.startMintingHubV1,
+			maxBlockRange: config.blockrange,
 		},
-		Position: {
+		PositionV1: {
+			// V1
 			network: chain.name,
-			abi: Position,
+			abi: PositionV1,
 			factory: {
-				address: ADDRESS[chain!.id]!.mintingHub as Address,
-				event: openPositionEvent,
+				address: chainAddr.mintingHubV1 as Address,
+				event: openPositionEventV1,
 				parameter: 'position',
 			},
-			startBlock: CONFIG[chain!.id].startBlockB,
-			maxBlockRange: CONFIG[chain!.id].blockrange,
+			startBlock: config.startMintingHubV1,
+			maxBlockRange: config.blockrange,
+		},
+		MintingHubV2: {
+			// V2
+			network: chain.name,
+			abi: MintingHubV2,
+			address: chainAddr.mintingHubV2 as Address,
+			startBlock: config.startMintingHubV2,
+			maxBlockRange: config.blockrange,
+		},
+		PositionV2: {
+			// V2
+			network: chain.name,
+			abi: PositionV2,
+			factory: {
+				address: chainAddr.mintingHubV2 as Address,
+				event: openPositionEventV2,
+				parameter: 'position',
+			},
+			startBlock: config.startMintingHubV2,
+			maxBlockRange: config.blockrange,
+		},
+		Savings: {
+			// V2
+			network: chain.name,
+			abi: Savings,
+			address: chainAddr.savings as Address,
+			startBlock: config.startMintingHubV2,
+			maxBlockRange: config.blockrange,
 		},
 	},
 });
