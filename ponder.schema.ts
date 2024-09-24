@@ -171,11 +171,12 @@ export default createSchema((p) => ({
 	}),
 
 	// -------------------------------------------------------------------------
-	// MINTINGHUB >>> V2 <<<
+	// MINTINGHUB >>> V2 Utils <<< SAVINGS
 	// -------------------------------------------------------------------------
 	SavingsRateProposed: p.createTable({
 		id: p.string(),
 		created: p.bigint(),
+		blockheight: p.bigint(),
 		proposer: p.string(),
 		nextRate: p.int(),
 		nextChange: p.int(),
@@ -184,7 +185,69 @@ export default createSchema((p) => ({
 	SavingsRateChanged: p.createTable({
 		id: p.string(),
 		created: p.bigint(),
+		blockheight: p.bigint(),
 		approvedRate: p.int(),
+	}),
+
+	SavingsSaved: p.createTable({
+		id: p.string(),
+		created: p.bigint(),
+		blockheight: p.bigint(),
+		account: p.string(),
+		amount: p.bigint(),
+	}),
+
+	SavingsSavedMapping: p.createTable({
+		id: p.string(), // address in lower case
+		created: p.bigint(), // first timestamp
+		blockheight: p.bigint(), // first blockheight
+		updated: p.bigint(), // latest timestamp
+		amount: p.bigint(), // total amount
+	}),
+
+	SavingsInterestReserved: p.createTable({
+		id: p.string(),
+		created: p.bigint(),
+		blockheight: p.bigint(),
+		account: p.string(),
+		interest: p.bigint(),
+	}),
+
+	SavingsInterestReservedMapping: p.createTable({
+		id: p.string(),
+		created: p.bigint(),
+		blockheight: p.bigint(),
+		updated: p.bigint(),
+		interest: p.bigint(),
+	}),
+
+	SavingsWithdrawal: p.createTable({
+		id: p.string(),
+		created: p.bigint(),
+		blockheight: p.bigint(),
+		account: p.string(),
+		amount: p.bigint(),
+	}),
+
+	SavingsWithdrawalMapping: p.createTable({
+		id: p.string(),
+		created: p.bigint(),
+		blockheight: p.bigint(),
+		updated: p.bigint(),
+		amount: p.bigint(),
+	}),
+
+	RollerRolled: p.createTable({
+		id: p.string(),
+		created: p.bigint(),
+		blockheight: p.bigint(),
+		owner: p.string(),
+		source: p.string(),
+		collWithdraw: p.bigint(),
+		repay: p.bigint(),
+		target: p.string(),
+		collDeposit: p.bigint(),
+		mint: p.bigint(),
 	}),
 
 	// -------------------------------------------------------------------------
