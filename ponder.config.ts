@@ -11,6 +11,7 @@ import { MintingHub as MintingHubV2 } from './abis/MintingHubV2';
 import { Position as PositionV1 } from './abis/PositionV1';
 import { Position as PositionV2 } from './abis/PositionV2';
 import { Savings } from './abis/Savings';
+import { Roller } from './abis/Roller';
 
 // mainnet (default) or polygon
 const chain = (process.env.PONDER_PROFILE as string) == 'polygon' ? polygon : mainnet;
@@ -117,6 +118,14 @@ export default createConfig({
 			network: chain.name,
 			abi: Savings,
 			address: chainAddr.savings as Address,
+			startBlock: config.startMintingHubV2,
+			maxBlockRange: config.blockrange,
+		},
+		Roller: {
+			// V2
+			network: chain.name,
+			abi: Roller,
+			address: chainAddr.roller as Address,
 			startBlock: config.startMintingHubV2,
 			maxBlockRange: config.blockrange,
 		},
