@@ -72,11 +72,6 @@ export const Position = [
 	},
 	{
 		inputs: [],
-		name: 'AlreadyInitialized',
-		type: 'error',
-	},
-	{
-		inputs: [],
 		name: 'ChallengeTooSmall',
 		type: 'error',
 	},
@@ -537,6 +532,11 @@ export const Position = [
 		inputs: [
 			{
 				internalType: 'address',
+				name: 'owner',
+				type: 'address',
+			},
+			{
+				internalType: 'contract Position',
 				name: 'parent',
 				type: 'address',
 			},

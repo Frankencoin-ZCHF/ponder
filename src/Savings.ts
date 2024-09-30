@@ -69,7 +69,7 @@ ponder.on('Savings:InterestReserved', async ({ event, context }) => {
 
 	// flat indexing
 	await SavingsInterestReserved.create({
-		id: `${account}-${event.block.number.toString()}`,
+		id: `${account.toLowerCase()}-${event.block.number.toString()}`,
 		data: {
 			created: event.block.timestamp,
 			blockheight: event.block.number,
@@ -100,7 +100,7 @@ ponder.on('Savings:Withdrawal', async ({ event, context }) => {
 
 	// flat indexing
 	await SavingsWithdrawal.create({
-		id: `${account}-${event.block.number.toString()}`,
+		id: `${account.toLowerCase()}-${event.block.number.toString()}`,
 		data: {
 			created: event.block.timestamp,
 			blockheight: event.block.number,
