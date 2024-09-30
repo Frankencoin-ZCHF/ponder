@@ -4,9 +4,9 @@ import { ERC20 as ERC20ABI } from '../abis/ERC20';
 
 ponder.on('PositionV1:MintingUpdate', async ({ event, context }) => {
 	const { client } = context;
-	const { Position, MintingUpdate, Ecosystem, ActiveUser } = context.db;
+	const { PositionV1, MintingUpdateV1, Ecosystem, ActiveUser } = context.db;
 
-	// event MintingUpdate(uint256 collateral, uint256 price, uint256 minted, uint256 limit);
+	// event MintingUpdateV1(uint256 collateral, uint256 price, uint256 minted, uint256 limit);
 	const { collateral, price, minted, limit } = event.args;
 	const positionAddress = event.log.address;
 
@@ -23,7 +23,7 @@ ponder.on('PositionV1:MintingUpdate', async ({ event, context }) => {
 		functionName: 'cooldown',
 	});
 
-	const position = await Position.findUnique({
+	const position = await PositionV1.findUnique({
 		id: positionAddress.toLowerCase(),
 	});
 
@@ -31,7 +31,7 @@ ponder.on('PositionV1:MintingUpdate', async ({ event, context }) => {
 		const limitForPosition = (collateral * price) / BigInt(10 ** position.zchfDecimals);
 		const availableForPosition = limitForPosition - minted;
 
-		await Position.update({
+		await PositionV1.update({
 			id: positionAddress.toLowerCase(),
 			data: {
 				collateralBalance: collateral,
@@ -185,7 +185,7 @@ ponder.on('PositionV1:MintingUpdate', async ({ event, context }) => {
 	// const get;
 
 	if (mintingCounter === 1n) {
-		await MintingUpdate.create({
+		await MintingUpdateV1.create({
 			id: idMinting(1),
 			data: {
 				txHash: event.transaction.hash,
@@ -211,7 +211,7 @@ ponder.on('PositionV1:MintingUpdate', async ({ event, context }) => {
 			},
 		});
 	} else {
-		const prev = await MintingUpdate.findUnique({
+		const prev = await MintingUpdateV1.findUnique({
 			id: idMinting(mintingCounter - 1n),
 		});
 		if (prev == null) throw new Error(`previous minting update not found.`);
@@ -220,7 +220,7 @@ ponder.on('PositionV1:MintingUpdate', async ({ event, context }) => {
 		const priceAdjusted = price - prev.price;
 		const mintedAdjusted = minted - prev.minted;
 
-		await MintingUpdate.create({
+		await MintingUpdateV1.create({
 			id: idMinting(mintingCounter),
 			data: {
 				txHash: event.transaction.hash,
@@ -260,10 +260,10 @@ ponder.on('PositionV1:MintingUpdate', async ({ event, context }) => {
 });
 
 ponder.on('PositionV1:PositionDenied', async ({ event, context }) => {
-	const { Position, ActiveUser, Ecosystem } = context.db;
+	const { PositionV1, ActiveUser, Ecosystem } = context.db;
 	const { client } = context;
 
-	const position = await Position.findUnique({
+	const position = await PositionV1.findUnique({
 		id: event.log.address.toLowerCase(),
 	});
 
@@ -274,7 +274,7 @@ ponder.on('PositionV1:PositionDenied', async ({ event, context }) => {
 	});
 
 	if (position) {
-		await Position.update({
+		await PositionV1.update({
 			id: event.log.address.toLowerCase(),
 			data: {
 				cooldown,
@@ -295,13 +295,13 @@ ponder.on('PositionV1:PositionDenied', async ({ event, context }) => {
 });
 
 ponder.on('PositionV1:OwnershipTransferred', async ({ event, context }) => {
-	const { Position, ActiveUser } = context.db;
+	const { PositionV1, ActiveUser } = context.db;
 
-	const position = await Position.findUnique({
+	const position = await PositionV1.findUnique({
 		id: event.log.address.toLowerCase(),
 	});
 	if (position) {
-		await Position.update({
+		await PositionV1.update({
 			id: event.log.address.toLowerCase(),
 			data: {
 				owner: event.args.newOwner,
