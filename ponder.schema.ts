@@ -81,7 +81,7 @@ export default createSchema((p) => ({
 	// -------------------------------------------------------------------------
 	// MINTINGHUB >>> V1 <<<
 	// -------------------------------------------------------------------------
-	Position: p.createTable({
+	PositionV1: p.createTable({
 		id: p.string(),
 		position: p.string(),
 		owner: p.string(),
@@ -115,7 +115,7 @@ export default createSchema((p) => ({
 		minted: p.bigint(),
 	}),
 
-	MintingUpdate: p.createTable({
+	MintingUpdateV1: p.createTable({
 		id: p.string(),
 		txHash: p.string(),
 		created: p.bigint(),
@@ -139,7 +139,7 @@ export default createSchema((p) => ({
 		feePaid: p.bigint(),
 	}),
 
-	Challenge: p.createTable({
+	ChallengeV1: p.createTable({
 		id: p.string(), // e.g. 0x5d0e66DC411FEfBE9cAe9CE56dA9BCE8C027f492-challenge-2
 		position: p.string(), // position being challenged
 		number: p.bigint(), // number of the challenge in minting hub
@@ -155,7 +155,7 @@ export default createSchema((p) => ({
 		status: p.string(), // status: "Active" | "Success"
 	}),
 
-	ChallengeBid: p.createTable({
+	ChallengeBidV1: p.createTable({
 		id: p.string(), // e.g. 0x5d0e66DC411FEfBE9cAe9CE56dA9BCE8C027f492-challenge-2-bid-0
 		position: p.string(),
 		number: p.bigint(),
@@ -171,7 +171,7 @@ export default createSchema((p) => ({
 	}),
 
 	// -------------------------------------------------------------------------
-	// MINTINGHUB >>> V2 Utils <<< SAVINGS
+	// MINTINGHUB >>> V2 Utils <<< SAVINGS AND ROLLER
 	// -------------------------------------------------------------------------
 	SavingsRateProposed: p.createTable({
 		id: p.string(),
@@ -248,6 +248,73 @@ export default createSchema((p) => ({
 		target: p.string(),
 		collDeposit: p.bigint(),
 		mint: p.bigint(),
+	}),
+
+	// -------------------------------------------------------------------------
+	// MINTINGHUB >>> V2 <<<
+	// -------------------------------------------------------------------------
+	PositionV2: p.createTable({
+		id: p.string(),
+		position: p.string(),
+		owner: p.string(),
+		zchf: p.string(),
+		collateral: p.string(),
+		price: p.bigint(),
+		created: p.bigint(), // block timestamp when position was created
+		isOriginal: p.boolean(),
+		isClone: p.boolean(),
+		denied: p.boolean(),
+		closed: p.boolean(),
+		original: p.string(),
+		minimumCollateral: p.bigint(),
+		riskPremiumPPM: p.int(),
+		reserveContribution: p.int(),
+		start: p.int(),
+		cooldown: p.int(),
+		expiration: p.int(),
+		challengePeriod: p.int(),
+		zchfName: p.string(),
+		zchfSymbol: p.string(),
+		zchfDecimals: p.int(),
+		collateralName: p.string(),
+		collateralSymbol: p.string(),
+		collateralDecimals: p.int(),
+		collateralBalance: p.bigint(),
+		limitForClones: p.bigint(), // global limit for position and their clones
+		availableForClones: p.bigint(), // for positions or clones for further clones
+		availableForMinting: p.bigint(), // "unlocked" to mint for position
+		minted: p.bigint(), // position minted amount
+	}),
+
+	ChallengeV2: p.createTable({
+		id: p.string(), // e.g. 0x5d0e66DC411FEfBE9cAe9CE56dA9BCE8C027f492-challenge-2
+		position: p.string(), // position being challenged
+		number: p.bigint(), // number of the challenge in minting hub
+		challenger: p.string(),
+		start: p.int(), // timestamp for start of challenge
+		created: p.bigint(), // block timestamp when challenge was created
+		duration: p.int(),
+		size: p.bigint(), // size of the challenge, set by the challenger
+		liqPrice: p.bigint(), // trigger price for challenge
+		bids: p.bigint(), // number of bids, starting with 0
+		filledSize: p.bigint(), // accumulated bids amounts, set by the bidders
+		acquiredCollateral: p.bigint(), // total amount of collateral acquired, set by the bidders
+		status: p.string(), // status: "Active" | "Success"
+	}),
+
+	ChallengeBidV2: p.createTable({
+		id: p.string(), // e.g. 0x5d0e66DC411FEfBE9cAe9CE56dA9BCE8C027f492-challenge-2-bid-0
+		position: p.string(),
+		number: p.bigint(),
+		numberBid: p.bigint(),
+		bidder: p.string(),
+		created: p.bigint(), // block timestamp when bid was created
+		bidType: p.string(), // "Averted" | "Succeeded"
+		bid: p.bigint(), // bid amount
+		price: p.bigint(), // bid price
+		filledSize: p.bigint(),
+		acquiredCollateral: p.bigint(),
+		challengeSize: p.bigint(),
 	}),
 
 	// -------------------------------------------------------------------------
