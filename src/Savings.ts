@@ -10,6 +10,7 @@ ponder.on('Savings:RateProposed', async ({ event, context }) => {
 		data: {
 			created: event.block.timestamp,
 			blockheight: event.block.number,
+			txHash: event.transaction.hash,
 			proposer: who,
 			nextRate: nextRate,
 			nextChange: nextChange,
