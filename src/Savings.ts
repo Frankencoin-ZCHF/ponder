@@ -28,6 +28,7 @@ ponder.on('Savings:RateChanged', async ({ event, context }) => {
 		data: {
 			created: event.block.timestamp,
 			blockheight: event.block.number,
+			txHash: event.transaction.hash,
 			approvedRate: newRate,
 		},
 	});

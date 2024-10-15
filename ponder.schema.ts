@@ -187,6 +187,7 @@ export default createSchema((p) => ({
 		id: p.string(),
 		created: p.bigint(),
 		blockheight: p.bigint(),
+		txHash: p.string(),
 		approvedRate: p.int(),
 	}),
 
