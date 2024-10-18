@@ -1,6 +1,5 @@
 import { ponder } from '@/generated';
-import { Position as PositionABI } from '../abis/PositionV2';
-import { ADDRESS } from '../ponder.address';
+import { PositionV2ABI as PositionABI } from '@frankencoin/zchf';
 
 ponder.on('PositionV2:MintingUpdate', async ({ event, context }) => {
 	const { client } = context;
