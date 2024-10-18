@@ -50,7 +50,7 @@ if (openPositionEventV2 === undefined) throw new Error('openPositionEventV2 not 
 export default createConfig({
 	networks: {
 		[chain.name]: {
-			Id,
+			chainId: Id,
 			maxRequestsPerSecond: config.maxRequestsPerSecond,
 			pollingInterval: config.pollingInterval,
 			transport: http(config.rpc),

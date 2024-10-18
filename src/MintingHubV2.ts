@@ -1,6 +1,5 @@
 import { ponder } from '@/generated';
-import { Position as PositionABI } from '../abis/PositionV2';
-import { ERC20 as ERC20ABI } from '../abis/ERC20';
+import { PositionV2ABI as PositionABI, ERC20ABI } from '@frankencoin/zchf';
 
 // event PositionOpened(address indexed owner, address indexed position, address original, address collateral);
 ponder.on('MintingHubV2:PositionOpened', async ({ event, context }) => {
