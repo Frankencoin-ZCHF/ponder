@@ -305,7 +305,7 @@ export default createSchema((p) => ({
 		sizeAdjusted: p.bigint(),
 		priceAdjusted: p.bigint(),
 		mintedAdjusted: p.bigint(),
-		basePremiumPPMAdjusted: p.int(),
+		annualInterestPPM: p.int(),
 		basePremiumPPM: p.int(),
 		riskPremiumPPM: p.int(),
 		reserveContribution: p.int(),

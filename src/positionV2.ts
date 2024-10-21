@@ -78,6 +78,8 @@ ponder.on('PositionV2:MintingUpdate', async ({ event, context }) => {
 		return `${positionAddress.toLowerCase()}-${cnt}`;
 	};
 
+	const annualInterestPPM = baseRatePPM + position.riskPremiumPPM;
+
 	const getFeeTimeframe = function (): number {
 		const OneMonth = 60 * 60 * 24 * 30;
 		const secToExp = Math.floor(parseInt(position.expiration.toString()) - parseInt(event.block.timestamp.toString()));
@@ -113,7 +115,7 @@ ponder.on('PositionV2:MintingUpdate', async ({ event, context }) => {
 				sizeAdjusted: collateral,
 				priceAdjusted: price,
 				mintedAdjusted: minted,
-				basePremiumPPMAdjusted: baseRatePPM,
+				annualInterestPPM: annualInterestPPM,
 				basePremiumPPM: baseRatePPM,
 				riskPremiumPPM: position.riskPremiumPPM,
 				reserveContribution: position.reserveContribution,
@@ -151,7 +153,7 @@ ponder.on('PositionV2:MintingUpdate', async ({ event, context }) => {
 				sizeAdjusted,
 				priceAdjusted,
 				mintedAdjusted,
-				basePremiumPPMAdjusted,
+				annualInterestPPM,
 				basePremiumPPM: baseRatePPM,
 				riskPremiumPPM: position.riskPremiumPPM,
 				reserveContribution: position.reserveContribution,
