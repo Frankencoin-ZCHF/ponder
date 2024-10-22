@@ -202,7 +202,7 @@ ponder.on('MintingHubV2:PositionOpened', async ({ event, context }) => {
 			riskPremiumPPM,
 			reserveContribution,
 			start,
-			cooldown,
+			cooldown: BigInt(cooldown),
 			expiration,
 			challengePeriod,
 
@@ -388,7 +388,7 @@ ponder.on('MintingHubV2:ChallengeAverted', async ({ event, context }) => {
 	// update PositionV2 related changes
 	await PositionV2.update({
 		id: event.args.position.toLowerCase(),
-		data: { cooldown },
+		data: { cooldown: BigInt(cooldown) },
 	});
 
 	// ------------------------------------------------------------------
@@ -488,7 +488,7 @@ ponder.on('MintingHubV2:ChallengeSucceeded', async ({ event, context }) => {
 
 	await PositionV2.update({
 		id: event.args.position.toLowerCase(),
-		data: { cooldown },
+		data: { cooldown: BigInt(cooldown) },
 	});
 
 	// ------------------------------------------------------------------

@@ -49,7 +49,7 @@ ponder.on('PositionV2:MintingUpdate', async ({ event, context }) => {
 			minted,
 			availableForMinting,
 			availableForClones,
-			cooldown,
+			cooldown: BigInt(cooldown),
 			closed: collateral == 0n,
 		},
 	});
@@ -194,7 +194,7 @@ ponder.on('PositionV2:PositionDenied', async ({ event, context }) => {
 		await PositionV2.update({
 			id: event.log.address.toLowerCase(),
 			data: {
-				cooldown,
+				cooldown: BigInt(cooldown),
 				denied: true,
 			},
 		});

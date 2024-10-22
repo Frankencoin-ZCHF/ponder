@@ -272,7 +272,7 @@ export default createSchema((p) => ({
 		riskPremiumPPM: p.int(),
 		reserveContribution: p.int(),
 		start: p.int(),
-		cooldown: p.int(),
+		cooldown: p.bigint(),
 		expiration: p.int(),
 		challengePeriod: p.int(),
 		zchfName: p.string(),
