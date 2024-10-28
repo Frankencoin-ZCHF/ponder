@@ -35,7 +35,7 @@ ponder.on('Savings:RateChanged', async ({ event, context }) => {
 });
 
 ponder.on('Savings:Saved', async ({ event, context }) => {
-	const { SavingsSaved, SavingsSavedMapping } = context.db;
+	const { SavingsSaved, SavingsSavedMapping, Ecosystem } = context.db;
 	const { account, amount } = event.args;
 
 	// flat indexing
@@ -63,10 +63,22 @@ ponder.on('Savings:Saved', async ({ event, context }) => {
 			amount: c.current.amount + amount,
 		}),
 	});
+
+	// ecosystem
+	await Ecosystem.upsert({
+		id: `Savings:TotalSaved`,
+		create: {
+			value: '',
+			amount: amount,
+		},
+		update: ({ current }) => ({
+			amount: current.amount + amount,
+		}),
+	});
 });
 
 ponder.on('Savings:InterestReserved', async ({ event, context }) => {
-	const { SavingsInterestReserved, SavingsInterestReservedMapping } = context.db;
+	const { SavingsInterestReserved, SavingsInterestReservedMapping, Ecosystem } = context.db;
 	const { account, interest } = event.args;
 
 	// flat indexing
@@ -94,10 +106,22 @@ ponder.on('Savings:InterestReserved', async ({ event, context }) => {
 			interest: c.current.interest + interest,
 		}),
 	});
+
+	// ecosystem
+	await Ecosystem.upsert({
+		id: `Savings:TotalInterestReserved`,
+		create: {
+			value: '',
+			amount: interest,
+		},
+		update: ({ current }) => ({
+			amount: current.amount + interest,
+		}),
+	});
 });
 
 ponder.on('Savings:Withdrawal', async ({ event, context }) => {
-	const { SavingsWithdrawal, SavingsWithdrawalMapping } = context.db;
+	const { SavingsWithdrawal, SavingsWithdrawalMapping, Ecosystem } = context.db;
 	const { account, amount } = event.args;
 
 	// flat indexing
@@ -123,6 +147,18 @@ ponder.on('Savings:Withdrawal', async ({ event, context }) => {
 		update: (c) => ({
 			updated: event.block.timestamp,
 			amount: c.current.amount + amount,
+		}),
+	});
+
+	// ecosystem
+	await Ecosystem.upsert({
+		id: `Savings:TotalWithdrawal`,
+		create: {
+			value: '',
+			amount: amount,
+		},
+		update: ({ current }) => ({
+			amount: current.amount + amount,
 		}),
 	});
 });
