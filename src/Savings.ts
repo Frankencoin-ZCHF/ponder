@@ -77,12 +77,12 @@ ponder.on('Savings:Saved', async ({ event, context }) => {
 	});
 });
 
-ponder.on('Savings:InterestReserved', async ({ event, context }) => {
-	const { SavingsInterestReserved, SavingsInterestReservedMapping, Ecosystem } = context.db;
+ponder.on('Savings:InterestCollected', async ({ event, context }) => {
+	const { SavingsInterestCollected, SavingsInterestCollectedMapping, Ecosystem } = context.db;
 	const { account, interest } = event.args;
 
 	// flat indexing
-	await SavingsInterestReserved.create({
+	await SavingsInterestCollected.create({
 		id: `${account.toLowerCase()}-${event.block.number.toString()}`,
 		data: {
 			created: event.block.timestamp,
@@ -93,7 +93,7 @@ ponder.on('Savings:InterestReserved', async ({ event, context }) => {
 	});
 
 	// map indexing
-	await SavingsInterestReservedMapping.upsert({
+	await SavingsInterestCollectedMapping.upsert({
 		id: account.toLowerCase(),
 		create: {
 			created: event.block.timestamp,
@@ -109,7 +109,7 @@ ponder.on('Savings:InterestReserved', async ({ event, context }) => {
 
 	// ecosystem
 	await Ecosystem.upsert({
-		id: `Savings:TotalInterestReserved`,
+		id: `Savings:TotalInterestCollected`,
 		create: {
 			value: '',
 			amount: interest,
@@ -120,12 +120,12 @@ ponder.on('Savings:InterestReserved', async ({ event, context }) => {
 	});
 });
 
-ponder.on('Savings:Withdrawal', async ({ event, context }) => {
-	const { SavingsWithdrawal, SavingsWithdrawalMapping, Ecosystem } = context.db;
+ponder.on('Savings:Withdrawn', async ({ event, context }) => {
+	const { SavingsWithdrawn, SavingsWithdrawnMapping, Ecosystem } = context.db;
 	const { account, amount } = event.args;
 
 	// flat indexing
-	await SavingsWithdrawal.create({
+	await SavingsWithdrawn.create({
 		id: `${account.toLowerCase()}-${event.block.number.toString()}`,
 		data: {
 			created: event.block.timestamp,
@@ -136,7 +136,7 @@ ponder.on('Savings:Withdrawal', async ({ event, context }) => {
 	});
 
 	// map indexing
-	await SavingsWithdrawalMapping.upsert({
+	await SavingsWithdrawnMapping.upsert({
 		id: account.toLowerCase(),
 		create: {
 			created: event.block.timestamp,
@@ -152,7 +152,7 @@ ponder.on('Savings:Withdrawal', async ({ event, context }) => {
 
 	// ecosystem
 	await Ecosystem.upsert({
-		id: `Savings:TotalWithdrawal`,
+		id: `Savings:TotalWithdrawn`,
 		create: {
 			value: '',
 			amount: amount,

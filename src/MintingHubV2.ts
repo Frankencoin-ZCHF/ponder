@@ -64,7 +64,7 @@ ponder.on('MintingHubV2:PositionOpened', async ({ event, context }) => {
 	const limitForClones = await client.readContract({
 		abi: PositionABI,
 		address: position,
-		functionName: 'globalLimit',
+		functionName: 'limit',
 	});
 
 	// ------------------------------------------------------------------
