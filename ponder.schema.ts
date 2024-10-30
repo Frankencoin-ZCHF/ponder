@@ -197,6 +197,7 @@ export default createSchema((p) => ({
 		blockheight: p.bigint(),
 		account: p.string(),
 		amount: p.bigint(),
+		rate: p.int(),
 		total: p.bigint(),
 	}),
 
@@ -214,6 +215,7 @@ export default createSchema((p) => ({
 		blockheight: p.bigint(),
 		account: p.string(),
 		interest: p.bigint(),
+		rate: p.int(),
 		total: p.bigint(),
 	}),
 
@@ -231,6 +233,7 @@ export default createSchema((p) => ({
 		blockheight: p.bigint(),
 		account: p.string(),
 		amount: p.bigint(),
+		rate: p.int(),
 		total: p.bigint(),
 	}),
 

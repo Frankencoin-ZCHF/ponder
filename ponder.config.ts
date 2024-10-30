@@ -14,11 +14,11 @@ import {
 } from '@frankencoin/zchf';
 
 // mainnet (default) or polygon
-const chain = (process.env.PONDER_PROFILE as string) == 'polygon' ? polygon : mainnet;
-const Id = chain.id!;
-const ADDR = ADDRESS[chain.id]!;
+export const chain = (process.env.PONDER_PROFILE as string) == 'polygon' ? polygon : mainnet;
+export const Id = chain.id!;
+export const ADDR = ADDRESS[chain.id]!;
 
-const CONFIG = {
+export const CONFIG = {
 	[mainnet.id]: {
 		rpc: process.env.RPC_URL_MAINNET ?? mainnet.rpcUrls.default.http[0],
 		startFrankencoin: 18451518,
@@ -39,7 +39,7 @@ const CONFIG = {
 	},
 };
 
-const config = CONFIG[Id];
+export const config = CONFIG[Id];
 
 const openPositionEventV1 = MintingHubV1ABI.find((a) => a.type === 'event' && a.name === 'PositionOpened');
 if (openPositionEventV1 === undefined) throw new Error('openPositionEventV1 not found.');

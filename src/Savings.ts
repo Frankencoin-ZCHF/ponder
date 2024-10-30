@@ -1,4 +1,6 @@
 import { ponder } from '@/generated';
+import { SavingsABI } from '@frankencoin/zchf';
+import { ADDR } from '../ponder.config';
 
 ponder.on('Savings:RateProposed', async ({ event, context }) => {
 	const { SavingsRateProposed } = context.db;
@@ -35,8 +37,15 @@ ponder.on('Savings:RateChanged', async ({ event, context }) => {
 });
 
 ponder.on('Savings:Saved', async ({ event, context }) => {
+	const { client } = context;
 	const { SavingsSaved, SavingsSavedMapping, Ecosystem } = context.db;
 	const { account, amount } = event.args;
+
+	const ratePPM = await client.readContract({
+		abi: SavingsABI,
+		address: ADDR.savings,
+		functionName: 'currentRatePPM',
+	});
 
 	const latest = await SavingsSavedMapping.findUnique({
 		id: account.toLowerCase(),
@@ -51,6 +60,7 @@ ponder.on('Savings:Saved', async ({ event, context }) => {
 			account: account,
 			amount: amount,
 			total: latest ? latest.amount + amount : amount,
+			rate: ratePPM,
 		},
 	});
 
@@ -83,8 +93,15 @@ ponder.on('Savings:Saved', async ({ event, context }) => {
 });
 
 ponder.on('Savings:InterestCollected', async ({ event, context }) => {
+	const { client } = context;
 	const { SavingsInterestClaimed, SavingsInterestClaimedMapping, Ecosystem } = context.db;
 	const { account, interest } = event.args;
+
+	const ratePPM = await client.readContract({
+		abi: SavingsABI,
+		address: ADDR.savings,
+		functionName: 'currentRatePPM',
+	});
 
 	const latest = await SavingsInterestClaimedMapping.findUnique({
 		id: account.toLowerCase(),
@@ -99,6 +116,7 @@ ponder.on('Savings:InterestCollected', async ({ event, context }) => {
 			account,
 			interest,
 			total: latest ? latest.interest + interest : interest,
+			rate: ratePPM,
 		},
 	});
 
@@ -131,8 +149,15 @@ ponder.on('Savings:InterestCollected', async ({ event, context }) => {
 });
 
 ponder.on('Savings:Withdrawn', async ({ event, context }) => {
+	const { client } = context;
 	const { SavingsWithdrawn, SavingsWithdrawnMapping, Ecosystem } = context.db;
 	const { account, amount } = event.args;
+
+	const ratePPM = await client.readContract({
+		abi: SavingsABI,
+		address: ADDR.savings,
+		functionName: 'currentRatePPM',
+	});
 
 	const latest = await SavingsWithdrawnMapping.findUnique({
 		id: account.toLowerCase(),
@@ -147,6 +172,7 @@ ponder.on('Savings:Withdrawn', async ({ event, context }) => {
 			account,
 			amount,
 			total: latest ? latest.amount + amount : amount,
+			rate: ratePPM,
 		},
 	});
 
