@@ -197,6 +197,7 @@ export default createSchema((p) => ({
 		blockheight: p.bigint(),
 		account: p.string(),
 		amount: p.bigint(),
+		total: p.bigint(),
 	}),
 
 	SavingsSavedMapping: p.createTable({
@@ -207,15 +208,16 @@ export default createSchema((p) => ({
 		amount: p.bigint(), // total amount
 	}),
 
-	SavingsInterestCollected: p.createTable({
+	SavingsInterestClaimed: p.createTable({
 		id: p.string(),
 		created: p.bigint(),
 		blockheight: p.bigint(),
 		account: p.string(),
 		interest: p.bigint(),
+		total: p.bigint(),
 	}),
 
-	SavingsInterestCollectedMapping: p.createTable({
+	SavingsInterestClaimedMapping: p.createTable({
 		id: p.string(),
 		created: p.bigint(),
 		blockheight: p.bigint(),
@@ -229,6 +231,7 @@ export default createSchema((p) => ({
 		blockheight: p.bigint(),
 		account: p.string(),
 		amount: p.bigint(),
+		total: p.bigint(),
 	}),
 
 	SavingsWithdrawnMapping: p.createTable({

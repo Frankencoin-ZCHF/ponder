@@ -38,6 +38,10 @@ ponder.on('Savings:Saved', async ({ event, context }) => {
 	const { SavingsSaved, SavingsSavedMapping, Ecosystem } = context.db;
 	const { account, amount } = event.args;
 
+	const latest = await SavingsSavedMapping.findUnique({
+		id: account.toLowerCase(),
+	});
+
 	// flat indexing
 	await SavingsSaved.create({
 		id: `${account.toLowerCase()}-${event.block.number.toString()}`,
@@ -46,6 +50,7 @@ ponder.on('Savings:Saved', async ({ event, context }) => {
 			blockheight: event.block.number,
 			account: account,
 			amount: amount,
+			total: latest ? latest.amount + amount : amount,
 		},
 	});
 
@@ -78,22 +83,27 @@ ponder.on('Savings:Saved', async ({ event, context }) => {
 });
 
 ponder.on('Savings:InterestCollected', async ({ event, context }) => {
-	const { SavingsInterestCollected, SavingsInterestCollectedMapping, Ecosystem } = context.db;
+	const { SavingsInterestClaimed, SavingsInterestClaimedMapping, Ecosystem } = context.db;
 	const { account, interest } = event.args;
 
+	const latest = await SavingsInterestClaimedMapping.findUnique({
+		id: account.toLowerCase(),
+	});
+
 	// flat indexing
-	await SavingsInterestCollected.create({
+	await SavingsInterestClaimed.create({
 		id: `${account.toLowerCase()}-${event.block.number.toString()}`,
 		data: {
 			created: event.block.timestamp,
 			blockheight: event.block.number,
 			account,
 			interest,
+			total: latest ? latest.interest + interest : interest,
 		},
 	});
 
 	// map indexing
-	await SavingsInterestCollectedMapping.upsert({
+	await SavingsInterestClaimedMapping.upsert({
 		id: account.toLowerCase(),
 		create: {
 			created: event.block.timestamp,
@@ -124,6 +134,10 @@ ponder.on('Savings:Withdrawn', async ({ event, context }) => {
 	const { SavingsWithdrawn, SavingsWithdrawnMapping, Ecosystem } = context.db;
 	const { account, amount } = event.args;
 
+	const latest = await SavingsWithdrawnMapping.findUnique({
+		id: account.toLowerCase(),
+	});
+
 	// flat indexing
 	await SavingsWithdrawn.create({
 		id: `${account.toLowerCase()}-${event.block.number.toString()}`,
@@ -132,6 +146,7 @@ ponder.on('Savings:Withdrawn', async ({ event, context }) => {
 			blockheight: event.block.number,
 			account,
 			amount,
+			total: latest ? latest.amount + amount : amount,
 		},
 	});
 
