@@ -30,9 +30,9 @@ export const CONFIG = {
 	},
 	[polygon.id]: {
 		rpc: process.env.RPC_URL_POLYGON ?? polygon.rpcUrls.default.http[0],
-		startFrankencoin: 63643990,
-		startMintingHubV1: 63644014,
-		startMintingHubV2: 63644131,
+		startFrankencoin: 63633900,
+		startMintingHubV1: 63633900,
+		startMintingHubV2: 63633900,
 		blockrange: undefined,
 		maxRequestsPerSecond: 5,
 		pollingInterval: 5_000,
