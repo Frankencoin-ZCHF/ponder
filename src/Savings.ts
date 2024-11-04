@@ -1,6 +1,7 @@
 import { ponder } from '@/generated';
 import { SavingsABI } from '@frankencoin/zchf';
 import { ADDR } from '../ponder.config';
+import { Address } from 'viem';
 
 ponder.on('Savings:RateProposed', async ({ event, context }) => {
 	const { SavingsRateProposed } = context.db;
@@ -38,8 +39,9 @@ ponder.on('Savings:RateChanged', async ({ event, context }) => {
 
 ponder.on('Savings:Saved', async ({ event, context }) => {
 	const { client } = context;
-	const { SavingsSaved, SavingsSavedMapping, Ecosystem } = context.db;
-	const { account, amount } = event.args;
+	const { SavingsSaved, SavingsSavedMapping, SavingsWithdrawnMapping, SavingsInterestMapping, Ecosystem } = context.db;
+	const { amount } = event.args;
+	const account: Address = event.args.account.toLowerCase() as Address;
 
 	const ratePPM = await client.readContract({
 		abi: SavingsABI,
@@ -47,26 +49,9 @@ ponder.on('Savings:Saved', async ({ event, context }) => {
 		functionName: 'currentRatePPM',
 	});
 
-	const latest = await SavingsSavedMapping.findUnique({
-		id: account.toLowerCase(),
-	});
-
-	// flat indexing
-	await SavingsSaved.create({
-		id: `${account.toLowerCase()}-${event.block.number.toString()}`,
-		data: {
-			created: event.block.timestamp,
-			blockheight: event.block.number,
-			account: account.toLowerCase(),
-			amount,
-			total: latest ? latest.amount + amount : amount,
-			rate: ratePPM,
-		},
-	});
-
 	// map indexing
 	await SavingsSavedMapping.upsert({
-		id: account.toLowerCase(),
+		id: account,
 		create: {
 			created: event.block.timestamp,
 			blockheight: event.block.number,
@@ -77,6 +62,35 @@ ponder.on('Savings:Saved', async ({ event, context }) => {
 			updated: event.block.timestamp,
 			amount: c.current.amount + amount,
 		}),
+	});
+
+	const latestSaved = await SavingsSavedMapping.findUnique({
+		id: account,
+	});
+	const latestWithdraw = await SavingsWithdrawnMapping.findUnique({
+		id: account,
+	});
+	const latestInterest = await SavingsInterestMapping.findUnique({
+		id: account,
+	});
+
+	const balance: bigint = latestSaved
+		? latestSaved.amount - (latestWithdraw ? latestWithdraw.amount : 0n) + (latestInterest ? latestInterest.amount : 0n)
+		: 0n;
+
+	// flat indexing
+	await SavingsSaved.create({
+		id: `${account}-${event.block.number.toString()}`,
+		data: {
+			created: event.block.timestamp,
+			blockheight: event.block.number,
+			account: account,
+			txHash: event.transaction.hash,
+			amount,
+			rate: ratePPM,
+			total: latestSaved ? latestSaved.amount : amount,
+			balance,
+		},
 	});
 
 	// ecosystem
@@ -94,8 +108,9 @@ ponder.on('Savings:Saved', async ({ event, context }) => {
 
 ponder.on('Savings:InterestCollected', async ({ event, context }) => {
 	const { client } = context;
-	const { SavingsInterestClaimed, SavingsInterestClaimedMapping, Ecosystem } = context.db;
-	const { account, interest } = event.args;
+	const { SavingsInterest, SavingsSavedMapping, SavingsWithdrawnMapping, SavingsInterestMapping, Ecosystem } = context.db;
+	const { interest } = event.args;
+	const account: Address = event.args.account.toLowerCase() as Address;
 
 	const ratePPM = await client.readContract({
 		abi: SavingsABI,
@@ -103,26 +118,9 @@ ponder.on('Savings:InterestCollected', async ({ event, context }) => {
 		functionName: 'currentRatePPM',
 	});
 
-	const latest = await SavingsInterestClaimedMapping.findUnique({
-		id: account.toLowerCase(),
-	});
-
-	// flat indexing
-	await SavingsInterestClaimed.create({
-		id: `${account.toLowerCase()}-${event.block.number.toString()}`,
-		data: {
-			created: event.block.timestamp,
-			blockheight: event.block.number,
-			account: account.toLowerCase(),
-			amount: interest,
-			total: latest ? latest.amount + interest : interest,
-			rate: ratePPM,
-		},
-	});
-
 	// map indexing
-	await SavingsInterestClaimedMapping.upsert({
-		id: account.toLowerCase(),
+	await SavingsInterestMapping.upsert({
+		id: account,
 		create: {
 			created: event.block.timestamp,
 			blockheight: event.block.number,
@@ -133,6 +131,35 @@ ponder.on('Savings:InterestCollected', async ({ event, context }) => {
 			updated: event.block.timestamp,
 			interest: c.current.amount + interest,
 		}),
+	});
+
+	const latestSaved = await SavingsSavedMapping.findUnique({
+		id: account,
+	});
+	const latestWithdraw = await SavingsWithdrawnMapping.findUnique({
+		id: account,
+	});
+	const latestInterest = await SavingsInterestMapping.findUnique({
+		id: account,
+	});
+
+	const balance: bigint = latestSaved
+		? latestSaved.amount - (latestWithdraw ? latestWithdraw.amount : 0n) + (latestInterest ? latestInterest.amount : 0n)
+		: 0n;
+
+	// flat indexing
+	await SavingsInterest.create({
+		id: `${account}-${event.block.number.toString()}`,
+		data: {
+			created: event.block.timestamp,
+			blockheight: event.block.number,
+			txHash: event.transaction.hash,
+			account: account,
+			amount: interest,
+			rate: ratePPM,
+			total: latestInterest ? latestInterest.amount : interest,
+			balance,
+		},
 	});
 
 	// ecosystem
@@ -150,8 +177,9 @@ ponder.on('Savings:InterestCollected', async ({ event, context }) => {
 
 ponder.on('Savings:Withdrawn', async ({ event, context }) => {
 	const { client } = context;
-	const { SavingsWithdrawn, SavingsWithdrawnMapping, Ecosystem } = context.db;
-	const { account, amount } = event.args;
+	const { SavingsWithdrawn, SavingsSavedMapping, SavingsWithdrawnMapping, SavingsInterestMapping, Ecosystem } = context.db;
+	const { amount } = event.args;
+	const account: Address = event.args.account.toLowerCase() as Address;
 
 	const ratePPM = await client.readContract({
 		abi: SavingsABI,
@@ -159,26 +187,9 @@ ponder.on('Savings:Withdrawn', async ({ event, context }) => {
 		functionName: 'currentRatePPM',
 	});
 
-	const latest = await SavingsWithdrawnMapping.findUnique({
-		id: account.toLowerCase(),
-	});
-
-	// flat indexing
-	await SavingsWithdrawn.create({
-		id: `${account.toLowerCase()}-${event.block.number.toString()}`,
-		data: {
-			created: event.block.timestamp,
-			blockheight: event.block.number,
-			account: account.toLowerCase(),
-			amount,
-			total: latest ? latest.amount + amount : amount,
-			rate: ratePPM,
-		},
-	});
-
 	// map indexing
 	await SavingsWithdrawnMapping.upsert({
-		id: account.toLowerCase(),
+		id: account,
 		create: {
 			created: event.block.timestamp,
 			blockheight: event.block.number,
@@ -189,6 +200,35 @@ ponder.on('Savings:Withdrawn', async ({ event, context }) => {
 			updated: event.block.timestamp,
 			amount: c.current.amount + amount,
 		}),
+	});
+
+	const latestSaved = await SavingsSavedMapping.findUnique({
+		id: account,
+	});
+	const latestWithdraw = await SavingsWithdrawnMapping.findUnique({
+		id: account,
+	});
+	const latestInterest = await SavingsInterestMapping.findUnique({
+		id: account,
+	});
+
+	const balance: bigint = latestSaved
+		? latestSaved.amount - (latestWithdraw ? latestWithdraw.amount : 0n) + (latestInterest ? latestInterest.amount : 0n)
+		: 0n;
+
+	// flat indexing
+	await SavingsWithdrawn.create({
+		id: `${account}-${event.block.number.toString()}`,
+		data: {
+			created: event.block.timestamp,
+			blockheight: event.block.number,
+			txHash: event.transaction.hash,
+			account: account,
+			amount,
+			rate: ratePPM,
+			total: latestWithdraw ? latestWithdraw.amount : amount,
+			balance,
+		},
 	});
 
 	// ecosystem
