@@ -129,7 +129,7 @@ ponder.on('Savings:InterestCollected', async ({ event, context }) => {
 		},
 		update: (c) => ({
 			updated: event.block.timestamp,
-			interest: c.current.amount + interest,
+			amount: c.current.amount + interest,
 		}),
 	});
 
