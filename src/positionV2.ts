@@ -10,6 +10,10 @@ ponder.on('PositionV2:MintingUpdate', async ({ event, context }) => {
 	const { collateral, price, minted } = event.args;
 	const positionAddress = event.log.address;
 
+	// FIXME:
+	console.log(positionAddress);
+	if (true) return;
+
 	// position updates
 	const availableForClones = await client.readContract({
 		abi: PositionABI,
