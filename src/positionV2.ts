@@ -10,10 +10,6 @@ ponder.on('PositionV2:MintingUpdate', async ({ event, context }) => {
 	const { collateral, price, minted } = event.args;
 	const positionAddress = event.log.address;
 
-	// FIXME:
-	console.log(positionAddress);
-	if (true) return;
-
 	// position updates
 	const availableForClones = await client.readContract({
 		abi: PositionABI,
@@ -43,7 +39,7 @@ ponder.on('PositionV2:MintingUpdate', async ({ event, context }) => {
 		id: positionAddress.toLowerCase(),
 	});
 
-	if (!position) throw new Error('PositionV2 unknown in MintingUpdat');
+	if (!position) throw new Error('PositionV2 unknown in MintingUpdate');
 
 	await PositionV2.update({
 		id: positionAddress.toLowerCase(),
