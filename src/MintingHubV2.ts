@@ -8,17 +8,24 @@ ponder.on('MintingHubV2:PositionOpened', async ({ event, context }) => {
 
 	// ------------------------------------------------------------------
 	// FROM EVENT & TRANSACTION
-	const { owner, position, original, collateral } = event.args;
+	const { owner, position, collateral } = event.args;
+	const parent = event.args.original;
 
 	const created: bigint = event.block.timestamp;
 
-	const isOriginal: boolean = original.toLowerCase() === position.toLowerCase();
+	const isOriginal: boolean = parent.toLowerCase() === position.toLowerCase();
 	const isClone: boolean = !isOriginal;
 	const closed: boolean = false;
 	const denied: boolean = false;
 
 	// ------------------------------------------------------------------
 	// CONST
+	const original = await client.readContract({
+		abi: PositionABI,
+		address: position,
+		functionName: 'original',
+	});
+
 	const zchf = await client.readContract({
 		abi: PositionABI,
 		address: position,
@@ -197,6 +204,7 @@ ponder.on('MintingHubV2:PositionOpened', async ({ event, context }) => {
 			denied,
 			closed,
 			original,
+			parent,
 
 			minimumCollateral,
 			riskPremiumPPM,
