@@ -106,11 +106,10 @@ ponder.on('Equity:Trade', async ({ event, context }) => {
 		}),
 	});
 
-	const startTime = (event.block.timestamp / 86400n) * 86400n;
 	await TradeChart.upsert({
-		id: startTime.toString(),
+		id: time.toString(),
 		create: {
-			time: startTime,
+			time: time,
 			lastPrice: event.args.newprice,
 		},
 		update: ({ current }) => ({
