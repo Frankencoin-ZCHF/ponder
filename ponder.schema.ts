@@ -371,4 +371,40 @@ export default createSchema((p) => ({
 		value: p.string(),
 		amount: p.bigint(),
 	}),
+
+	// -------------------------------------------------------------------------
+	// TRANSACTION LOG
+	// -------------------------------------------------------------------------
+	TransactionLog: p.createTable({
+		id: p.string(),
+		timestamp: p.bigint(),
+		kind: p.string(),
+		amount: p.bigint(),
+
+		totalProfitFees: p.bigint(),
+		totalLossFees: p.bigint(),
+		totalTradeFees: p.bigint(),
+
+		totalSupply: p.bigint(),
+		totalEquity: p.bigint(),
+		totalEquityPct: p.bigint(),
+		totalSavings: p.bigint(),
+		totalSavingsPct: p.bigint(),
+
+		fpsTotalSupply: p.bigint(),
+		fpsPrice: p.bigint(),
+
+		currentLeadratePPM: p.bigint(),
+		claimableInterests: p.bigint(),
+		projectedInterests: p.bigint(),
+		impliedV1Interests: p.bigint(), // forwardWeighted
+		impliedV2Interests: p.bigint(), // forwardWeighted
+
+		impliedV1AvgBorrowFee: p.bigint(),
+		impliedV2AvgBorrowFee: p.bigint(),
+
+		netImpliedEarnings: p.bigint(),
+		netImpliedEarningsPerToken: p.bigint(),
+		netImpliedYieldPerToken: p.bigint(),
+	}),
 }));

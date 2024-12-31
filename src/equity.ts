@@ -1,5 +1,6 @@
 import { ponder } from '@/generated';
 import { Address, zeroAddress } from 'viem';
+import { updateTransactionLog } from './Analytic';
 
 ponder.on('Equity:Trade', async ({ event, context }) => {
 	const { Trade, VotingPower, TradeChart, ActiveUser, Ecosystem } = context.db;
@@ -39,7 +40,7 @@ ponder.on('Equity:Trade', async ({ event, context }) => {
 			id: 'Equity:Invested',
 			create: {
 				value: '',
-				amount: 0n,
+				amount: amount,
 			},
 			update: ({ current }) => ({
 				amount: current.amount + amount,
@@ -51,12 +52,14 @@ ponder.on('Equity:Trade', async ({ event, context }) => {
 			id: 'Equity:InvestedFeePaidPPM',
 			create: {
 				value: '',
-				amount: 0n,
+				amount: amount * 3000n,
 			},
 			update: ({ current }) => ({
 				amount: current.amount + amount * 3000n,
 			}),
 		});
+
+		await updateTransactionLog({ context, timestamp: event.block.timestamp, kind: 'Equity:Invested', amount });
 	} else {
 		// cnt
 		await Ecosystem.upsert({
@@ -75,7 +78,7 @@ ponder.on('Equity:Trade', async ({ event, context }) => {
 			id: 'Equity:Redeemed',
 			create: {
 				value: '',
-				amount: 0n,
+				amount: amount,
 			},
 			update: ({ current }) => ({
 				amount: current.amount + amount,
@@ -87,12 +90,14 @@ ponder.on('Equity:Trade', async ({ event, context }) => {
 			id: 'Equity:RedeemedFeePaidPPM',
 			create: {
 				value: '',
-				amount: 0n,
+				amount: amount * 3000n,
 			},
 			update: ({ current }) => ({
 				amount: current.amount + amount * 3000n,
 			}),
 		});
+
+		await updateTransactionLog({ context, timestamp: event.block.timestamp, kind: 'Equity:Redeemed', amount });
 	}
 
 	await VotingPower.upsert({

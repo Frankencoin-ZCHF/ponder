@@ -1,7 +1,8 @@
 import { ponder } from '@/generated';
 import { SavingsABI } from '@frankencoin/zchf';
 import { ADDR } from '../ponder.config';
-import { Address } from 'viem';
+import { Address, parseEther } from 'viem';
+import { updateTransactionLog } from './Analytic';
 
 ponder.on('Savings:RateProposed', async ({ event, context }) => {
 	const { SavingsRateProposed } = context.db;
@@ -34,6 +35,13 @@ ponder.on('Savings:RateChanged', async ({ event, context }) => {
 			txHash: event.transaction.hash,
 			approvedRate: newRate,
 		},
+	});
+
+	await updateTransactionLog({
+		context,
+		timestamp: event.block.timestamp,
+		kind: 'Savings:RateChanged',
+		amount: parseEther(newRate.toString()),
 	});
 });
 
@@ -104,6 +112,8 @@ ponder.on('Savings:Saved', async ({ event, context }) => {
 			amount: current.amount + amount,
 		}),
 	});
+
+	await updateTransactionLog({ context, timestamp: event.block.timestamp, kind: 'Savings:Saved', amount: event.args.amount });
 });
 
 ponder.on('Savings:InterestCollected', async ({ event, context }) => {
@@ -172,6 +182,13 @@ ponder.on('Savings:InterestCollected', async ({ event, context }) => {
 		update: ({ current }) => ({
 			amount: current.amount + interest,
 		}),
+	});
+
+	await updateTransactionLog({
+		context,
+		timestamp: event.block.timestamp,
+		kind: 'Savings:InterestCollected',
+		amount: event.args.interest,
 	});
 });
 
@@ -242,4 +259,6 @@ ponder.on('Savings:Withdrawn', async ({ event, context }) => {
 			amount: current.amount + amount,
 		}),
 	});
+
+	await updateTransactionLog({ context, timestamp: event.block.timestamp, kind: 'Savings:Withdrawn', amount: event.args.amount });
 });
