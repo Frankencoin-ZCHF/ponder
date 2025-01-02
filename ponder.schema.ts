@@ -41,6 +41,13 @@ export default createSchema((p) => ({
 		vetor: p.string().optional(),
 	}),
 
+	ProfitLoss: p.createTable({
+		id: p.string(),
+		timestamp: p.bigint(),
+		kind: p.string(),
+		amount: p.bigint(),
+	}),
+
 	// -------------------------------------------------------------------------
 	// FPS
 	// -------------------------------------------------------------------------
@@ -381,30 +388,43 @@ export default createSchema((p) => ({
 		kind: p.string(),
 		amount: p.bigint(),
 
-		totalProfitFees: p.bigint(),
-		totalLossFees: p.bigint(),
-		totalTradeFees: p.bigint(),
+		totalInflow: p.bigint(),
+		totalOutflow: p.bigint(),
+		totalTradeFee: p.bigint(),
 
 		totalSupply: p.bigint(),
 		totalEquity: p.bigint(),
-		totalEquityPct: p.bigint(),
 		totalSavings: p.bigint(),
-		totalSavingsPct: p.bigint(),
+		equityToSupplyRatio: p.bigint(),
+		savingsToSupplyRatio: p.bigint(),
 
 		fpsTotalSupply: p.bigint(),
-		fpsPrice: p.bigint(),
+		fpsPrice: p.bigint(), // smart contract price
 
-		currentLeadratePPM: p.bigint(),
+		totalMintedV1: p.bigint(),
+		totalMintedV2: p.bigint(),
+		mintedV1ToSupplyRatio: p.bigint(),
+		mintedV2ToSupplyRatio: p.bigint(),
+
+		currentLeadRate: p.bigint(),
 		claimableInterests: p.bigint(),
 		projectedInterests: p.bigint(),
-		impliedV1Interests: p.bigint(), // forwardWeighted
-		impliedV2Interests: p.bigint(), // forwardWeighted
+		impliedV1Interests: p.bigint(), // current forwardWeighted
+		impliedV2Interests: p.bigint(), // current forwardWeighted
 
-		impliedV1AvgBorrowFee: p.bigint(),
-		impliedV2AvgBorrowFee: p.bigint(),
+		impliedV1AvgBorrowRate: p.bigint(),
+		impliedV2AvgBorrowRate: p.bigint(),
 
 		netImpliedEarnings: p.bigint(),
+		netImpliedEarningsToSupplyRatio: p.bigint(),
+		netImpliedEarningsToEquityRatio: p.bigint(),
 		netImpliedEarningsPerToken: p.bigint(),
-		netImpliedYieldPerToken: p.bigint(),
+		netImpliedEarningsPerTokenYield: p.bigint(),
+
+		netRealized365Earnings: p.bigint(),
+		netRealized365EarningsToSupplyRatio: p.bigint(),
+		netRealized365EarningsToEquityRatio: p.bigint(),
+		netRealized365EarningsPerToken: p.bigint(),
+		netRealized365EarningsPerTokenYield: p.bigint(),
 	}),
 }));

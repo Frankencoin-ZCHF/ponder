@@ -1,6 +1,6 @@
 import { ponder, Context } from '@/generated';
 import { EquityABI, FrankencoinABI, SavingsABI } from '@frankencoin/zchf';
-import { Address, formatUnits, parseEther, zeroAddress } from 'viem';
+import { Address, formatUnits, parseEther, parseUnits, zeroAddress } from 'viem';
 import { ADDR } from '../ponder.config';
 import fs from 'fs';
 
@@ -16,15 +16,15 @@ export async function updateTransactionLog({ context, timestamp, kind, amount }:
 	const eco = context.db.Ecosystem;
 
 	const profitFees = await eco.findUnique({ id: `Equity:Profits` });
-	const totalProfitFees = profitFees ? profitFees.amount : 0n;
+	const totalInflow = profitFees ? profitFees.amount : 0n;
 	const lossFees = await eco.findUnique({ id: `Equity:Losses` });
-	const totalLossFees = lossFees ? lossFees.amount : 0n;
+	const totalOutflow = lossFees ? lossFees.amount : 0n;
 
 	const investedFeePaidPPM = await eco.findUnique({ id: `Equity:InvestedFeePaidPPM` });
 	const investedFeePaid = investedFeePaidPPM ? investedFeePaidPPM.amount / 1_000_000n : 0n;
 	const redeemedFeePaidPPM = await eco.findUnique({ id: `Equity:RedeemedFeePaidPPM` });
 	const redeemedFeePaid = redeemedFeePaidPPM ? redeemedFeePaidPPM.amount / 1_000_000n : 0n;
-	const totalTradeFees = investedFeePaid + redeemedFeePaid;
+	const totalTradeFee = investedFeePaid + redeemedFeePaid;
 
 	const _totalSaved = await eco.findUnique({ id: `Savings:TotalSaved` });
 	const totalSaved = _totalSaved ? _totalSaved.amount : 0n;
@@ -58,8 +58,8 @@ export async function updateTransactionLog({ context, timestamp, kind, amount }:
 		functionName: 'price',
 	});
 
-	const totalSavingsPct = totalSupply > 0n ? (totalSavings * parseEther('1')) / totalSupply : 0n;
-	const totalEquityPct = totalSupply > 0n ? (totalEquity * parseEther('1')) / totalSupply : 0n;
+	const savingsToSupplyRatio = totalSupply > 0n ? (totalSavings * parseEther('1')) / totalSupply : 0n;
+	const equityToSupplyRatio = totalSupply > 0n ? (totalEquity * parseEther('1')) / totalSupply : 0n;
 
 	const savingsSavedMapping = await context.db.SavingsSavedMapping.findMany({ limit: 1000 });
 	const savers = savingsSavedMapping.items.map((i) => i.id as Address);
@@ -76,7 +76,8 @@ export async function updateTransactionLog({ context, timestamp, kind, amount }:
 		claimableInterests += accruedInterest;
 	}
 
-	let currentLeadratePPM: bigint = 0n;
+	let currentLeadRatePPM: number = 0;
+	let currentLeadRate: bigint = 0n;
 	let projectedInterests: bigint = 0n;
 	if (totalSavings > 0n) {
 		const leadRatePPM = await context.client.readContract({
@@ -85,8 +86,9 @@ export async function updateTransactionLog({ context, timestamp, kind, amount }:
 			functionName: 'currentRatePPM',
 		});
 
-		currentLeadratePPM = BigInt(leadRatePPM);
-		projectedInterests = (totalSavings * currentLeadratePPM) / 1_000_000n;
+		currentLeadRate = parseUnits(leadRatePPM.toString(), 12);
+		currentLeadRatePPM = leadRatePPM;
+		projectedInterests = (totalSavings * BigInt(leadRatePPM)) / 1_000_000n;
 	}
 
 	// V1
@@ -105,18 +107,39 @@ export async function updateTransactionLog({ context, timestamp, kind, amount }:
 	let impliedV2Interests: bigint = 0n;
 	let totalMintedV2: bigint = 0n;
 	for (let p of openPositionV2) {
-		impliedV2Interests += (p.minted * (BigInt(p.riskPremiumPPM) + currentLeadratePPM)) / 1_000_000n;
+		impliedV2Interests += (p.minted * BigInt(p.riskPremiumPPM + currentLeadRatePPM)) / 1_000_000n;
 		totalMintedV2 += p.minted;
 	}
 
+	// V1 + V2 minted supply ratio
+	const mintedV1ToSupplyRatio = totalSupply > 0n ? (totalMintedV1 * parseEther('1')) / totalSupply : 0n;
+	const mintedV2ToSupplyRatio = totalSupply > 0n ? (totalMintedV2 * parseEther('1')) / totalSupply : 0n;
+
 	// avg borrow interest
-	const impliedV1AvgBorrowFee = totalMintedV1 > 0n ? (impliedV1Interests * parseEther('1')) / totalMintedV1 : 0n;
-	const impliedV2AvgBorrowFee = totalMintedV2 > 0n ? (impliedV2Interests * parseEther('1')) / totalMintedV2 : 0n;
+	const impliedV1AvgBorrowRate = totalMintedV1 > 0n ? (impliedV1Interests * parseEther('1')) / totalMintedV1 : 0n;
+	const impliedV2AvgBorrowRate = totalMintedV2 > 0n ? (impliedV2Interests * parseEther('1')) / totalMintedV2 : 0n;
 
 	// net calc
 	const netImpliedEarnings = impliedV1Interests + impliedV2Interests - claimableInterests - projectedInterests;
+	const netImpliedEarningsToSupplyRatio = totalSupply > 0n ? (netImpliedEarnings * parseEther('1')) / totalSupply : 0n;
+	const netImpliedEarningsToEquityRatio = totalEquity > 0n ? (netImpliedEarnings * parseEther('1')) / totalEquity : 0n;
 	const netImpliedEarningsPerToken = fpsTotalSupply > 0n ? (netImpliedEarnings * parseEther('1')) / fpsTotalSupply : 0n;
-	const netImpliedYieldPerToken = fpsPrice > 0n ? (netImpliedEarningsPerToken * parseEther('1')) / fpsPrice : 0n;
+	const netImpliedEarningsPerTokenYield = fpsPrice > 0n ? (netImpliedEarningsPerToken * parseEther('1')) / fpsPrice : 0n;
+
+	// calc realized earnings, rolling latest 365days
+	const filteredProfitLoss = (
+		await context.db.ProfitLoss.findMany({
+			where: { timestamp: { gt: timestamp - 365n * 86400n } },
+			orderBy: { timestamp: 'asc' },
+			limit: 1000,
+		})
+	).items;
+
+	const netRealized365Earnings = filteredProfitLoss.reduce<bigint>((a, b) => (b.kind == 'Profit' ? a + b.amount : a - b.amount), 0n);
+	const netRealized365EarningsToSupplyRatio = totalSupply > 0n ? (netRealized365Earnings * parseEther('1')) / totalSupply : 0n;
+	const netRealized365EarningsToEquityRatio = totalEquity > 0n ? (netRealized365Earnings * parseEther('1')) / totalEquity : 0n;
+	const netRealized365EarningsPerToken = fpsTotalSupply > 0n ? (netRealized365Earnings * parseEther('1')) / fpsTotalSupply : 0n;
+	const netRealized365EarningsPerTokenYield = fpsPrice > 0n ? (netRealized365EarningsPerToken * parseEther('1')) / fpsPrice : 0n;
 
 	const entry = await txLog.upsert({
 		id: `${timestamp}-${kind}`,
@@ -125,104 +148,134 @@ export async function updateTransactionLog({ context, timestamp, kind, amount }:
 			kind,
 			amount,
 
-			totalProfitFees,
-			totalLossFees,
-			totalTradeFees,
+			totalInflow,
+			totalOutflow,
+			totalTradeFee,
 
 			totalSupply,
 			totalEquity,
-			totalEquityPct,
 			totalSavings,
-			totalSavingsPct,
+			equityToSupplyRatio,
+			savingsToSupplyRatio,
 
 			fpsTotalSupply,
 			fpsPrice,
 
-			currentLeadratePPM,
+			totalMintedV1,
+			totalMintedV2,
+			mintedV1ToSupplyRatio,
+			mintedV2ToSupplyRatio,
+
+			currentLeadRate,
 			claimableInterests,
 			projectedInterests,
 			impliedV1Interests,
 			impliedV2Interests,
 
-			impliedV1AvgBorrowFee,
-			impliedV2AvgBorrowFee,
+			impliedV1AvgBorrowRate,
+			impliedV2AvgBorrowRate,
 
 			netImpliedEarnings,
+			netImpliedEarningsToSupplyRatio,
+			netImpliedEarningsToEquityRatio,
 			netImpliedEarningsPerToken,
-			netImpliedYieldPerToken,
+			netImpliedEarningsPerTokenYield,
+
+			netRealized365Earnings,
+			netRealized365EarningsToSupplyRatio,
+			netRealized365EarningsToEquityRatio,
+			netRealized365EarningsPerToken,
+			netRealized365EarningsPerTokenYield,
 		},
 		update: ({ current }) => ({
 			timestamp,
 			kind,
 			amount: current.amount + amount,
 
-			totalProfitFees,
-			totalLossFees,
-			totalTradeFees,
+			totalInflow,
+			totalOutflow,
+			totalTradeFee,
 
 			totalSupply,
 			totalEquity,
-			totalEquityPct,
+			equityToSupplyRatio,
 			totalSavings,
-			totalSavingsPct,
+			savingsToSupplyRatio,
 
 			fpsTotalSupply,
 			fpsPrice,
 
-			currentLeadratePPM,
+			totalMintedV1,
+			totalMintedV2,
+			mintedV1ToSupplyRatio,
+			mintedV2ToSupplyRatio,
+
+			currentLeadRate,
 			claimableInterests,
 			projectedInterests,
 			impliedV1Interests,
 			impliedV2Interests,
 
-			impliedV1AvgBorrowFee,
-			impliedV2AvgBorrowFee,
+			impliedV1AvgBorrowRate,
+			impliedV2AvgBorrowRate,
 
 			netImpliedEarnings,
+			netImpliedEarningsToSupplyRatio,
+			netImpliedEarningsToEquityRatio,
 			netImpliedEarningsPerToken,
-			netImpliedYieldPerToken,
+			netImpliedEarningsPerTokenYield,
+
+			netRealized365Earnings,
+			netRealized365EarningsToSupplyRatio,
+			netRealized365EarningsToEquityRatio,
+			netRealized365EarningsPerToken,
+			netRealized365EarningsPerTokenYield,
 		}),
 	});
 
-	const file = __dirname + '/analytics.csv';
-
-	if (!fs.existsSync(file)) {
-		const headers = Object.keys(entry).slice(0, -1).join(', ') + ' \n';
-		fs.appendFileSync(file, headers);
+	if (parseInt(entry.timestamp.toString()) * 1000 > Date.now() - 30 * 86400 * 1000) {
+		console.log(entry);
 	}
 
-	const toStrore = [
-		new Date(parseInt(entry.timestamp.toString()) * 1000).toISOString(),
-		entry.kind,
-		formatUnits(entry.amount, 18),
+	// const file = __dirname + '/analytics.csv';
 
-		formatUnits(entry.totalProfitFees, 18),
-		formatUnits(entry.totalLossFees, 18),
-		formatUnits(entry.totalTradeFees, 18),
+	// if (!fs.existsSync(file)) {
+	// 	const headers = Object.keys(entry).slice(0, -1).join(', ') + ' \n';
+	// 	fs.appendFileSync(file, headers);
+	// }
 
-		formatUnits(entry.totalSupply, 18),
-		formatUnits(entry.totalEquity, 18),
-		formatUnits(entry.totalEquityPct, 16),
-		formatUnits(entry.totalSavings, 18),
-		formatUnits(entry.totalSavingsPct, 16),
+	// const toStrore = [
+	// 	new Date(parseInt(entry.timestamp.toString()) * 1000).toISOString(),
+	// 	entry.kind,
+	// 	formatUnits(entry.amount, 18),
 
-		formatUnits(entry.fpsTotalSupply, 18),
-		formatUnits(entry.fpsPrice, 18),
+	// 	formatUnits(entry.totalInflow, 18),
+	// 	formatUnits(entry.totalOutflow, 18),
+	// 	formatUnits(entry.totalTradeFee, 18),
 
-		entry.currentLeadratePPM,
-		formatUnits(entry.claimableInterests, 18),
-		formatUnits(entry.projectedInterests, 18),
-		formatUnits(entry.impliedV1Interests, 18),
-		formatUnits(entry.impliedV2Interests, 18),
+	// 	formatUnits(entry.totalSupply, 18),
+	// 	formatUnits(entry.totalEquity, 18),
+	// 	formatUnits(entry.equityToSupplyRatio, 16),
+	// 	formatUnits(entry.totalSavings, 18),
+	// 	formatUnits(entry.savingsToSupplyRatio, 16),
 
-		formatUnits(entry.impliedV1AvgBorrowFee, 18),
-		formatUnits(entry.impliedV2AvgBorrowFee, 18),
+	// 	formatUnits(entry.fpsTotalSupply, 18),
+	// 	formatUnits(entry.fpsPrice, 18),
 
-		formatUnits(entry.netImpliedEarnings, 18),
-		formatUnits(entry.netImpliedEarningsPerToken, 18),
-		formatUnits(entry.netImpliedYieldPerToken, 18),
-	];
+	// 	entry.currentLeadRate,
+	// 	formatUnits(entry.claimableInterests, 18),
+	// 	formatUnits(entry.projectedInterests, 18),
+	// 	formatUnits(entry.impliedV1Interests, 18),
+	// 	formatUnits(entry.impliedV2Interests, 18),
 
-	const appendWith = toStrore.join(', ') + ' \n';
-	fs.appendFileSync(__dirname + '/analytics.csv', appendWith);
+	// 	formatUnits(entry.impliedV1AvgBorrowRate, 18),
+	// 	formatUnits(entry.impliedV2AvgBorrowRate, 18),
+
+	// 	formatUnits(entry.netImpliedEarnings, 18),
+	// 	formatUnits(entry.netImpliedEarningsPerToken, 18),
+	// 	formatUnits(entry.netImpliedYieldPerToken, 18),
+	// ];
+
+	// const appendWith = toStrore.join(', ') + ' \n';
+	// fs.appendFileSync(__dirname + '/analytics.csv', appendWith);
 }
