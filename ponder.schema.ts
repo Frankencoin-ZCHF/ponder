@@ -395,36 +395,54 @@ export default createSchema((p) => ({
 		totalSupply: p.bigint(),
 		totalEquity: p.bigint(),
 		totalSavings: p.bigint(),
-		equityToSupplyRatio: p.bigint(),
-		savingsToSupplyRatio: p.bigint(),
 
 		fpsTotalSupply: p.bigint(),
 		fpsPrice: p.bigint(), // smart contract price
 
 		totalMintedV1: p.bigint(),
 		totalMintedV2: p.bigint(),
-		mintedV1ToSupplyRatio: p.bigint(),
-		mintedV2ToSupplyRatio: p.bigint(),
 
 		currentLeadRate: p.bigint(),
 		claimableInterests: p.bigint(),
 		projectedInterests: p.bigint(),
-		impliedV1Interests: p.bigint(), // current forwardWeighted
-		impliedV2Interests: p.bigint(), // current forwardWeighted
 
-		impliedV1AvgBorrowRate: p.bigint(),
-		impliedV2AvgBorrowRate: p.bigint(),
+		annualV1Interests: p.bigint(),
+		annualV2Interests: p.bigint(),
+		annualV1BorrowRate: p.bigint(),
+		annualV2BorrowRate: p.bigint(),
 
-		netImpliedEarnings: p.bigint(),
-		netImpliedEarningsToSupplyRatio: p.bigint(),
-		netImpliedEarningsToEquityRatio: p.bigint(),
-		netImpliedEarningsPerToken: p.bigint(),
-		netImpliedEarningsPerTokenYield: p.bigint(),
+		annualNetEarnings: p.bigint(),
+		realizedNetEarnings: p.bigint(),
+	}),
 
-		netRealized365Earnings: p.bigint(),
-		netRealized365EarningsToSupplyRatio: p.bigint(),
-		netRealized365EarningsToEquityRatio: p.bigint(),
-		netRealized365EarningsPerToken: p.bigint(),
-		netRealized365EarningsPerTokenYield: p.bigint(),
+	DailyLog: p.createTable({
+		id: p.string(),
+		timestamp: p.bigint(),
+
+		totalInflow: p.bigint(),
+		totalOutflow: p.bigint(),
+		totalTradeFee: p.bigint(),
+
+		totalSupply: p.bigint(),
+		totalEquity: p.bigint(),
+		totalSavings: p.bigint(),
+
+		fpsTotalSupply: p.bigint(),
+		fpsPrice: p.bigint(), // smart contract price
+
+		totalMintedV1: p.bigint(),
+		totalMintedV2: p.bigint(),
+
+		currentLeadRate: p.bigint(),
+		claimableInterests: p.bigint(),
+		projectedInterests: p.bigint(),
+
+		annualV1Interests: p.bigint(),
+		annualV2Interests: p.bigint(),
+		annualV1BorrowRate: p.bigint(),
+		annualV2BorrowRate: p.bigint(),
+
+		annualNetEarnings: p.bigint(),
+		realizedNetEarnings: p.bigint(),
 	}),
 }));

@@ -1,8 +1,7 @@
-import { ponder, Context } from '@/generated';
+import { Context } from '@/generated';
 import { EquityABI, FrankencoinABI, SavingsABI } from '@frankencoin/zchf';
-import { Address, formatUnits, parseEther, parseUnits, zeroAddress } from 'viem';
+import { Address, parseEther, parseUnits } from 'viem';
 import { ADDR } from '../ponder.config';
-import fs from 'fs';
 
 interface updateTransactionLogProps {
 	context: Context;
@@ -13,6 +12,7 @@ interface updateTransactionLogProps {
 
 export async function updateTransactionLog({ context, timestamp, kind, amount }: updateTransactionLogProps) {
 	const txLog = context.db.TransactionLog;
+	const dailyLog = context.db.DailyLog;
 	const eco = context.db.Ecosystem;
 
 	const profitFees = await eco.findUnique({ id: `Equity:Profits` });
@@ -58,9 +58,6 @@ export async function updateTransactionLog({ context, timestamp, kind, amount }:
 		functionName: 'price',
 	});
 
-	const savingsToSupplyRatio = totalSupply > 0n ? (totalSavings * parseEther('1')) / totalSupply : 0n;
-	const equityToSupplyRatio = totalSupply > 0n ? (totalEquity * parseEther('1')) / totalSupply : 0n;
-
 	const savingsSavedMapping = await context.db.SavingsSavedMapping.findMany({ limit: 1000 });
 	const savers = savingsSavedMapping.items.map((i) => i.id as Address);
 
@@ -94,52 +91,49 @@ export async function updateTransactionLog({ context, timestamp, kind, amount }:
 	// V1
 	const allPositionV1 = await context.db.PositionV1.findMany({ limit: 1000 });
 	const openPositionV1 = allPositionV1.items.filter((p) => !p.closed && !p.denied && p.minted > 0n);
-	let impliedV1Interests: bigint = 0n;
+	let annualV1Interests: bigint = 0n;
 	let totalMintedV1: bigint = 0n;
 	for (let p of openPositionV1) {
-		impliedV1Interests += (p.minted * BigInt(p.annualInterestPPM)) / 1_000_000n;
+		annualV1Interests += (p.minted * BigInt(p.annualInterestPPM)) / 1_000_000n;
 		totalMintedV1 += p.minted;
 	}
 
 	// V2
 	const allPositionV2 = await context.db.PositionV2.findMany({ limit: 1000 });
 	const openPositionV2 = allPositionV2.items.filter((p) => !p.closed && !p.denied && p.minted > 0n);
-	let impliedV2Interests: bigint = 0n;
+	let annualV2Interests: bigint = 0n;
 	let totalMintedV2: bigint = 0n;
 	for (let p of openPositionV2) {
-		impliedV2Interests += (p.minted * BigInt(p.riskPremiumPPM + currentLeadRatePPM)) / 1_000_000n;
+		annualV2Interests += (p.minted * BigInt(p.riskPremiumPPM + currentLeadRatePPM)) / 1_000_000n;
 		totalMintedV2 += p.minted;
 	}
 
-	// V1 + V2 minted supply ratio
-	const mintedV1ToSupplyRatio = totalSupply > 0n ? (totalMintedV1 * parseEther('1')) / totalSupply : 0n;
-	const mintedV2ToSupplyRatio = totalSupply > 0n ? (totalMintedV2 * parseEther('1')) / totalSupply : 0n;
-
 	// avg borrow interest
-	const impliedV1AvgBorrowRate = totalMintedV1 > 0n ? (impliedV1Interests * parseEther('1')) / totalMintedV1 : 0n;
-	const impliedV2AvgBorrowRate = totalMintedV2 > 0n ? (impliedV2Interests * parseEther('1')) / totalMintedV2 : 0n;
+	const annualV1BorrowRate = totalMintedV1 > 0n ? (annualV1Interests * parseEther('1')) / totalMintedV1 : 0n;
+	const annualV2BorrowRate = totalMintedV2 > 0n ? (annualV2Interests * parseEther('1')) / totalMintedV2 : 0n;
 
 	// net calc
-	const netImpliedEarnings = impliedV1Interests + impliedV2Interests - claimableInterests - projectedInterests;
-	const netImpliedEarningsToSupplyRatio = totalSupply > 0n ? (netImpliedEarnings * parseEther('1')) / totalSupply : 0n;
-	const netImpliedEarningsToEquityRatio = totalEquity > 0n ? (netImpliedEarnings * parseEther('1')) / totalEquity : 0n;
-	const netImpliedEarningsPerToken = fpsTotalSupply > 0n ? (netImpliedEarnings * parseEther('1')) / fpsTotalSupply : 0n;
-	const netImpliedEarningsPerTokenYield = fpsPrice > 0n ? (netImpliedEarningsPerToken * parseEther('1')) / fpsPrice : 0n;
+	const annualNetEarnings = annualV1Interests + annualV2Interests - claimableInterests - projectedInterests;
 
 	// calc realized earnings, rolling latest 365days
-	const filteredProfitLoss = (
-		await context.db.ProfitLoss.findMany({
-			where: { timestamp: { gt: timestamp - 365n * 86400n } },
-			orderBy: { timestamp: 'asc' },
-			limit: 1000,
-		})
-	).items;
+	const last365dayObj = new Date(parseInt(timestamp.toString()) * 1000 - 365 * 24 * 60 * 60 * 1000);
+	const last365dayTimestamp = last365dayObj.setUTCHours(0, 0, 0, 0);
 
-	const netRealized365Earnings = filteredProfitLoss.reduce<bigint>((a, b) => (b.kind == 'Profit' ? a + b.amount : a - b.amount), 0n);
-	const netRealized365EarningsToSupplyRatio = totalSupply > 0n ? (netRealized365Earnings * parseEther('1')) / totalSupply : 0n;
-	const netRealized365EarningsToEquityRatio = totalEquity > 0n ? (netRealized365Earnings * parseEther('1')) / totalEquity : 0n;
-	const netRealized365EarningsPerToken = fpsTotalSupply > 0n ? (netRealized365Earnings * parseEther('1')) / fpsTotalSupply : 0n;
-	const netRealized365EarningsPerTokenYield = fpsPrice > 0n ? (netRealized365EarningsPerToken * parseEther('1')) / fpsPrice : 0n;
+	const last356dayEntry = await context.db.DailyLog.findMany({
+		where: {
+			timestamp: { gte: BigInt(last365dayTimestamp) },
+		},
+		orderBy: { timestamp: 'asc' },
+		limit: 1,
+	});
+
+	let realizedNetEarnings = totalInflow - totalOutflow;
+	if (last356dayEntry.items.length > 0) {
+		const item = last356dayEntry.items.at(0);
+		const inflowAdjusted = totalInflow - item!.totalInflow;
+		const outflowAdjusted = totalOutflow - item!.totalOutflow;
+		realizedNetEarnings = inflowAdjusted - outflowAdjusted;
+	}
 
 	const entry = await txLog.upsert({
 		id: `${timestamp}-${kind}`,
@@ -155,42 +149,29 @@ export async function updateTransactionLog({ context, timestamp, kind, amount }:
 			totalSupply,
 			totalEquity,
 			totalSavings,
-			equityToSupplyRatio,
-			savingsToSupplyRatio,
 
 			fpsTotalSupply,
 			fpsPrice,
 
 			totalMintedV1,
 			totalMintedV2,
-			mintedV1ToSupplyRatio,
-			mintedV2ToSupplyRatio,
 
 			currentLeadRate,
 			claimableInterests,
 			projectedInterests,
-			impliedV1Interests,
-			impliedV2Interests,
+			annualV1Interests,
+			annualV2Interests,
 
-			impliedV1AvgBorrowRate,
-			impliedV2AvgBorrowRate,
+			annualV1BorrowRate,
+			annualV2BorrowRate,
 
-			netImpliedEarnings,
-			netImpliedEarningsToSupplyRatio,
-			netImpliedEarningsToEquityRatio,
-			netImpliedEarningsPerToken,
-			netImpliedEarningsPerTokenYield,
-
-			netRealized365Earnings,
-			netRealized365EarningsToSupplyRatio,
-			netRealized365EarningsToEquityRatio,
-			netRealized365EarningsPerToken,
-			netRealized365EarningsPerTokenYield,
+			annualNetEarnings,
+			realizedNetEarnings,
 		},
 		update: ({ current }) => ({
 			timestamp,
 			kind,
-			amount: current.amount + amount,
+			amount,
 
 			totalInflow,
 			totalOutflow,
@@ -198,38 +179,91 @@ export async function updateTransactionLog({ context, timestamp, kind, amount }:
 
 			totalSupply,
 			totalEquity,
-			equityToSupplyRatio,
 			totalSavings,
-			savingsToSupplyRatio,
 
 			fpsTotalSupply,
 			fpsPrice,
 
 			totalMintedV1,
 			totalMintedV2,
-			mintedV1ToSupplyRatio,
-			mintedV2ToSupplyRatio,
 
 			currentLeadRate,
 			claimableInterests,
 			projectedInterests,
-			impliedV1Interests,
-			impliedV2Interests,
+			annualV1Interests,
+			annualV2Interests,
 
-			impliedV1AvgBorrowRate,
-			impliedV2AvgBorrowRate,
+			annualV1BorrowRate,
+			annualV2BorrowRate,
 
-			netImpliedEarnings,
-			netImpliedEarningsToSupplyRatio,
-			netImpliedEarningsToEquityRatio,
-			netImpliedEarningsPerToken,
-			netImpliedEarningsPerTokenYield,
+			annualNetEarnings,
+			realizedNetEarnings,
+		}),
+	});
 
-			netRealized365Earnings,
-			netRealized365EarningsToSupplyRatio,
-			netRealized365EarningsToEquityRatio,
-			netRealized365EarningsPerToken,
-			netRealized365EarningsPerTokenYield,
+	const dateObj = new Date(parseInt(timestamp.toString()) * 1000);
+	const timestampDay = dateObj.setUTCHours(0, 0, 0, 0);
+	const dateString = dateObj.toDateString().split(' ').join('-');
+
+	const dailyEntry = await dailyLog.upsert({
+		id: dateString,
+		create: {
+			timestamp: BigInt(timestampDay),
+
+			totalInflow,
+			totalOutflow,
+			totalTradeFee,
+
+			totalSupply,
+			totalEquity,
+			totalSavings,
+
+			fpsTotalSupply,
+			fpsPrice,
+
+			totalMintedV1,
+			totalMintedV2,
+
+			currentLeadRate,
+			claimableInterests,
+			projectedInterests,
+			annualV1Interests,
+			annualV2Interests,
+
+			annualV1BorrowRate,
+			annualV2BorrowRate,
+
+			annualNetEarnings,
+			realizedNetEarnings,
+		},
+		update: ({ current }) => ({
+			timestamp: BigInt(timestampDay),
+
+			totalInflow,
+			totalOutflow,
+			totalTradeFee,
+
+			totalSupply,
+			totalEquity,
+			totalSavings,
+
+			fpsTotalSupply,
+			fpsPrice,
+
+			totalMintedV1,
+			totalMintedV2,
+
+			currentLeadRate,
+			claimableInterests,
+			projectedInterests,
+			annualV1Interests,
+			annualV2Interests,
+
+			annualV1BorrowRate,
+			annualV2BorrowRate,
+
+			annualNetEarnings,
+			realizedNetEarnings,
 		}),
 	});
 }
