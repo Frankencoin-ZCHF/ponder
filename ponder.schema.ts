@@ -41,6 +41,13 @@ export default createSchema((p) => ({
 		vetor: p.string().optional(),
 	}),
 
+	ProfitLoss: p.createTable({
+		id: p.string(),
+		timestamp: p.bigint(),
+		kind: p.string(),
+		amount: p.bigint(),
+	}),
+
 	// -------------------------------------------------------------------------
 	// FPS
 	// -------------------------------------------------------------------------
@@ -370,5 +377,72 @@ export default createSchema((p) => ({
 		id: p.string(),
 		value: p.string(),
 		amount: p.bigint(),
+	}),
+
+	// -------------------------------------------------------------------------
+	// TRANSACTION LOG
+	// -------------------------------------------------------------------------
+	TransactionLog: p.createTable({
+		id: p.string(),
+		timestamp: p.bigint(),
+		kind: p.string(),
+		amount: p.bigint(),
+
+		totalInflow: p.bigint(),
+		totalOutflow: p.bigint(),
+		totalTradeFee: p.bigint(),
+
+		totalSupply: p.bigint(),
+		totalEquity: p.bigint(),
+		totalSavings: p.bigint(),
+
+		fpsTotalSupply: p.bigint(),
+		fpsPrice: p.bigint(), // smart contract price
+
+		totalMintedV1: p.bigint(),
+		totalMintedV2: p.bigint(),
+
+		currentLeadRate: p.bigint(),
+		claimableInterests: p.bigint(),
+		projectedInterests: p.bigint(),
+
+		annualV1Interests: p.bigint(),
+		annualV2Interests: p.bigint(),
+		annualV1BorrowRate: p.bigint(),
+		annualV2BorrowRate: p.bigint(),
+
+		annualNetEarnings: p.bigint(),
+		realizedNetEarnings: p.bigint(),
+	}),
+
+	DailyLog: p.createTable({
+		id: p.string(),
+		timestamp: p.bigint(),
+
+		totalInflow: p.bigint(),
+		totalOutflow: p.bigint(),
+		totalTradeFee: p.bigint(),
+
+		totalSupply: p.bigint(),
+		totalEquity: p.bigint(),
+		totalSavings: p.bigint(),
+
+		fpsTotalSupply: p.bigint(),
+		fpsPrice: p.bigint(), // smart contract price
+
+		totalMintedV1: p.bigint(),
+		totalMintedV2: p.bigint(),
+
+		currentLeadRate: p.bigint(),
+		claimableInterests: p.bigint(),
+		projectedInterests: p.bigint(),
+
+		annualV1Interests: p.bigint(),
+		annualV2Interests: p.bigint(),
+		annualV1BorrowRate: p.bigint(),
+		annualV2BorrowRate: p.bigint(),
+
+		annualNetEarnings: p.bigint(),
+		realizedNetEarnings: p.bigint(),
 	}),
 }));
