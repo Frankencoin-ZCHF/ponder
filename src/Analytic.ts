@@ -58,7 +58,7 @@ export async function updateTransactionLog({ context, timestamp, kind, amount }:
 		functionName: 'price',
 	});
 
-	const savingsSavedMapping = await context.db.SavingsSavedMapping.findMany({ limit: 1000 });
+	const savingsSavedMapping = await context.db.SavingsSavedMapping.findMany({ where: { amount: { gt: 0n } }, limit: 1000 });
 	const savers = savingsSavedMapping.items.map((i) => i.id as Address);
 
 	let claimableInterests: bigint = 0n;
@@ -203,7 +203,7 @@ export async function updateTransactionLog({ context, timestamp, kind, amount }:
 
 	const dateObj = new Date(parseInt(timestamp.toString()) * 1000);
 	const timestampDay = dateObj.setUTCHours(0, 0, 0, 0);
-	const dateString = dateObj.toDateString().split(' ').join('-');
+	const dateString = dateObj.toISOString().split('T').at(0) || dateObj.toISOString();
 
 	const dailyEntry = await dailyLog.upsert({
 		id: dateString,
