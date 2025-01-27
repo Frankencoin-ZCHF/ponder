@@ -10,18 +10,29 @@ ponder.on('PositionV2:MintingUpdate', async ({ event, context }) => {
 	const { collateral, price, minted } = event.args;
 	const positionAddress = event.log.address;
 
-	// position updates
-	const availableForClones = await client.readContract({
-		abi: PositionABI,
-		address: positionAddress,
-		functionName: 'availableForClones',
+	const position = await PositionV2.findUnique({
+		id: positionAddress.toLowerCase(),
 	});
 
-	const availableForMinting = await client.readContract({
-		abi: PositionABI,
-		address: positionAddress,
-		functionName: 'availableForMinting',
-	});
+	if (!position) throw new Error('PositionV2 unknown in MintingUpdate');
+
+	// @dev: https://github.com/Frankencoin-ZCHF/ponder/issues/28
+	// position updates
+	let availableForClones = 0n;
+	let availableForMinting = 0n;
+	if (position.isOriginal) {
+		availableForClones = await client.readContract({
+			abi: PositionABI,
+			address: positionAddress,
+			functionName: 'availableForClones',
+		});
+	} else {
+		availableForMinting = await client.readContract({
+			abi: PositionABI,
+			address: positionAddress,
+			functionName: 'availableForMinting',
+		});
+	}
 
 	const cooldown = await client.readContract({
 		abi: PositionABI,
@@ -34,12 +45,6 @@ ponder.on('PositionV2:MintingUpdate', async ({ event, context }) => {
 		address: Savings.address,
 		functionName: 'currentRatePPM',
 	});
-
-	const position = await PositionV2.findUnique({
-		id: positionAddress.toLowerCase(),
-	});
-
-	if (!position) throw new Error('PositionV2 unknown in MintingUpdate');
 
 	await PositionV2.update({
 		id: positionAddress.toLowerCase(),
