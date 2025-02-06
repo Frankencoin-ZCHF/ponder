@@ -102,11 +102,13 @@ ponder.on('Savings:Saved', async ({ event, context }) => {
 			created: event.block.timestamp,
 			blockheight: event.block.number,
 			updated: event.block.timestamp,
-			amount: balance,
+			interest: latestInterest ? latestInterest.amount : 0n,
+			balance,
 		},
 		update: (c) => ({
 			updated: event.block.timestamp,
-			amount: balance,
+			interest: latestInterest ? latestInterest.amount : 0n,
+			balance,
 		}),
 	});
 
@@ -202,11 +204,13 @@ ponder.on('Savings:InterestCollected', async ({ event, context }) => {
 			created: event.block.timestamp,
 			blockheight: event.block.number,
 			updated: event.block.timestamp,
-			amount: balance,
+			interest: latestInterest ? latestInterest.amount : 0n,
+			balance,
 		},
 		update: (c) => ({
 			updated: event.block.timestamp,
-			amount: balance,
+			interest: latestInterest ? latestInterest.amount : 0n,
+			balance,
 		}),
 	});
 
@@ -302,11 +306,13 @@ ponder.on('Savings:Withdrawn', async ({ event, context }) => {
 			created: event.block.timestamp,
 			blockheight: event.block.number,
 			updated: event.block.timestamp,
-			amount: balance,
+			interest: latestInterest ? latestInterest.amount : 0n,
+			balance,
 		},
 		update: (c) => ({
 			updated: event.block.timestamp,
-			amount: balance,
+			interest: latestInterest ? latestInterest.amount : 0n,
+			balance,
 		}),
 	});
 

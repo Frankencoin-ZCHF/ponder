@@ -203,7 +203,8 @@ export default createSchema((p) => ({
 		created: p.bigint(), // first timestamp
 		blockheight: p.bigint(), // first blockheight
 		updated: p.bigint(),
-		amount: p.bigint(), // balance of account
+		interest: p.bigint(),
+		balance: p.bigint(), // balance of account
 	}),
 
 	SavingsSaved: p.createTable({
