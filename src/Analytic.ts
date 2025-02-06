@@ -8,9 +8,10 @@ interface updateTransactionLogProps {
 	timestamp: bigint;
 	kind: string;
 	amount: bigint;
+	txHash: string;
 }
 
-export async function updateTransactionLog({ context, timestamp, kind, amount }: updateTransactionLogProps) {
+export async function updateTransactionLog({ context, timestamp, kind, amount, txHash }: updateTransactionLogProps) {
 	const txLog = context.db.TransactionLog;
 	const dailyLog = context.db.DailyLog;
 	const eco = context.db.Ecosystem;
@@ -61,7 +62,10 @@ export async function updateTransactionLog({ context, timestamp, kind, amount }:
 		functionName: 'price',
 	});
 
-	const savingsSavedMapping = await context.db.SavingsSavedMapping.findMany({ where: { amount: { gt: 0n } }, limit: 1000 });
+	const savingsSavedMapping = await context.db.SavingsSavedMapping.findMany({
+		where: { amount: { gt: 0n } },
+		limit: 1000,
+	});
 	const savers = savingsSavedMapping.items.map((i) => i.id as Address);
 
 	let claimableInterests: bigint = 0n;
@@ -144,6 +148,7 @@ export async function updateTransactionLog({ context, timestamp, kind, amount }:
 			timestamp,
 			kind,
 			amount,
+			txHash,
 
 			totalInflow,
 			totalOutflow,
@@ -176,6 +181,7 @@ export async function updateTransactionLog({ context, timestamp, kind, amount }:
 			timestamp,
 			kind,
 			amount,
+			txHash,
 
 			totalInflow,
 			totalOutflow,
@@ -214,6 +220,7 @@ export async function updateTransactionLog({ context, timestamp, kind, amount }:
 		id: dateString,
 		create: {
 			timestamp: BigInt(timestampDay),
+			txHash,
 
 			totalInflow,
 			totalOutflow,
@@ -244,6 +251,7 @@ export async function updateTransactionLog({ context, timestamp, kind, amount }:
 		},
 		update: ({ current }) => ({
 			timestamp: BigInt(timestampDay),
+			txHash,
 
 			totalInflow,
 			totalOutflow,

@@ -59,7 +59,13 @@ ponder.on('Equity:Trade', async ({ event, context }) => {
 			}),
 		});
 
-		await updateTransactionLog({ context, timestamp: event.block.timestamp, kind: 'Equity:Invested', amount });
+		await updateTransactionLog({
+			context,
+			timestamp: event.block.timestamp,
+			kind: 'Equity:Invested',
+			amount,
+			txHash: event.transaction.hash,
+		});
 	} else {
 		// cnt
 		await Ecosystem.upsert({
@@ -97,7 +103,13 @@ ponder.on('Equity:Trade', async ({ event, context }) => {
 			}),
 		});
 
-		await updateTransactionLog({ context, timestamp: event.block.timestamp, kind: 'Equity:Redeemed', amount });
+		await updateTransactionLog({
+			context,
+			timestamp: event.block.timestamp,
+			kind: 'Equity:Redeemed',
+			amount,
+			txHash: event.transaction.hash,
+		});
 	}
 
 	await VotingPower.upsert({
