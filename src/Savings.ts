@@ -42,6 +42,7 @@ ponder.on('Savings:RateChanged', async ({ event, context }) => {
 		timestamp: event.block.timestamp,
 		kind: 'Savings:RateChanged',
 		amount: parseEther(newRate.toString()),
+		txHash: event.transaction.hash,
 	});
 });
 
@@ -144,6 +145,7 @@ ponder.on('Savings:Saved', async ({ event, context }) => {
 		timestamp: event.block.timestamp,
 		kind: 'Savings:Saved',
 		amount: event.args.amount,
+		txHash: event.transaction.hash,
 	});
 });
 
@@ -246,6 +248,7 @@ ponder.on('Savings:InterestCollected', async ({ event, context }) => {
 		timestamp: event.block.timestamp,
 		kind: 'Savings:InterestCollected',
 		amount: event.args.interest,
+		txHash: event.transaction.hash,
 	});
 });
 
@@ -348,5 +351,6 @@ ponder.on('Savings:Withdrawn', async ({ event, context }) => {
 		timestamp: event.block.timestamp,
 		kind: 'Savings:Withdrawn',
 		amount: event.args.amount,
+		txHash: event.transaction.hash,
 	});
 });

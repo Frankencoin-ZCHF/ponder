@@ -396,6 +396,7 @@ export default createSchema((p) => ({
 		timestamp: p.bigint(),
 		kind: p.string(),
 		amount: p.bigint(),
+		txHash: p.string(),
 
 		totalInflow: p.bigint(),
 		totalOutflow: p.bigint(),
@@ -431,6 +432,7 @@ export default createSchema((p) => ({
 	DailyLog: p.createTable({
 		id: p.string(),
 		timestamp: p.bigint(),
+		txHash: p.string(),
 
 		totalInflow: p.bigint(),
 		totalOutflow: p.bigint(),

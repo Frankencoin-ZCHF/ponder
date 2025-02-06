@@ -85,6 +85,7 @@ ponder.on('Frankencoin:Profit', async ({ event, context }) => {
 		timestamp: event.block.timestamp,
 		kind: 'Equity:Profit',
 		amount: event.args.amount,
+		txHash: event.transaction.hash,
 	});
 });
 
@@ -169,6 +170,7 @@ ponder.on('Frankencoin:Loss', async ({ event, context }) => {
 		timestamp: event.block.timestamp,
 		kind: 'Equity:Loss',
 		amount: event.args.amount,
+		txHash: event.transaction.hash,
 	});
 });
 
@@ -332,6 +334,7 @@ ponder.on('Frankencoin:Transfer', async ({ event, context }) => {
 			timestamp: event.block.timestamp,
 			kind: 'Frankencoin:Mint',
 			amount: event.args.value,
+			txHash: event.transaction.hash,
 		});
 	}
 
@@ -395,6 +398,7 @@ ponder.on('Frankencoin:Transfer', async ({ event, context }) => {
 			timestamp: event.block.timestamp,
 			kind: 'Frankencoin:Burn',
 			amount: event.args.value,
+			txHash: event.transaction.hash,
 		});
 	}
 });
