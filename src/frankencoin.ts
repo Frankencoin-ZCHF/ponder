@@ -80,7 +80,12 @@ ponder.on('Frankencoin:Profit', async ({ event, context }) => {
 		}),
 	});
 
-	await updateTransactionLog({ context, timestamp: event.block.timestamp, kind: 'Equity:Profit', amount: event.args.amount });
+	await updateTransactionLog({
+		context,
+		timestamp: event.block.timestamp,
+		kind: 'Equity:Profit',
+		amount: event.args.amount,
+	});
 });
 
 ponder.on('Frankencoin:Loss', async ({ event, context }) => {
@@ -159,7 +164,12 @@ ponder.on('Frankencoin:Loss', async ({ event, context }) => {
 		}),
 	});
 
-	await updateTransactionLog({ context, timestamp: event.block.timestamp, kind: 'Equity:Loss', amount: event.args.amount });
+	await updateTransactionLog({
+		context,
+		timestamp: event.block.timestamp,
+		kind: 'Equity:Loss',
+		amount: event.args.amount,
+	});
 });
 
 ponder.on('Frankencoin:MinterApplied', async ({ event, context }) => {
@@ -317,7 +327,12 @@ ponder.on('Frankencoin:Transfer', async ({ event, context }) => {
 			}),
 		});
 
-		await updateTransactionLog({ context, timestamp: event.block.timestamp, kind: 'Frankencoin:Mint', amount: event.args.value });
+		await updateTransactionLog({
+			context,
+			timestamp: event.block.timestamp,
+			kind: 'Frankencoin:Mint',
+			amount: event.args.value,
+		});
 	}
 
 	// emit Transfer(account, address(0), amount);
@@ -375,6 +390,11 @@ ponder.on('Frankencoin:Transfer', async ({ event, context }) => {
 			}),
 		});
 
-		await updateTransactionLog({ context, timestamp: event.block.timestamp, kind: 'Frankencoin:Burn', amount: event.args.value });
+		await updateTransactionLog({
+			context,
+			timestamp: event.block.timestamp,
+			kind: 'Frankencoin:Burn',
+			amount: event.args.value,
+		});
 	}
 });

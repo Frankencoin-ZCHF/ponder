@@ -198,6 +198,14 @@ export default createSchema((p) => ({
 		approvedRate: p.int(),
 	}),
 
+	SavingsBalance: p.createTable({
+		id: p.string(), // address in lower case
+		created: p.bigint(), // first timestamp
+		blockheight: p.bigint(), // first blockheight
+		updated: p.bigint(),
+		amount: p.bigint(), // balance of account
+	}),
+
 	SavingsSaved: p.createTable({
 		id: p.string(),
 		created: p.bigint(),
