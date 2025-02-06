@@ -198,6 +198,14 @@ export default createSchema((p) => ({
 		approvedRate: p.int(),
 	}),
 
+	SavingsBalance: p.createTable({
+		id: p.string(), // address in lower case
+		created: p.bigint(), // first timestamp
+		blockheight: p.bigint(), // first blockheight
+		updated: p.bigint(),
+		amount: p.bigint(), // balance of account
+	}),
+
 	SavingsSaved: p.createTable({
 		id: p.string(),
 		created: p.bigint(),
@@ -413,6 +421,10 @@ export default createSchema((p) => ({
 
 		annualNetEarnings: p.bigint(),
 		realizedNetEarnings: p.bigint(),
+
+		// @dev: E = ∑ (delta_earnings_n / totalSupplyFPS_n, n = 0, ...) = ( d0 / t0 ) + ( d1 / t1 ) ... + ( dn / tn )
+		// if (dn > 0) then 'profit' aka '+' else 'loss' aka '-'
+		earningsPerFPS: p.bigint(),
 	}),
 
 	DailyLog: p.createTable({
@@ -444,5 +456,6 @@ export default createSchema((p) => ({
 
 		annualNetEarnings: p.bigint(),
 		realizedNetEarnings: p.bigint(),
+		earningsPerFPS: p.bigint(),
 	}),
 }));

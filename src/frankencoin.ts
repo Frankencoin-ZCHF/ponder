@@ -1,9 +1,17 @@
 import { ponder } from '@/generated';
-import { Address, zeroAddress } from 'viem';
+import { Address, parseEther, zeroAddress } from 'viem';
 import { updateTransactionLog } from './Analytic';
+import { EquityABI } from '@frankencoin/zchf';
+import { ADDR } from '../ponder.config';
 
 ponder.on('Frankencoin:Profit', async ({ event, context }) => {
 	const { FPS, ActiveUser, Ecosystem, ProfitLoss } = context.db;
+
+	const fpsTotalSupply = await context.client.readContract({
+		abi: EquityABI,
+		address: ADDR.equity,
+		functionName: 'totalSupply',
+	});
 
 	await Ecosystem.upsert({
 		id: 'Equity:ProfitCounter',
@@ -24,6 +32,17 @@ ponder.on('Frankencoin:Profit', async ({ event, context }) => {
 		},
 		update: ({ current }) => ({
 			amount: current.amount + event.args.amount,
+		}),
+	});
+
+	await Ecosystem.upsert({
+		id: 'Equity:EarningsPerFPS',
+		create: {
+			value: '',
+			amount: (event.args.amount * parseEther('1')) / fpsTotalSupply,
+		},
+		update: ({ current }) => ({
+			amount: current.amount + (event.args.amount * parseEther('1')) / fpsTotalSupply,
 		}),
 	});
 
@@ -61,11 +80,22 @@ ponder.on('Frankencoin:Profit', async ({ event, context }) => {
 		}),
 	});
 
-	await updateTransactionLog({ context, timestamp: event.block.timestamp, kind: 'Equity:Profit', amount: event.args.amount });
+	await updateTransactionLog({
+		context,
+		timestamp: event.block.timestamp,
+		kind: 'Equity:Profit',
+		amount: event.args.amount,
+	});
 });
 
 ponder.on('Frankencoin:Loss', async ({ event, context }) => {
 	const { FPS, ActiveUser, Ecosystem, ProfitLoss } = context.db;
+
+	const fpsTotalSupply = await context.client.readContract({
+		abi: EquityABI,
+		address: ADDR.equity,
+		functionName: 'totalSupply',
+	});
 
 	await Ecosystem.upsert({
 		id: 'Equity:LossCounter',
@@ -86,6 +116,17 @@ ponder.on('Frankencoin:Loss', async ({ event, context }) => {
 		},
 		update: ({ current }) => ({
 			amount: current.amount + event.args.amount,
+		}),
+	});
+
+	await Ecosystem.upsert({
+		id: 'Equity:EarningsPerFPS',
+		create: {
+			value: '',
+			amount: -(event.args.amount * parseEther('1')) / fpsTotalSupply,
+		},
+		update: ({ current }) => ({
+			amount: current.amount - (event.args.amount * parseEther('1')) / fpsTotalSupply,
 		}),
 	});
 
@@ -123,7 +164,12 @@ ponder.on('Frankencoin:Loss', async ({ event, context }) => {
 		}),
 	});
 
-	await updateTransactionLog({ context, timestamp: event.block.timestamp, kind: 'Equity:Loss', amount: event.args.amount });
+	await updateTransactionLog({
+		context,
+		timestamp: event.block.timestamp,
+		kind: 'Equity:Loss',
+		amount: event.args.amount,
+	});
 });
 
 ponder.on('Frankencoin:MinterApplied', async ({ event, context }) => {
@@ -281,7 +327,12 @@ ponder.on('Frankencoin:Transfer', async ({ event, context }) => {
 			}),
 		});
 
-		await updateTransactionLog({ context, timestamp: event.block.timestamp, kind: 'Frankencoin:Mint', amount: event.args.value });
+		await updateTransactionLog({
+			context,
+			timestamp: event.block.timestamp,
+			kind: 'Frankencoin:Mint',
+			amount: event.args.value,
+		});
 	}
 
 	// emit Transfer(account, address(0), amount);
@@ -339,6 +390,11 @@ ponder.on('Frankencoin:Transfer', async ({ event, context }) => {
 			}),
 		});
 
-		await updateTransactionLog({ context, timestamp: event.block.timestamp, kind: 'Frankencoin:Burn', amount: event.args.value });
+		await updateTransactionLog({
+			context,
+			timestamp: event.block.timestamp,
+			kind: 'Frankencoin:Burn',
+			amount: event.args.value,
+		});
 	}
 });

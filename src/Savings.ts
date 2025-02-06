@@ -47,7 +47,14 @@ ponder.on('Savings:RateChanged', async ({ event, context }) => {
 
 ponder.on('Savings:Saved', async ({ event, context }) => {
 	const { client } = context;
-	const { SavingsSaved, SavingsSavedMapping, SavingsWithdrawnMapping, SavingsInterestMapping, Ecosystem } = context.db;
+	const {
+		SavingsBalance,
+		SavingsSaved,
+		SavingsSavedMapping,
+		SavingsWithdrawnMapping,
+		SavingsInterestMapping,
+		Ecosystem,
+	} = context.db;
 	const { amount } = event.args;
 	const account: Address = event.args.account.toLowerCase() as Address;
 
@@ -83,8 +90,25 @@ ponder.on('Savings:Saved', async ({ event, context }) => {
 	});
 
 	const balance: bigint = latestSaved
-		? latestSaved.amount - (latestWithdraw ? latestWithdraw.amount : 0n) + (latestInterest ? latestInterest.amount : 0n)
+		? latestSaved.amount -
+		  (latestWithdraw ? latestWithdraw.amount : 0n) +
+		  (latestInterest ? latestInterest.amount : 0n)
 		: 0n;
+
+	// balance indexing
+	await SavingsBalance.upsert({
+		id: account,
+		create: {
+			created: event.block.timestamp,
+			blockheight: event.block.number,
+			updated: event.block.timestamp,
+			amount: balance,
+		},
+		update: (c) => ({
+			updated: event.block.timestamp,
+			amount: balance,
+		}),
+	});
 
 	// flat indexing
 	await SavingsSaved.create({
@@ -113,12 +137,24 @@ ponder.on('Savings:Saved', async ({ event, context }) => {
 		}),
 	});
 
-	await updateTransactionLog({ context, timestamp: event.block.timestamp, kind: 'Savings:Saved', amount: event.args.amount });
+	await updateTransactionLog({
+		context,
+		timestamp: event.block.timestamp,
+		kind: 'Savings:Saved',
+		amount: event.args.amount,
+	});
 });
 
 ponder.on('Savings:InterestCollected', async ({ event, context }) => {
 	const { client } = context;
-	const { SavingsInterest, SavingsSavedMapping, SavingsWithdrawnMapping, SavingsInterestMapping, Ecosystem } = context.db;
+	const {
+		SavingsBalance,
+		SavingsInterest,
+		SavingsSavedMapping,
+		SavingsWithdrawnMapping,
+		SavingsInterestMapping,
+		Ecosystem,
+	} = context.db;
 	const { interest } = event.args;
 	const account: Address = event.args.account.toLowerCase() as Address;
 
@@ -154,8 +190,25 @@ ponder.on('Savings:InterestCollected', async ({ event, context }) => {
 	});
 
 	const balance: bigint = latestSaved
-		? latestSaved.amount - (latestWithdraw ? latestWithdraw.amount : 0n) + (latestInterest ? latestInterest.amount : 0n)
+		? latestSaved.amount -
+		  (latestWithdraw ? latestWithdraw.amount : 0n) +
+		  (latestInterest ? latestInterest.amount : 0n)
 		: 0n;
+
+	// balance indexing
+	await SavingsBalance.upsert({
+		id: account,
+		create: {
+			created: event.block.timestamp,
+			blockheight: event.block.number,
+			updated: event.block.timestamp,
+			amount: balance,
+		},
+		update: (c) => ({
+			updated: event.block.timestamp,
+			amount: balance,
+		}),
+	});
 
 	// flat indexing
 	await SavingsInterest.create({
@@ -194,7 +247,14 @@ ponder.on('Savings:InterestCollected', async ({ event, context }) => {
 
 ponder.on('Savings:Withdrawn', async ({ event, context }) => {
 	const { client } = context;
-	const { SavingsWithdrawn, SavingsSavedMapping, SavingsWithdrawnMapping, SavingsInterestMapping, Ecosystem } = context.db;
+	const {
+		SavingsBalance,
+		SavingsWithdrawn,
+		SavingsSavedMapping,
+		SavingsWithdrawnMapping,
+		SavingsInterestMapping,
+		Ecosystem,
+	} = context.db;
 	const { amount } = event.args;
 	const account: Address = event.args.account.toLowerCase() as Address;
 
@@ -230,8 +290,25 @@ ponder.on('Savings:Withdrawn', async ({ event, context }) => {
 	});
 
 	const balance: bigint = latestSaved
-		? latestSaved.amount - (latestWithdraw ? latestWithdraw.amount : 0n) + (latestInterest ? latestInterest.amount : 0n)
+		? latestSaved.amount -
+		  (latestWithdraw ? latestWithdraw.amount : 0n) +
+		  (latestInterest ? latestInterest.amount : 0n)
 		: 0n;
+
+	// balance indexing
+	await SavingsBalance.upsert({
+		id: account,
+		create: {
+			created: event.block.timestamp,
+			blockheight: event.block.number,
+			updated: event.block.timestamp,
+			amount: balance,
+		},
+		update: (c) => ({
+			updated: event.block.timestamp,
+			amount: balance,
+		}),
+	});
 
 	// flat indexing
 	await SavingsWithdrawn.create({
@@ -260,5 +337,10 @@ ponder.on('Savings:Withdrawn', async ({ event, context }) => {
 		}),
 	});
 
-	await updateTransactionLog({ context, timestamp: event.block.timestamp, kind: 'Savings:Withdrawn', amount: event.args.amount });
+	await updateTransactionLog({
+		context,
+		timestamp: event.block.timestamp,
+		kind: 'Savings:Withdrawn',
+		amount: event.args.amount,
+	});
 });
