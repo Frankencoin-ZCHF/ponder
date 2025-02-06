@@ -26,6 +26,9 @@ export async function updateTransactionLog({ context, timestamp, kind, amount }:
 	const redeemedFeePaid = redeemedFeePaidPPM ? redeemedFeePaidPPM.amount / 1_000_000n : 0n;
 	const totalTradeFee = investedFeePaid + redeemedFeePaid;
 
+	const _earningsPerFPS = await eco.findUnique({ id: `Equity:EarningsPerFPS` });
+	const earningsPerFPS = _earningsPerFPS ? _earningsPerFPS.amount : 0n;
+
 	const _totalSaved = await eco.findUnique({ id: `Savings:TotalSaved` });
 	const totalSaved = _totalSaved ? _totalSaved.amount : 0n;
 	const _totalInterestCollected = await eco.findUnique({ id: `Savings:TotalInterestCollected` });
@@ -167,6 +170,7 @@ export async function updateTransactionLog({ context, timestamp, kind, amount }:
 
 			annualNetEarnings,
 			realizedNetEarnings,
+			earningsPerFPS,
 		},
 		update: ({ current }) => ({
 			timestamp,
@@ -198,6 +202,7 @@ export async function updateTransactionLog({ context, timestamp, kind, amount }:
 
 			annualNetEarnings,
 			realizedNetEarnings,
+			earningsPerFPS,
 		}),
 	});
 
@@ -235,6 +240,7 @@ export async function updateTransactionLog({ context, timestamp, kind, amount }:
 
 			annualNetEarnings,
 			realizedNetEarnings,
+			earningsPerFPS,
 		},
 		update: ({ current }) => ({
 			timestamp: BigInt(timestampDay),
@@ -264,6 +270,7 @@ export async function updateTransactionLog({ context, timestamp, kind, amount }:
 
 			annualNetEarnings,
 			realizedNetEarnings,
+			earningsPerFPS,
 		}),
 	});
 }

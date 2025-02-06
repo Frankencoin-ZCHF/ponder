@@ -413,6 +413,10 @@ export default createSchema((p) => ({
 
 		annualNetEarnings: p.bigint(),
 		realizedNetEarnings: p.bigint(),
+
+		// @dev: E = ∑ (delta_earnings_n / totalSupplyFPS_n, n = 0, ...) = ( d0 / t0 ) + ( d1 / t1 ) ... + ( dn / tn )
+		// if (dn > 0) then 'profit' aka '+' else 'loss' aka '-'
+		earningsPerFPS: p.bigint(),
 	}),
 
 	DailyLog: p.createTable({
@@ -444,5 +448,6 @@ export default createSchema((p) => ({
 
 		annualNetEarnings: p.bigint(),
 		realizedNetEarnings: p.bigint(),
+		earningsPerFPS: p.bigint(),
 	}),
 }));
