@@ -418,6 +418,7 @@ export default createSchema((p) => ({
 	// -------------------------------------------------------------------------
 	TransactionLog: p.createTable({
 		id: p.string(),
+		count: p.bigint(),
 		timestamp: p.bigint(),
 		kind: p.string(),
 		amount: p.bigint(),

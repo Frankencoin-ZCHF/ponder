@@ -157,6 +157,7 @@ export async function updateTransactionLog({ context, timestamp, kind, amount, t
 		id: `${timestamp}-${kind}-${counter.amount}`,
 		data: {
 			timestamp,
+			count: counter.amount,
 			kind,
 			amount,
 			txHash,
