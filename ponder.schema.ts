@@ -51,6 +51,21 @@ export default createSchema((p) => ({
 	// -------------------------------------------------------------------------
 	// FPS
 	// -------------------------------------------------------------------------
+	BalanceMapping: p.createTable({
+		id: p.string(),
+		amount: p.bigint(),
+	}),
+
+	BalanceHistory: p.createTable({
+		id: p.string(),
+		txHash: p.string(),
+		address: p.string(),
+		amount: p.bigint(),
+		kind: p.string(),
+		balance: p.bigint(),
+		created: p.bigint(),
+	}),
+
 	VotingPower: p.createTable({
 		id: p.string(),
 		address: p.string(),
@@ -144,6 +159,11 @@ export default createSchema((p) => ({
 		feeTimeframe: p.int(),
 		feePPM: p.int(),
 		feePaid: p.bigint(),
+	}),
+
+	MintingUpdateMappedCounterV1: p.createTable({
+		id: p.string(),
+		amount: p.bigint(),
 	}),
 
 	ChallengeV1: p.createTable({
@@ -341,6 +361,11 @@ export default createSchema((p) => ({
 		feeTimeframe: p.int(),
 		feePPM: p.int(),
 		feePaid: p.bigint(),
+	}),
+
+	MintingUpdateMappedCounterV2: p.createTable({
+		id: p.string(),
+		amount: p.bigint(),
 	}),
 
 	ChallengeV2: p.createTable({

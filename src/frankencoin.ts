@@ -13,7 +13,7 @@ ponder.on('Frankencoin:Profit', async ({ event, context }) => {
 		functionName: 'totalSupply',
 	});
 
-	await Ecosystem.upsert({
+	const profitCounterRaw = await Ecosystem.upsert({
 		id: 'Equity:ProfitCounter',
 		create: {
 			value: '',
@@ -59,7 +59,7 @@ ponder.on('Frankencoin:Profit', async ({ event, context }) => {
 	});
 
 	await ProfitLoss.upsert({
-		id: `${event.args.reportingMinter}-${event.block.timestamp}-Profit`,
+		id: `${event.args.reportingMinter}-${event.block.timestamp}-Profit-${profitCounterRaw}`,
 		create: {
 			timestamp: event.block.timestamp,
 			kind: 'Profit',
@@ -98,7 +98,7 @@ ponder.on('Frankencoin:Loss', async ({ event, context }) => {
 		functionName: 'totalSupply',
 	});
 
-	await Ecosystem.upsert({
+	const lossCounter = await Ecosystem.upsert({
 		id: 'Equity:LossCounter',
 		create: {
 			value: '',
@@ -144,7 +144,7 @@ ponder.on('Frankencoin:Loss', async ({ event, context }) => {
 	});
 
 	await ProfitLoss.upsert({
-		id: `${event.args.reportingMinter}-${event.block.timestamp}-Loss`,
+		id: `${event.args.reportingMinter}-${event.block.timestamp}-Loss-${lossCounter.amount}`,
 		create: {
 			timestamp: event.block.timestamp,
 			kind: 'Loss',
@@ -276,17 +276,7 @@ ponder.on('Frankencoin:Transfer', async ({ event, context }) => {
 
 	// emit Transfer(address(0), recipient, amount);
 	if (event.args.from === zeroAddress) {
-		await Mint.create({
-			id: `${event.args.to}-mint-${event.block.number}`,
-			data: {
-				to: event.args.to,
-				value: event.args.value,
-				blockheight: event.block.number,
-				timestamp: event.block.timestamp,
-			},
-		});
-
-		await Ecosystem.upsert({
+		const counter = await Ecosystem.upsert({
 			id: 'Frankencoin:MintCounter',
 			create: {
 				value: '',
@@ -295,6 +285,16 @@ ponder.on('Frankencoin:Transfer', async ({ event, context }) => {
 			update: ({ current }) => ({
 				amount: current.amount + 1n,
 			}),
+		});
+
+		await Mint.create({
+			id: `${event.args.to}-${event.block.number}-mint-${counter}`,
+			data: {
+				to: event.args.to,
+				value: event.args.value,
+				blockheight: event.block.number,
+				timestamp: event.block.timestamp,
+			},
 		});
 
 		await Ecosystem.upsert({
@@ -340,17 +340,7 @@ ponder.on('Frankencoin:Transfer', async ({ event, context }) => {
 
 	// emit Transfer(account, address(0), amount);
 	if (event.args.to === zeroAddress) {
-		await Burn.create({
-			id: `${event.args.from}-burn-${event.block.number}`,
-			data: {
-				from: event.args.from,
-				value: event.args.value,
-				blockheight: event.block.number,
-				timestamp: event.block.timestamp,
-			},
-		});
-
-		await Ecosystem.upsert({
+		const counter = await Ecosystem.upsert({
 			id: 'Frankencoin:BurnCounter',
 			create: {
 				value: '',
@@ -359,6 +349,16 @@ ponder.on('Frankencoin:Transfer', async ({ event, context }) => {
 			update: ({ current }) => ({
 				amount: current.amount + 1n,
 			}),
+		});
+
+		await Burn.create({
+			id: `${event.args.from}-${event.block.number}-burn-${counter}`,
+			data: {
+				from: event.args.from,
+				value: event.args.value,
+				blockheight: event.block.number,
+				timestamp: event.block.timestamp,
+			},
 		});
 
 		await Ecosystem.upsert({
