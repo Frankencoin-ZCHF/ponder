@@ -35,14 +35,16 @@ ponder.on('Frankencoin:Profit', async ({ event, context }) => {
 		}),
 	});
 
+	const perFPS = (event.args.amount * parseEther('1')) / fpsTotalSupply;
+
 	await Ecosystem.upsert({
 		id: 'Equity:EarningsPerFPS',
 		create: {
 			value: '',
-			amount: (event.args.amount * parseEther('1')) / fpsTotalSupply,
+			amount: perFPS,
 		},
 		update: ({ current }) => ({
-			amount: current.amount + (event.args.amount * parseEther('1')) / fpsTotalSupply,
+			amount: current.amount + perFPS,
 		}),
 	});
 
@@ -64,9 +66,11 @@ ponder.on('Frankencoin:Profit', async ({ event, context }) => {
 			timestamp: event.block.timestamp,
 			kind: 'Profit',
 			amount: event.args.amount,
+			perFPS,
 		},
 		update: ({ current }) => ({
 			amount: current.amount + event.args.amount,
+			perFPS,
 		}),
 	});
 
@@ -120,14 +124,16 @@ ponder.on('Frankencoin:Loss', async ({ event, context }) => {
 		}),
 	});
 
+	const perFPS = -(event.args.amount * parseEther('1')) / fpsTotalSupply;
+
 	await Ecosystem.upsert({
 		id: 'Equity:EarningsPerFPS',
 		create: {
 			value: '',
-			amount: -(event.args.amount * parseEther('1')) / fpsTotalSupply,
+			amount: perFPS,
 		},
 		update: ({ current }) => ({
-			amount: current.amount - (event.args.amount * parseEther('1')) / fpsTotalSupply,
+			amount: current.amount + perFPS,
 		}),
 	});
 
@@ -149,9 +155,11 @@ ponder.on('Frankencoin:Loss', async ({ event, context }) => {
 			timestamp: event.block.timestamp,
 			kind: 'Loss',
 			amount: event.args.amount,
+			perFPS,
 		},
 		update: ({ current }) => ({
 			amount: current.amount + event.args.amount,
+			perFPS,
 		}),
 	});
 

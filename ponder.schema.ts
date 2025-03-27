@@ -46,6 +46,7 @@ export default createSchema((p) => ({
 		timestamp: p.bigint(),
 		kind: p.string(),
 		amount: p.bigint(),
+		perFPS: p.bigint(),
 	}),
 
 	// -------------------------------------------------------------------------
@@ -58,12 +59,14 @@ export default createSchema((p) => ({
 
 	BalanceHistory: p.createTable({
 		id: p.string(),
-		txHash: p.string(),
-		address: p.string(),
-		amount: p.bigint(),
-		kind: p.string(),
-		balance: p.bigint(),
+		count: p.bigint(),
 		created: p.bigint(),
+		txHash: p.string(),
+		from: p.string(),
+		to: p.string(),
+		amount: p.bigint(),
+		balanceFrom: p.bigint(),
+		balanceTo: p.bigint(),
 	}),
 
 	VotingPower: p.createTable({

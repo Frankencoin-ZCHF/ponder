@@ -161,7 +161,6 @@ ponder.on('Equity:Trade', async ({ event, context }) => {
 ponder.on('Equity:Transfer', async ({ event, context }) => {
 	const { VotingPower, BalanceMapping, BalanceHistory, Ecosystem, ActiveUser } = context.db;
 
-	// counter
 	const counter = await Ecosystem.upsert({
 		id: 'Equity:TransferCount',
 		create: {
@@ -173,6 +172,9 @@ ponder.on('Equity:Transfer', async ({ event, context }) => {
 		}),
 	});
 
+	let balanceFrom = 0n;
+	let balanceTo = 0n;
+
 	// update balance
 	if (event.args.from != zeroAddress) {
 		const balance = await BalanceMapping.update({
@@ -181,18 +183,7 @@ ponder.on('Equity:Transfer', async ({ event, context }) => {
 				amount: current.amount - event.args.value, // deduct balance
 			}),
 		});
-
-		await BalanceHistory.create({
-			id: `${event.args.from}-${event.args.to}-transfer-${counter.amount}-out`,
-			data: {
-				txHash: event.transaction.hash,
-				address: event.args.from,
-				amount: event.args.value,
-				kind: 'Out',
-				balance: balance.amount,
-				created: event.block.timestamp,
-			},
-		});
+		balanceFrom = balance.amount;
 	}
 
 	if (event.args.to != zeroAddress) {
@@ -205,19 +196,22 @@ ponder.on('Equity:Transfer', async ({ event, context }) => {
 				amount: current.amount + event.args.value, // add balance
 			}),
 		});
-
-		await BalanceHistory.create({
-			id: `${event.args.from}-${event.args.to}-transfer-${counter.amount}-in`,
-			data: {
-				txHash: event.transaction.hash,
-				address: event.args.to,
-				amount: event.args.value,
-				kind: 'In',
-				balance: balance.amount,
-				created: event.block.timestamp,
-			},
-		});
+		balanceTo = balance.amount;
 	}
+
+	await BalanceHistory.create({
+		id: `${event.args.from}-${event.args.to}-transfer-${counter.amount}`,
+		data: {
+			count: counter.amount,
+			created: event.block.timestamp,
+			txHash: event.transaction.hash,
+			from: event.args.from.toLowerCase(),
+			to: event.args.to.toLowerCase(),
+			amount: event.args.value,
+			balanceFrom,
+			balanceTo,
+		},
+	});
 
 	// logic guard
 	if (event.args.from == zeroAddress || event.args.to == zeroAddress) return;
