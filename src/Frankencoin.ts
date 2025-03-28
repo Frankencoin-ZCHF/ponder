@@ -13,7 +13,18 @@ ponder.on('Frankencoin:Profit', async ({ event, context }) => {
 		functionName: 'totalSupply',
 	});
 
-	const profitCounterRaw = await Ecosystem.upsert({
+	const counter = await Ecosystem.upsert({
+		id: 'Equity:ProfitLossCounter',
+		create: {
+			value: '',
+			amount: 1n,
+		},
+		update: ({ current }) => ({
+			amount: current.amount + 1n,
+		}),
+	});
+
+	await Ecosystem.upsert({
 		id: 'Equity:ProfitCounter',
 		create: {
 			value: '',
@@ -61,9 +72,10 @@ ponder.on('Frankencoin:Profit', async ({ event, context }) => {
 	});
 
 	await ProfitLoss.upsert({
-		id: `${event.args.reportingMinter}-${event.block.timestamp}-Profit-${profitCounterRaw}`,
+		id: `${event.args.reportingMinter}-${event.block.timestamp}-Profit-${counter.amount}`,
 		create: {
-			timestamp: event.block.timestamp,
+			count: counter.amount,
+			created: event.block.timestamp,
 			kind: 'Profit',
 			amount: event.args.amount,
 			perFPS,
@@ -102,7 +114,18 @@ ponder.on('Frankencoin:Loss', async ({ event, context }) => {
 		functionName: 'totalSupply',
 	});
 
-	const lossCounter = await Ecosystem.upsert({
+	const counter = await Ecosystem.upsert({
+		id: 'Equity:ProfitLossCounter',
+		create: {
+			value: '',
+			amount: 1n,
+		},
+		update: ({ current }) => ({
+			amount: current.amount + 1n,
+		}),
+	});
+
+	await Ecosystem.upsert({
 		id: 'Equity:LossCounter',
 		create: {
 			value: '',
@@ -150,9 +173,10 @@ ponder.on('Frankencoin:Loss', async ({ event, context }) => {
 	});
 
 	await ProfitLoss.upsert({
-		id: `${event.args.reportingMinter}-${event.block.timestamp}-Loss-${lossCounter.amount}`,
+		id: `${event.args.reportingMinter}-${event.block.timestamp}-Loss-${counter.amount}`,
 		create: {
-			timestamp: event.block.timestamp,
+			count: counter.amount,
+			created: event.block.timestamp,
 			kind: 'Loss',
 			amount: event.args.amount,
 			perFPS,
@@ -296,7 +320,7 @@ ponder.on('Frankencoin:Transfer', async ({ event, context }) => {
 		});
 
 		await Mint.create({
-			id: `${event.args.to}-${event.block.number}-mint-${counter}`,
+			id: `${event.args.to}-${event.block.number}-mint-${counter.amount}`,
 			data: {
 				to: event.args.to,
 				value: event.args.value,
@@ -360,7 +384,7 @@ ponder.on('Frankencoin:Transfer', async ({ event, context }) => {
 		});
 
 		await Burn.create({
-			id: `${event.args.from}-${event.block.number}-burn-${counter}`,
+			id: `${event.args.from}-${event.block.number}-burn-${counter.amount}`,
 			data: {
 				from: event.args.from,
 				value: event.args.value,

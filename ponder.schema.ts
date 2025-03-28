@@ -43,7 +43,8 @@ export default createSchema((p) => ({
 
 	ProfitLoss: p.createTable({
 		id: p.string(),
-		timestamp: p.bigint(),
+		count: p.bigint(),
+		created: p.bigint(),
 		kind: p.string(),
 		amount: p.bigint(),
 		perFPS: p.bigint(),
