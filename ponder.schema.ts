@@ -143,6 +143,7 @@ export default createSchema((p) => ({
 
 	MintingUpdateV1: p.createTable({
 		id: p.string(),
+		count: p.bigint(),
 		txHash: p.string(),
 		created: p.bigint(),
 		position: p.string(),
@@ -343,6 +344,7 @@ export default createSchema((p) => ({
 
 	MintingUpdateV2: p.createTable({
 		id: p.string(),
+		count: p.bigint(),
 		txHash: p.string(),
 		created: p.bigint(),
 		position: p.string(),

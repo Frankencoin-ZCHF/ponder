@@ -183,12 +183,13 @@ ponder.on('PositionV1:MintingUpdate', async ({ event, context }) => {
 		await MintingUpdateV1.create({
 			id: idMinting(1),
 			data: {
+				count: 1n,
 				txHash: event.transaction.hash,
 				created: event.block.timestamp,
-				position: missingPositionData.position,
-				owner: missingPositionData.owner,
+				position: missingPositionData.position.toLowerCase(),
+				owner: missingPositionData.owner.toLowerCase(),
 				isClone: missingPositionData.original.toLowerCase() != missingPositionData.position.toLowerCase(),
-				collateral: missingPositionData.collateral,
+				collateral: missingPositionData.collateral.toLowerCase(),
 				collateralName: missingPositionData.collateralName,
 				collateralSymbol: missingPositionData.collateralSymbol,
 				collateralDecimals: missingPositionData.collateralDecimals,
@@ -218,12 +219,13 @@ ponder.on('PositionV1:MintingUpdate', async ({ event, context }) => {
 		await MintingUpdateV1.create({
 			id: idMinting(mintingCounter),
 			data: {
+				count: mintingCounter,
 				txHash: event.transaction.hash,
 				created: event.block.timestamp,
-				position: missingPositionData.position,
-				owner: missingPositionData.owner,
+				position: missingPositionData.position.toLowerCase(),
+				owner: missingPositionData.owner.toLowerCase(),
 				isClone: missingPositionData.original.toLowerCase() != missingPositionData.position.toLowerCase(),
-				collateral: missingPositionData.collateral,
+				collateral: missingPositionData.collateral.toLowerCase(),
 				collateralName: missingPositionData.collateralName,
 				collateralSymbol: missingPositionData.collateralSymbol,
 				collateralDecimals: missingPositionData.collateralDecimals,
