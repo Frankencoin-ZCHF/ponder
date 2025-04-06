@@ -3,7 +3,7 @@ import { PositionV2ABI as PositionABI } from '@frankencoin/zchf';
 
 ponder.on('PositionV2:MintingUpdate', async ({ event, context }) => {
 	const { client } = context;
-	const { PositionV2, MintingUpdateV2, Ecosystem, ActiveUser } = context.db;
+	const { PositionV2, MintingUpdateV2, MintingUpdateMappedCounterV2, ActiveUser } = context.db;
 	const { Savings } = context.contracts;
 
 	// event MintingUpdateV2(uint256 collateral, uint256 price, uint256 minted);
@@ -60,11 +60,9 @@ ponder.on('PositionV2:MintingUpdate', async ({ event, context }) => {
 	});
 
 	// minting updates
-	const idEco = `PositionMintingUpdates:${positionAddress.toLowerCase()}`;
-	await Ecosystem.upsert({
-		id: idEco,
+	const mintingCounterRaw = await MintingUpdateMappedCounterV2.upsert({
+		id: positionAddress.toLowerCase(),
 		create: {
-			value: '',
 			amount: 1n,
 		},
 		update: ({ current }) => ({
@@ -72,11 +70,7 @@ ponder.on('PositionV2:MintingUpdate', async ({ event, context }) => {
 		}),
 	});
 
-	const mintingCounter = (
-		await Ecosystem.findUnique({
-			id: idEco,
-		})
-	)?.amount;
+	const mintingCounter = mintingCounterRaw.amount;
 	if (mintingCounter === undefined) throw new Error('MintingCounter not found.');
 
 	const idMinting = function (cnt: number | bigint) {
@@ -87,7 +81,9 @@ ponder.on('PositionV2:MintingUpdate', async ({ event, context }) => {
 
 	const getFeeTimeframe = function (): number {
 		const OneMonth = 60 * 60 * 24 * 30;
-		const secToExp = Math.floor(parseInt(position.expiration.toString()) - parseInt(event.block.timestamp.toString()));
+		const secToExp = Math.floor(
+			parseInt(position.expiration.toString()) - parseInt(event.block.timestamp.toString())
+		);
 		return Math.max(OneMonth, secToExp);
 	};
 
@@ -105,12 +101,13 @@ ponder.on('PositionV2:MintingUpdate', async ({ event, context }) => {
 		await MintingUpdateV2.create({
 			id: idMinting(1),
 			data: {
+				count: 1n,
 				txHash: event.transaction.hash,
 				created: event.block.timestamp,
-				position: position.position,
-				owner: position.owner,
+				position: position.position.toLowerCase(),
+				owner: position.owner.toLowerCase(),
 				isClone: position.original.toLowerCase() != position.position.toLowerCase(),
-				collateral: position.collateral,
+				collateral: position.collateral.toLowerCase(),
 				collateralName: position.collateralName,
 				collateralSymbol: position.collateralSymbol,
 				collateralDecimals: position.collateralDecimals,
@@ -143,12 +140,13 @@ ponder.on('PositionV2:MintingUpdate', async ({ event, context }) => {
 		await MintingUpdateV2.create({
 			id: idMinting(mintingCounter),
 			data: {
+				count: mintingCounter,
 				txHash: event.transaction.hash,
 				created: event.block.timestamp,
-				position: position.position,
-				owner: position.owner,
+				position: position.position.toLowerCase(),
+				owner: position.owner.toLowerCase(),
 				isClone: position.original.toLowerCase() != position.position.toLowerCase(),
-				collateral: position.collateral,
+				collateral: position.collateral.toLowerCase(),
 				collateralName: position.collateralName,
 				collateralSymbol: position.collateralSymbol,
 				collateralDecimals: position.collateralDecimals,
@@ -182,7 +180,7 @@ ponder.on('PositionV2:MintingUpdate', async ({ event, context }) => {
 });
 
 ponder.on('PositionV2:PositionDenied', async ({ event, context }) => {
-	const { PositionV2, ActiveUser, Ecosystem } = context.db;
+	const { PositionV2, ActiveUser } = context.db;
 	const { client } = context;
 
 	const position = await PositionV2.findUnique({

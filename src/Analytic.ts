@@ -142,10 +142,22 @@ export async function updateTransactionLog({ context, timestamp, kind, amount, t
 		realizedNetEarnings = inflowAdjusted - outflowAdjusted;
 	}
 
-	const entry = await txLog.upsert({
-		id: `${timestamp}-${kind}`,
+	const counter = await eco.upsert({
+		id: 'Analytics:TransactionLogCounter',
 		create: {
+			value: '',
+			amount: 1n,
+		},
+		update: ({ current }) => ({
+			amount: current.amount + 1n,
+		}),
+	});
+
+	const entry = await txLog.create({
+		id: `${timestamp}-${kind}-${counter.amount}`,
+		data: {
 			timestamp,
+			count: counter.amount,
 			kind,
 			amount,
 			txHash,
@@ -177,39 +189,6 @@ export async function updateTransactionLog({ context, timestamp, kind, amount, t
 			realizedNetEarnings,
 			earningsPerFPS,
 		},
-		update: ({ current }) => ({
-			timestamp,
-			kind,
-			amount,
-			txHash,
-
-			totalInflow,
-			totalOutflow,
-			totalTradeFee,
-
-			totalSupply,
-			totalEquity,
-			totalSavings,
-
-			fpsTotalSupply,
-			fpsPrice,
-
-			totalMintedV1,
-			totalMintedV2,
-
-			currentLeadRate,
-			claimableInterests,
-			projectedInterests,
-			annualV1Interests,
-			annualV2Interests,
-
-			annualV1BorrowRate,
-			annualV2BorrowRate,
-
-			annualNetEarnings,
-			realizedNetEarnings,
-			earningsPerFPS,
-		}),
 	});
 
 	const dateObj = new Date(parseInt(timestamp.toString()) * 1000);

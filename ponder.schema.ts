@@ -43,14 +43,33 @@ export default createSchema((p) => ({
 
 	ProfitLoss: p.createTable({
 		id: p.string(),
-		timestamp: p.bigint(),
+		count: p.bigint(),
+		created: p.bigint(),
 		kind: p.string(),
 		amount: p.bigint(),
+		perFPS: p.bigint(),
 	}),
 
 	// -------------------------------------------------------------------------
 	// FPS
 	// -------------------------------------------------------------------------
+	BalanceMapping: p.createTable({
+		id: p.string(),
+		amount: p.bigint(),
+	}),
+
+	BalanceHistory: p.createTable({
+		id: p.string(),
+		count: p.bigint(),
+		created: p.bigint(),
+		txHash: p.string(),
+		from: p.string(),
+		to: p.string(),
+		amount: p.bigint(),
+		balanceFrom: p.bigint(),
+		balanceTo: p.bigint(),
+	}),
+
 	VotingPower: p.createTable({
 		id: p.string(),
 		address: p.string(),
@@ -124,6 +143,7 @@ export default createSchema((p) => ({
 
 	MintingUpdateV1: p.createTable({
 		id: p.string(),
+		count: p.bigint(),
 		txHash: p.string(),
 		created: p.bigint(),
 		position: p.string(),
@@ -144,6 +164,11 @@ export default createSchema((p) => ({
 		feeTimeframe: p.int(),
 		feePPM: p.int(),
 		feePaid: p.bigint(),
+	}),
+
+	MintingUpdateMappedCounterV1: p.createTable({
+		id: p.string(),
+		amount: p.bigint(),
 	}),
 
 	ChallengeV1: p.createTable({
@@ -319,6 +344,7 @@ export default createSchema((p) => ({
 
 	MintingUpdateV2: p.createTable({
 		id: p.string(),
+		count: p.bigint(),
 		txHash: p.string(),
 		created: p.bigint(),
 		position: p.string(),
@@ -341,6 +367,11 @@ export default createSchema((p) => ({
 		feeTimeframe: p.int(),
 		feePPM: p.int(),
 		feePaid: p.bigint(),
+	}),
+
+	MintingUpdateMappedCounterV2: p.createTable({
+		id: p.string(),
+		amount: p.bigint(),
 	}),
 
 	ChallengeV2: p.createTable({
@@ -393,6 +424,7 @@ export default createSchema((p) => ({
 	// -------------------------------------------------------------------------
 	TransactionLog: p.createTable({
 		id: p.string(),
+		count: p.bigint(),
 		timestamp: p.bigint(),
 		kind: p.string(),
 		amount: p.bigint(),

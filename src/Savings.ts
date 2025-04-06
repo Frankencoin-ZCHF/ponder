@@ -5,12 +5,23 @@ import { Address, parseEther } from 'viem';
 import { updateTransactionLog } from './Analytic';
 
 ponder.on('Savings:RateProposed', async ({ event, context }) => {
-	const { SavingsRateProposed } = context.db;
+	const { SavingsRateProposed, Ecosystem } = context.db;
 	const { who, nextChange, nextRate } = event.args;
+
+	const counter = await Ecosystem.upsert({
+		id: 'Savings:RateProposedCounter',
+		create: {
+			value: '',
+			amount: 1n,
+		},
+		update: ({ current }) => ({
+			amount: current.amount + 1n,
+		}),
+	});
 
 	// flat indexing
 	await SavingsRateProposed.create({
-		id: `${who.toLowerCase()}-${event.block.number}`,
+		id: `${who.toLowerCase()}-${event.block.number}-${counter.amount}`,
 		data: {
 			created: event.block.timestamp,
 			blockheight: event.block.number,
@@ -23,12 +34,23 @@ ponder.on('Savings:RateProposed', async ({ event, context }) => {
 });
 
 ponder.on('Savings:RateChanged', async ({ event, context }) => {
-	const { SavingsRateChanged } = context.db;
+	const { SavingsRateChanged, Ecosystem } = context.db;
 	const { newRate } = event.args;
+
+	const counter = await Ecosystem.upsert({
+		id: 'Savings:RateChangedCounter',
+		create: {
+			value: '',
+			amount: 1n,
+		},
+		update: ({ current }) => ({
+			amount: current.amount + 1n,
+		}),
+	});
 
 	// flat indexing
 	await SavingsRateChanged.create({
-		id: event.block.number.toString(),
+		id: `${event.block.number}-${counter.amount}`,
 		data: {
 			created: event.block.timestamp,
 			blockheight: event.block.number,
@@ -63,6 +85,29 @@ ponder.on('Savings:Saved', async ({ event, context }) => {
 		abi: SavingsABI,
 		address: ADDR.savings,
 		functionName: 'currentRatePPM',
+	});
+
+	// ecosystem
+	const counter = await Ecosystem.upsert({
+		id: 'Savings:SavedCounter',
+		create: {
+			value: '',
+			amount: 1n,
+		},
+		update: ({ current }) => ({
+			amount: current.amount + 1n,
+		}),
+	});
+
+	await Ecosystem.upsert({
+		id: `Savings:TotalSaved`,
+		create: {
+			value: '',
+			amount: amount,
+		},
+		update: ({ current }) => ({
+			amount: current.amount + amount,
+		}),
 	});
 
 	// map indexing
@@ -115,7 +160,7 @@ ponder.on('Savings:Saved', async ({ event, context }) => {
 
 	// flat indexing
 	await SavingsSaved.create({
-		id: `${account}-${event.block.number.toString()}`,
+		id: `${account}-${event.block.number.toString()}-${counter.amount}`,
 		data: {
 			created: event.block.timestamp,
 			blockheight: event.block.number,
@@ -126,18 +171,6 @@ ponder.on('Savings:Saved', async ({ event, context }) => {
 			total: latestSaved ? latestSaved.amount : amount,
 			balance,
 		},
-	});
-
-	// ecosystem
-	await Ecosystem.upsert({
-		id: `Savings:TotalSaved`,
-		create: {
-			value: '',
-			amount: amount,
-		},
-		update: ({ current }) => ({
-			amount: current.amount + amount,
-		}),
 	});
 
 	await updateTransactionLog({
@@ -166,6 +199,29 @@ ponder.on('Savings:InterestCollected', async ({ event, context }) => {
 		abi: SavingsABI,
 		address: ADDR.savings,
 		functionName: 'currentRatePPM',
+	});
+
+	// ecosystem
+	const counter = await Ecosystem.upsert({
+		id: 'Savings:InterestCollectedCounter',
+		create: {
+			value: '',
+			amount: 1n,
+		},
+		update: ({ current }) => ({
+			amount: current.amount + 1n,
+		}),
+	});
+
+	await Ecosystem.upsert({
+		id: `Savings:TotalInterestCollected`,
+		create: {
+			value: '',
+			amount: interest,
+		},
+		update: ({ current }) => ({
+			amount: current.amount + interest,
+		}),
 	});
 
 	// map indexing
@@ -218,7 +274,7 @@ ponder.on('Savings:InterestCollected', async ({ event, context }) => {
 
 	// flat indexing
 	await SavingsInterest.create({
-		id: `${account}-${event.block.number.toString()}`,
+		id: `${account}-${event.block.number.toString()}-${counter.amount}`,
 		data: {
 			created: event.block.timestamp,
 			blockheight: event.block.number,
@@ -229,18 +285,6 @@ ponder.on('Savings:InterestCollected', async ({ event, context }) => {
 			total: latestInterest ? latestInterest.amount : interest,
 			balance,
 		},
-	});
-
-	// ecosystem
-	await Ecosystem.upsert({
-		id: `Savings:TotalInterestCollected`,
-		create: {
-			value: '',
-			amount: interest,
-		},
-		update: ({ current }) => ({
-			amount: current.amount + interest,
-		}),
 	});
 
 	await updateTransactionLog({
@@ -269,6 +313,29 @@ ponder.on('Savings:Withdrawn', async ({ event, context }) => {
 		abi: SavingsABI,
 		address: ADDR.savings,
 		functionName: 'currentRatePPM',
+	});
+
+	// ecosystem
+	const counter = await Ecosystem.upsert({
+		id: 'Savings:WithdrawnCounter',
+		create: {
+			value: '',
+			amount: 1n,
+		},
+		update: ({ current }) => ({
+			amount: current.amount + 1n,
+		}),
+	});
+
+	await Ecosystem.upsert({
+		id: `Savings:TotalWithdrawn`,
+		create: {
+			value: '',
+			amount: amount,
+		},
+		update: ({ current }) => ({
+			amount: current.amount + amount,
+		}),
 	});
 
 	// map indexing
@@ -321,7 +388,7 @@ ponder.on('Savings:Withdrawn', async ({ event, context }) => {
 
 	// flat indexing
 	await SavingsWithdrawn.create({
-		id: `${account}-${event.block.number.toString()}`,
+		id: `${account}-${event.block.number.toString()}-${counter.amount}`,
 		data: {
 			created: event.block.timestamp,
 			blockheight: event.block.number,
@@ -332,18 +399,6 @@ ponder.on('Savings:Withdrawn', async ({ event, context }) => {
 			total: latestWithdraw ? latestWithdraw.amount : amount,
 			balance,
 		},
-	});
-
-	// ecosystem
-	await Ecosystem.upsert({
-		id: `Savings:TotalWithdrawn`,
-		create: {
-			value: '',
-			amount: amount,
-		},
-		update: ({ current }) => ({
-			amount: current.amount + amount,
-		}),
 	});
 
 	await updateTransactionLog({

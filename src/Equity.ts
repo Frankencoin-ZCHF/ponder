@@ -10,21 +10,10 @@ ponder.on('Equity:Trade', async ({ event, context }) => {
 	const price: bigint = event.args.newprice;
 	const time: bigint = event.block.timestamp;
 
-	await Trade.create({
-		id: event.args.who + '_' + time.toString(),
-		data: {
-			trader,
-			amount,
-			shares,
-			price,
-			time,
-		},
-	});
-
 	// invested or redeemed
 	if (shares > 0n) {
 		// cnt
-		await Ecosystem.upsert({
+		const counter = await Ecosystem.upsert({
 			id: 'Equity:InvestedCounter',
 			create: {
 				value: '',
@@ -59,6 +48,18 @@ ponder.on('Equity:Trade', async ({ event, context }) => {
 			}),
 		});
 
+		// update trades, unique key
+		await Trade.create({
+			id: `${event.args.who}-${time.toString()}-Invested-${counter.amount}`,
+			data: {
+				trader,
+				amount,
+				shares,
+				price,
+				time,
+			},
+		});
+
 		await updateTransactionLog({
 			context,
 			timestamp: event.block.timestamp,
@@ -68,7 +69,7 @@ ponder.on('Equity:Trade', async ({ event, context }) => {
 		});
 	} else {
 		// cnt
-		await Ecosystem.upsert({
+		const counter = await Ecosystem.upsert({
 			id: 'Equity:RedeemedCounter',
 			create: {
 				value: '',
@@ -101,6 +102,18 @@ ponder.on('Equity:Trade', async ({ event, context }) => {
 			update: ({ current }) => ({
 				amount: current.amount + amount * 3000n,
 			}),
+		});
+
+		// update trades, unique key
+		await Trade.create({
+			id: `${event.args.who}-${time.toString()}-Redeemed-${counter.amount}`,
+			data: {
+				trader,
+				amount,
+				shares,
+				price,
+				time,
+			},
 		});
 
 		await updateTransactionLog({
@@ -146,8 +159,61 @@ ponder.on('Equity:Trade', async ({ event, context }) => {
 });
 
 ponder.on('Equity:Transfer', async ({ event, context }) => {
-	const { VotingPower, ActiveUser } = context.db;
+	const { VotingPower, BalanceMapping, BalanceHistory, Ecosystem, ActiveUser } = context.db;
 
+	const counter = await Ecosystem.upsert({
+		id: 'Equity:TransferCount',
+		create: {
+			value: '',
+			amount: 1n,
+		},
+		update: ({ current }) => ({
+			amount: current.amount + 1n,
+		}),
+	});
+
+	let balanceFrom = 0n;
+	let balanceTo = 0n;
+
+	// update balance
+	if (event.args.from != zeroAddress) {
+		const balance = await BalanceMapping.update({
+			id: event.args.from.toLowerCase(),
+			data: ({ current }) => ({
+				amount: current.amount - event.args.value, // deduct balance
+			}),
+		});
+		balanceFrom = balance.amount;
+	}
+
+	if (event.args.to != zeroAddress) {
+		const balance = await BalanceMapping.upsert({
+			id: event.args.to.toLowerCase(),
+			create: {
+				amount: event.args.value, // add balance
+			},
+			update: ({ current }) => ({
+				amount: current.amount + event.args.value, // add balance
+			}),
+		});
+		balanceTo = balance.amount;
+	}
+
+	await BalanceHistory.create({
+		id: `${event.args.from}-${event.args.to}-transfer-${counter.amount}`,
+		data: {
+			count: counter.amount,
+			created: event.block.timestamp,
+			txHash: event.transaction.hash,
+			from: event.args.from.toLowerCase(),
+			to: event.args.to.toLowerCase(),
+			amount: event.args.value,
+			balanceFrom,
+			balanceTo,
+		},
+	});
+
+	// logic guard
 	if (event.args.from == zeroAddress || event.args.to == zeroAddress) return;
 
 	await VotingPower.update({
