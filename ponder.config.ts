@@ -14,7 +14,7 @@ import {
 	ReferenceTransferABI,
 } from '@frankencoin/zchf';
 
-// mainnet (default) or polygon
+// mainnet (default) or polygon (test) environment
 export const chain = (process.env.PONDER_PROFILE as string) == 'polygon' ? polygon : mainnet;
 export const Id = chain.id!;
 export const ADDR = ADDRESS[chain.id]!;
@@ -63,20 +63,18 @@ export default createConfig({
 	},
 	contracts: {
 		Frankencoin: {
-			// Native
+			// Core
 			network: chain.name,
 			abi: FrankencoinABI,
 			address: ADDR.frankenCoin as Address,
 			startBlock: config.startFrankencoin,
-			maxBlockRange: config.blockrange,
 		},
 		Equity: {
-			// Native
+			// Core
 			network: chain.name,
 			abi: EquityABI,
 			address: ADDR.equity as Address,
 			startBlock: config.startFrankencoin,
-			maxBlockRange: config.blockrange,
 		},
 		MintingHubV1: {
 			// V1
@@ -84,7 +82,6 @@ export default createConfig({
 			abi: MintingHubV1ABI,
 			address: ADDR.mintingHubV1 as Address,
 			startBlock: config.startMintingHubV1,
-			maxBlockRange: config.blockrange,
 		},
 		PositionV1: {
 			// V1
@@ -96,7 +93,6 @@ export default createConfig({
 				parameter: 'position',
 			},
 			startBlock: config.startMintingHubV1,
-			maxBlockRange: config.blockrange,
 		},
 		MintingHubV2: {
 			// V2
@@ -104,7 +100,6 @@ export default createConfig({
 			abi: MintingHubV2ABI,
 			address: ADDR.mintingHubV2 as Address,
 			startBlock: config.startMintingHubV2,
-			maxBlockRange: config.blockrange,
 		},
 		PositionV2: {
 			// V2
@@ -116,7 +111,6 @@ export default createConfig({
 				parameter: 'position',
 			},
 			startBlock: config.startMintingHubV2,
-			maxBlockRange: config.blockrange,
 		},
 		Savings: {
 			// V2
