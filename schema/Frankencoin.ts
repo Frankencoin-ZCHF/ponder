@@ -16,7 +16,7 @@ export const FrankencoinBurn = onchainTable('Burn', (t) => ({
 	timestamp: t.bigint().notNull(),
 }));
 
-export const FrankencoinMintBurnMapping = onchainTable('MintBurnAddressMapper', (t) => ({
+export const FrankencoinMintBurnMapping = onchainTable('MintBurnMapping', (t) => ({
 	id: t.hex().primaryKey(),
 	mint: t.bigint().notNull(),
 	burn: t.bigint().notNull(),
