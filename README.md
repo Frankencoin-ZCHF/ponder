@@ -3,7 +3,7 @@
 ## Deployment of service
 
 -   Main branch should auto. deploy to: **ponder.frankencoin.com**
--   test Deployment deploy to: **ponder.test.frankencoin.com**
+-   Test Deployment deploy to: **ponder.test.frankencoin.com**
 
 ## Ponder needs .env.local
 
@@ -27,24 +27,31 @@ DATABASE_URL=
 You can adjust the default chain and chain specific parameters in "ponder.config.ts".
 
 ```
-// (add custom chain in ./ponder.address.ts)
-// mainnet (default), ethereum3, polygon
-const chain =
-	(process.env.PONDER_PROFILE as string) == 'polygon'
-		? polygon
-		: (process.env.PONDER_PROFILE as string) == 'ethereum3'
-		? ethereum3
-		: mainnet;
+// mainnet (default) or polygon
+export const chain = (process.env.PONDER_PROFILE as string) == 'polygon' ? polygon : mainnet;
+export const Id = chain.id!;
+export const ADDR = ADDRESS[chain.id]!;
 
-const CONFIG = {
+export const CONFIG = {
 	[mainnet.id]: {
 		rpc: process.env.RPC_URL_MAINNET ?? mainnet.rpcUrls.default.http[0],
-		startBlockA: 18451518,
-		startBlockB: 18451536,
+		startFrankencoin: 18451518,
+		startMintingHubV1: 18451536,
+		startMintingHubV2: 18451536,
 		blockrange: undefined,
-		maxRequestsPerSecond: undefined,
-		pollingInterval: undefined,
+		maxRequestsPerSecond: 5,
+		pollingInterval: 5_000,
 	},
+	[polygon.id]: {
+		rpc: process.env.RPC_URL_POLYGON ?? polygon.rpcUrls.default.http[0],
+		startFrankencoin: 63633900,
+		startMintingHubV1: 63633900,
+		startMintingHubV2: 63633900,
+		blockrange: undefined,
+		maxRequestsPerSecond: 5,
+		pollingInterval: 5_000,
+	},
+};
 
 	...
 }
