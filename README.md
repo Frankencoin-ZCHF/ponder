@@ -12,7 +12,7 @@ For SQLite, REMOVE THE DATABASE_URL LINE.
 
 ```
 # Select Profile/Chain
-PONDER_PROFILE=polygon
+PONDER_PROFILE=mainnet
 
 # Mainnet RPC URL used for fetching blockchain data. Alchemy is recommended.
 PONDER_RPC_URL_MAINNET=https://eth-mainnet.g.alchemy.com/v2/...
@@ -45,6 +45,9 @@ const CONFIG = {
 		maxRequestsPerSecond: undefined,
 		pollingInterval: undefined,
 	},
+
+	...
+}
 ```
 
 ## Add / Adjust custom chain(s)
@@ -59,10 +62,10 @@ export const ethereum3 = {
 	name: 'Ethereum3',
 	nativeCurrency: { name: 'Ethereum3', symbol: 'ETH3', decimals: 18 },
 	rpcUrls: {
-		default: { http: ['https://ethereum3.3dotshub.com'] },
+		default: { http: ['https://ethereum3.domain.com'] },
 	},
 	blockExplorers: {
-		default: { name: 'Blockscout', url: 'https://blockscout3.3dotshub.com' },
+		default: { name: 'Blockscout', url: 'https://blockscout3.domain.com' },
 	},
 } as const satisfies Chain;
 ```
