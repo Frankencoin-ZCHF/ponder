@@ -11,6 +11,7 @@ import {
 	PositionV1ABI,
 	PositionV2ABI,
 	SavingsABI,
+	ReferenceTransferABI,
 } from '@frankencoin/zchf';
 
 // mainnet (default) or polygon
@@ -126,6 +127,13 @@ export default createConfig({
 			network: chain.name,
 			abi: PositionRollerABI,
 			address: ADDR.roller as Address,
+			startBlock: config.startMintingHubV2,
+			maxBlockRange: config.blockrange,
+		},
+		ReferenceTransfer: {
+			network: chain.name,
+			abi: ReferenceTransferABI,
+			address: ADDR.referenceTransfer as Address,
 			startBlock: config.startMintingHubV2,
 			maxBlockRange: config.blockrange,
 		},

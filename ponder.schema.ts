@@ -50,6 +50,18 @@ export default createSchema((p) => ({
 		perFPS: p.bigint(),
 	}),
 
+	ReferenceTransfer: p.createTable({
+		id: p.string(),
+		count: p.bigint(),
+		created: p.bigint(),
+		txHash: p.string(),
+		from: p.string(),
+		to: p.string(),
+		amount: p.bigint(),
+		ref: p.string(),
+		autoSaved: p.boolean(),
+	}),
+
 	// -------------------------------------------------------------------------
 	// FPS
 	// -------------------------------------------------------------------------

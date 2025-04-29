@@ -254,10 +254,10 @@
   resolved "https://registry.yarnpkg.com/@eslint/object-schema/-/object-schema-2.1.3.tgz#e65ae80ee2927b4fd8c5c26b15ecacc2b2a6cc2a"
   integrity sha512-HAbhAYKfsAC2EkTqve00ibWIZlaU74Z1EHwAjYr4PXF0YU2VEA1zSIKSSpKszRLRWwHzzRZXvK632u+uXzvsvw==
 
-"@frankencoin/zchf@^0.2.17":
-  version "0.2.17"
-  resolved "https://registry.yarnpkg.com/@frankencoin/zchf/-/zchf-0.2.17.tgz#cf5ade64138cef86bc0272993581b77d73bcd2fd"
-  integrity sha512-l+qy9/G9kOwzQ9WsuU64WqW1MfTTtWFzOUvOVGsW+tZxlDivbcKtiIbn86y/hDgyBwOtVByRKn1x/FjB/IqCLQ==
+"@frankencoin/zchf@^0.2.34":
+  version "0.2.34"
+  resolved "https://registry.yarnpkg.com/@frankencoin/zchf/-/zchf-0.2.34.tgz#7d3e0f241b512cb7ec89c8f4e8566b5b2f4b7855"
+  integrity sha512-uTC5A9SrT3dmlU6w0YkGbGYDUEefD6ap25BCP/yhDVPBVbFmpzufj0VjEexoGqGMgfzQ4CSFbIz4euEGNbqcvg==
   dependencies:
     ts-node "^10.9.1"
     typescript "^5.2.2"
