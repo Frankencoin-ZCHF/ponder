@@ -25,6 +25,8 @@ export const CONFIG = {
 		startFrankencoin: 18451518,
 		startMintingHubV1: 18451536,
 		startMintingHubV2: 18451536,
+		startReferenceTransfer: 18451536, // FIXME: update block height
+		startSavingsDetached: 71253238, // FIXME: same
 		blockrange: undefined,
 		maxRequestsPerSecond: 5,
 		pollingInterval: 5_000,
@@ -34,6 +36,8 @@ export const CONFIG = {
 		startFrankencoin: 63633900,
 		startMintingHubV1: 63633900,
 		startMintingHubV2: 63633900,
+		startReferenceTransfer: 71252586,
+		startSavingsDetached: 71253238,
 		blockrange: undefined,
 		maxRequestsPerSecond: 5,
 		pollingInterval: 5_000,
@@ -134,7 +138,14 @@ export default createConfig({
 			network: chain.name,
 			abi: ReferenceTransferABI,
 			address: ADDR.referenceTransfer as Address,
-			startBlock: config.startMintingHubV2,
+			startBlock: config.startReferenceTransfer,
+			maxBlockRange: config.blockrange,
+		},
+		SavingsDetached: {
+			network: chain.name,
+			abi: SavingsABI,
+			address: ADDR.savingsDetached as Address,
+			startBlock: config.startSavingsDetached,
 			maxBlockRange: config.blockrange,
 		},
 	},

@@ -35,7 +35,7 @@ ponder.on('ReferenceTransfer:Transfer', async ({ event, context }) => {
 			to: to.toLowerCase(),
 			amount,
 			ref,
-			autoSaved,
+			autoSaved: autoSaved.toLowerCase(),
 		},
 	});
 });

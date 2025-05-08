@@ -254,10 +254,10 @@
   resolved "https://registry.yarnpkg.com/@eslint/object-schema/-/object-schema-2.1.3.tgz#e65ae80ee2927b4fd8c5c26b15ecacc2b2a6cc2a"
   integrity sha512-HAbhAYKfsAC2EkTqve00ibWIZlaU74Z1EHwAjYr4PXF0YU2VEA1zSIKSSpKszRLRWwHzzRZXvK632u+uXzvsvw==
 
-"@frankencoin/zchf@^0.2.34":
-  version "0.2.34"
-  resolved "https://registry.yarnpkg.com/@frankencoin/zchf/-/zchf-0.2.34.tgz#7d3e0f241b512cb7ec89c8f4e8566b5b2f4b7855"
-  integrity sha512-uTC5A9SrT3dmlU6w0YkGbGYDUEefD6ap25BCP/yhDVPBVbFmpzufj0VjEexoGqGMgfzQ4CSFbIz4euEGNbqcvg==
+"@frankencoin/zchf@^0.2.35":
+  version "0.2.35"
+  resolved "https://registry.yarnpkg.com/@frankencoin/zchf/-/zchf-0.2.35.tgz#6452b72c8e428363e53425a223e8774c667f62c7"
+  integrity sha512-3Rgyo5nd27R1UK2W4Yyb1OAnRiuL3ptKOogE6vN8NaxfPijbTdIl0PF+e5C9nSVggwphQTMTxP+P5IYR5d2VuA==
   dependencies:
     ts-node "^10.9.1"
     typescript "^5.2.2"
@@ -435,7 +435,7 @@
   resolved "https://registry.yarnpkg.com/@pkgjs/parseargs/-/parseargs-0.11.0.tgz#a77ea742fab25775145434eb1d2328cf5013ac33"
   integrity sha512-+1VkjdD0QBLPodGrJUeqarH8VAIvQODIbwh9XpP5Syisf7YoQgsJKPNFoqqLQlu+VQ/tVSshMR6loPMn8U+dPg==
 
-"@ponder/core@^0.4.36":
+"@ponder/core@^0.4.40":
   version "0.4.43"
   resolved "https://registry.yarnpkg.com/@ponder/core/-/core-0.4.43.tgz#08a3fd5ff865a187c61e101baef8a5ce9da3e030"
   integrity sha512-sfzpZAKUUXXm9b/F+uso8y5uQKn62aYJBmGqqO0DmeE5s+8DLF7ssXQiI2xxFXLjwAX6JwiPOduvD/Hlyj/k2w==

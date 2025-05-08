@@ -1,6 +1,6 @@
 {
 	"name": "frankencoin-ponder",
-	"version": "0.2.2",
+	"version": "0.2.3",
 	"private": false,
 	"license": "MIT",
 	"scripts": {
@@ -12,8 +12,8 @@
 		"typecheck": "tsc"
 	},
 	"dependencies": {
-		"@frankencoin/zchf": "^0.2.34",
-		"@ponder/core": "^0.4.36",
+		"@frankencoin/zchf": "^0.2.35",
+		"@ponder/core": "^0.4.40",
 		"viem": "^2.13.8"
 	},
 	"devDependencies": {
