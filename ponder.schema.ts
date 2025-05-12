@@ -59,7 +59,7 @@ export default createSchema((p) => ({
 		to: p.string(),
 		amount: p.bigint(),
 		ref: p.string(),
-		autoSaved: p.boolean(),
+		autoSaved: p.string(),
 	}),
 
 	// -------------------------------------------------------------------------
