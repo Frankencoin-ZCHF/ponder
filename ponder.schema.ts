@@ -1,6 +1,7 @@
 export * from './schema/Analytic';
 export * from './schema/Common';
 export * from './schema/Equity';
+export * from './schema/ERC20';
 export * from './schema/Frankencoin';
 export * from './schema/MintingHubV1';
 export * from './schema/MintingHubV2';

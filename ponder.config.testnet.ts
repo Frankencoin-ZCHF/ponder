@@ -1,6 +1,6 @@
 import { createConfig } from 'ponder';
 import { polygon } from 'viem/chains';
-import { Address, http } from 'viem';
+import { erc20Abi, http } from 'viem';
 import {
 	testing,
 	EquityABI,
@@ -54,6 +54,7 @@ export default createConfig({
 		// },
 	},
 	contracts: {
+		// ### NATIVE CONTRACT ###
 		Frankencoin: {
 			// Core
 			chain: chain.name,
@@ -117,6 +118,17 @@ export default createConfig({
 			abi: PositionRollerABI,
 			address: addr[chain.id].roller,
 			startBlock: config[chain.id].startMintingHubV2,
+		},
+
+		// ### COMMON CONTRACTS ###
+		ERC20: {
+			abi: erc20Abi,
+			chain: {
+				[chain.name]: {
+					address: [addr[chain.id].frankencoin, addr[chain.id].equity],
+					startBlock: config[chain.id].startFrankencoin,
+				},
+			},
 		},
 
 		// ### MULTI CHAIN CONTRACTS ###
