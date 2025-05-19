@@ -404,10 +404,10 @@
     "@eslint/core" "^0.13.0"
     levn "^0.4.1"
 
-"@frankencoin/zchf@^0.2.36":
-  version "0.2.36"
-  resolved "https://registry.yarnpkg.com/@frankencoin/zchf/-/zchf-0.2.36.tgz#41a248530ff55c2ae01835b1ba9e7c3fbee01d04"
-  integrity sha512-cE/L0SggZjyw7Pnrc6MLwyymbEDX8bjBIOfMz2TR3nkFFbjcYlnxg6UPGDLvET2rIsq9WgTke6bCCM1x7W9+Fw==
+"@frankencoin/zchf@^0.3.1":
+  version "0.3.1"
+  resolved "https://registry.yarnpkg.com/@frankencoin/zchf/-/zchf-0.3.1.tgz#001c8c8c7bde9a3c8d3a76c7cb2d7ac7ec742600"
+  integrity sha512-r2I120IPOQpJAxaeLrVKN1MKj+AN7SqD0wm4TS6Alv3lPEqAr/9mgrGKpOLOXXCmj9LzGAj9zgGnK7p5b+ouXA==
   dependencies:
     ts-node "^10.9.1"
     typescript "^5.2.2"

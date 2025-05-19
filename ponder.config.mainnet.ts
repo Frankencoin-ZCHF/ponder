@@ -2,7 +2,7 @@ import { createConfig } from 'ponder';
 import { mainnet } from 'viem/chains';
 import { Address, http } from 'viem';
 import {
-	ADDRESS,
+	deployment,
 	EquityABI,
 	FrankencoinABI,
 	MintingHubV1ABI,
@@ -13,10 +13,9 @@ import {
 	SavingsABI,
 } from '@frankencoin/zchf';
 
-// mainnet (default) or polygon (test) environment
 export const chain = mainnet;
 export const Id = chain.id!;
-export const ADDR = ADDRESS[chain.id]!;
+export const ADDR = deployment.ADDRESS;
 
 export const CONFIG = {
 	[mainnet.id]: {
@@ -46,27 +45,35 @@ export default createConfig({
 			pollingInterval: config.pollingInterval,
 			rpc: http(config.rpc),
 		},
+
+		// ### MULTICHAINS ###
+		// [polygon.name]: {
+		// 	id: polygon.id,
+		// 	maxRequestsPerSecond: config.maxRequestsPerSecond,
+		// 	pollingInterval: config.pollingInterval,
+		// 	rpc: http(config.rpc),
+		// },
 	},
 	contracts: {
 		Frankencoin: {
 			// Core
 			chain: chain.name,
 			abi: FrankencoinABI,
-			address: ADDR.frankenCoin as Address,
+			address: ADDR[mainnet.id].frankencoin,
 			startBlock: config.startFrankencoin,
 		},
 		Equity: {
 			// Core
 			chain: chain.name,
 			abi: EquityABI,
-			address: ADDR.equity as Address,
+			address: ADDR[mainnet.id].equity,
 			startBlock: config.startFrankencoin,
 		},
 		MintingHubV1: {
 			// V1
 			chain: chain.name,
 			abi: MintingHubV1ABI,
-			address: ADDR.mintingHubV1 as Address,
+			address: ADDR[mainnet.id].mintingHubV1,
 			startBlock: config.startMintingHubV1,
 		},
 		PositionV1: {
@@ -74,7 +81,7 @@ export default createConfig({
 			chain: chain.name,
 			abi: PositionV1ABI,
 			address: {
-				address: ADDR.mintingHubV1 as Address,
+				address: ADDR[mainnet.id].mintingHubV1,
 				event: openPositionEventV1,
 				parameter: 'position',
 			},
@@ -84,7 +91,7 @@ export default createConfig({
 			// V2
 			chain: chain.name,
 			abi: MintingHubV2ABI,
-			address: ADDR.mintingHubV2 as Address,
+			address: ADDR[mainnet.id].mintingHubV2,
 			startBlock: config.startMintingHubV2,
 		},
 		PositionV2: {
@@ -92,7 +99,7 @@ export default createConfig({
 			chain: chain.name,
 			abi: PositionV2ABI,
 			address: {
-				address: ADDR.mintingHubV2 as Address,
+				address: ADDR[mainnet.id].mintingHubV2,
 				event: openPositionEventV2,
 				parameter: 'position',
 			},
@@ -102,15 +109,17 @@ export default createConfig({
 			// V2
 			chain: chain.name,
 			abi: SavingsABI,
-			address: ADDR.savings as Address,
+			address: ADDR[mainnet.id].savings,
 			startBlock: config.startMintingHubV2,
 		},
 		Roller: {
 			// V2
 			chain: chain.name,
 			abi: PositionRollerABI,
-			address: ADDR.roller as Address,
+			address: ADDR[mainnet.id].roller,
 			startBlock: config.startMintingHubV2,
 		},
+
+		// ### MULTICHAIN CONTRACTS ###
 	},
 });
