@@ -1,4 +1,4 @@
-import { onchainTable } from '@ponder/core';
+import { onchainTable } from 'ponder';
 
 export const AnalyticTransactionLog = onchainTable('TransactionLog', (t) => ({
 	id: t.text().primaryKey(),

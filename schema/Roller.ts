@@ -1,4 +1,4 @@
-import { onchainTable } from '@ponder/core';
+import { onchainTable } from 'ponder';
 
 export const RollerRolled = onchainTable('RollerRolled', (t) => ({
 	id: t.text().primaryKey(),
