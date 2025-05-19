@@ -1,5 +1,5 @@
-import { ponder, Event, type Context } from 'ponder:registry';
-import { ERC20Balance, ERC20BalanceMapping, ERC20Counter } from 'ponder:schema';
+import { Event, type Context } from 'ponder:registry';
+import { ERC20Balance, ERC20BalanceMapping, ERC20Status } from 'ponder:schema';
 import { Address, zeroAddress } from 'viem';
 
 export async function indexERC20Balance(
@@ -9,51 +9,55 @@ export async function indexERC20Balance(
 	const token = event.log.address.toLowerCase() as Address;
 	const from = event.args.from.toLowerCase() as Address;
 	const to = event.args.to.toLowerCase() as Address;
+	const value = event.args.value;
 	const updated = event.block.timestamp;
 
-	// update counter
-	const counter = await context.db
-		.insert(ERC20Counter)
+	// update status
+	const status = await context.db
+		.insert(ERC20Status)
 		.values({
 			token,
 			updated,
 			mint: 0n,
 			burn: 0n,
-			balance: 1n,
+			balance: 1n, // count
+			supply: 0n,
 		})
 		.onConflictDoUpdate((current) => ({
 			updated,
-			balance: current.balance + 1n,
+			balance: current.balance + 1n, // count
 		}));
 
 	// make latest balance available
 	let balanceFrom = 0n;
 	let balanceTo = 0n;
 
-	// update balance from
-	if (from != zeroAddress) {
-		const balance = await context.db.update(ERC20BalanceMapping, { token, account: from }).set((current) => ({
-			updated,
-			balance: current.balance - event.args.value, // deduct balance
-		}));
-		balanceFrom = balance.balance;
-	}
-
-	// update balance from
+	// update balance to
 	if (to != zeroAddress) {
 		const balance = await context.db
 			.insert(ERC20BalanceMapping)
 			.values({
-				updated,
 				token,
-				account: event.args.to.toLowerCase() as Address,
-				balance: event.args.value,
+				updated,
+				account: to,
+				mint: 0n,
+				burn: 0n,
+				balance: value,
 			})
 			.onConflictDoUpdate((current) => ({
 				updated,
-				balance: current.balance + event.args.value,
+				balance: current.balance + value,
 			}));
 		balanceTo = balance.balance;
+	}
+
+	// update balance from
+	if (from != zeroAddress) {
+		const balance = await context.db.update(ERC20BalanceMapping, { token, account: from }).set((current) => ({
+			updated,
+			balance: current.balance - value, // deduct balance
+		}));
+		balanceFrom = balance.balance;
 	}
 
 	// index balance history, entry
@@ -62,13 +66,13 @@ export async function indexERC20Balance(
 		token,
 		created: updated,
 		blockheight: event.block.number,
-		count: counter.balance,
+		count: status.balance,
 		from,
 		to,
-		amount: event.args.value,
+		amount: value,
 		balanceFrom,
 		balanceTo,
 	});
 
-	console.log(entry);
+	// console.log(entry);
 }

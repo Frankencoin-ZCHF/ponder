@@ -1,15 +1,16 @@
 import { onchainTable, primaryKey } from 'ponder';
 
-// counter
+// status
 
-export const ERC20Counter = onchainTable(
-	'Counter',
+export const ERC20Status = onchainTable(
+	'Status',
 	(t) => ({
-		token: t.hex().notNull(),
-		updated: t.bigint().notNull(),
-		mint: t.bigint().notNull(),
-		burn: t.bigint().notNull(),
-		balance: t.bigint().notNull(),
+		token: t.hex().notNull(), // token contract
+		updated: t.bigint().notNull(), // latest timestamp
+		mint: t.bigint().notNull(), // counters
+		burn: t.bigint().notNull(), // counters
+		balance: t.bigint().notNull(), // counters
+		supply: t.bigint().notNull(), // amount of tokens
 	}),
 	(table) => ({
 		pk: primaryKey({ columns: [table.token] }),
@@ -50,20 +51,6 @@ export const ERC20Burn = onchainTable(
 	})
 );
 
-export const ERC20MintBurnMapping = onchainTable(
-	'MintBurnMapping',
-	(t) => ({
-		account: t.hex().notNull(),
-		updated: t.bigint().notNull(),
-		token: t.hex().notNull(),
-		mint: t.bigint().notNull(),
-		burn: t.bigint().notNull(),
-	}),
-	(table) => ({
-		pk: primaryKey({ columns: [table.token, table.account] }),
-	})
-);
-
 // balance indexing
 
 export const ERC20Balance = onchainTable(
@@ -88,9 +75,11 @@ export const ERC20Balance = onchainTable(
 export const ERC20BalanceMapping = onchainTable(
 	'Mapping',
 	(t) => ({
-		updated: t.bigint().notNull(),
 		token: t.hex().notNull(),
+		updated: t.bigint().notNull(),
 		account: t.hex().notNull(),
+		mint: t.bigint().notNull(),
+		burn: t.bigint().notNull(),
 		balance: t.bigint().notNull(),
 	}),
 	(table) => ({
