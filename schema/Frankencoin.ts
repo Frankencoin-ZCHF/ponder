@@ -1,27 +1,5 @@
 import { onchainTable } from 'ponder';
 
-export const FrankencoinMint = onchainTable('Mint', (t) => ({
-	id: t.text().primaryKey(),
-	to: t.hex().notNull(),
-	value: t.bigint().notNull(),
-	blockheight: t.bigint().notNull(),
-	timestamp: t.bigint().notNull(),
-}));
-
-export const FrankencoinBurn = onchainTable('Burn', (t) => ({
-	id: t.text().primaryKey(),
-	from: t.hex().notNull(),
-	value: t.bigint().notNull(),
-	blockheight: t.bigint().notNull(),
-	timestamp: t.bigint().notNull(),
-}));
-
-export const FrankencoinMintBurnMapping = onchainTable('MintBurnMapping', (t) => ({
-	id: t.hex().primaryKey(),
-	mint: t.bigint().notNull(),
-	burn: t.bigint().notNull(),
-}));
-
 export const FrankencoinMinter = onchainTable('Minter', (t) => ({
 	id: t.text().primaryKey(),
 	txHash: t.hex().notNull(),

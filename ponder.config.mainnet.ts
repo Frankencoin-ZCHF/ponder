@@ -1,4 +1,4 @@
-import { createConfig } from 'ponder';
+import { createConfig, factory } from 'ponder';
 import { mainnet } from 'viem/chains';
 import { erc20Abi, http } from 'viem';
 import {
@@ -128,6 +128,26 @@ export default createConfig({
 					startBlock: config[chain.id].startFrankencoin,
 				},
 			},
+		},
+
+		ERC20PositionV1: {
+			abi: erc20Abi,
+			chain: chain.name,
+			address: factory({
+				address: addr[chain.id].mintingHubV1,
+				event: openPositionEventV1,
+				parameter: 'collateral',
+			}),
+		},
+
+		ERC20PositionV2: {
+			abi: erc20Abi,
+			chain: chain.name,
+			address: factory({
+				address: addr[chain.id].mintingHubV2,
+				event: openPositionEventV2,
+				parameter: 'collateral',
+			}),
 		},
 
 		// ### MULTI CHAIN CONTRACTS ###
