@@ -1,8 +1,8 @@
 import { createConfig } from 'ponder';
-import { mainnet, polygon } from 'viem/chains';
+import { polygon } from 'viem/chains';
 import { Address, http } from 'viem';
 import {
-	ADDRESS,
+	testing,
 	EquityABI,
 	FrankencoinABI,
 	MintingHubV1ABI,
@@ -16,7 +16,7 @@ import {
 // mainnet (default) or polygon (test) environment
 export const chain = polygon;
 export const Id = chain.id!;
-export const ADDR = ADDRESS[chain.id]!;
+export const ADDR = testing.ADDRESS;
 
 export const CONFIG = {
 	[polygon.id]: {
@@ -52,21 +52,21 @@ export default createConfig({
 			// Core
 			chain: chain.name,
 			abi: FrankencoinABI,
-			address: ADDR.frankenCoin as Address,
+			address: ADDR[polygon.id].frankencoin as Address,
 			startBlock: config.startFrankencoin,
 		},
 		Equity: {
 			// Core
 			chain: chain.name,
 			abi: EquityABI,
-			address: ADDR.equity as Address,
+			address: ADDR[polygon.id].equity,
 			startBlock: config.startFrankencoin,
 		},
 		MintingHubV1: {
 			// V1
 			chain: chain.name,
 			abi: MintingHubV1ABI,
-			address: ADDR.mintingHubV1 as Address,
+			address: ADDR[polygon.id].mintingHubV1,
 			startBlock: config.startMintingHubV1,
 		},
 		PositionV1: {
@@ -74,7 +74,7 @@ export default createConfig({
 			chain: chain.name,
 			abi: PositionV1ABI,
 			address: {
-				address: ADDR.mintingHubV1 as Address,
+				address: ADDR[polygon.id].mintingHubV1,
 				event: openPositionEventV1,
 				parameter: 'position',
 			},
@@ -84,7 +84,7 @@ export default createConfig({
 			// V2
 			chain: chain.name,
 			abi: MintingHubV2ABI,
-			address: ADDR.mintingHubV2 as Address,
+			address: ADDR[polygon.id].mintingHubV2,
 			startBlock: config.startMintingHubV2,
 		},
 		PositionV2: {
@@ -92,7 +92,7 @@ export default createConfig({
 			chain: chain.name,
 			abi: PositionV2ABI,
 			address: {
-				address: ADDR.mintingHubV2 as Address,
+				address: ADDR[polygon.id].mintingHubV2,
 				event: openPositionEventV2,
 				parameter: 'position',
 			},
@@ -102,14 +102,14 @@ export default createConfig({
 			// V2
 			chain: chain.name,
 			abi: SavingsABI,
-			address: ADDR.savings as Address,
+			address: ADDR[polygon.id].savings,
 			startBlock: config.startMintingHubV2,
 		},
 		Roller: {
 			// V2
 			chain: chain.name,
 			abi: PositionRollerABI,
-			address: ADDR.roller as Address,
+			address: ADDR[polygon.id].roller,
 			startBlock: config.startMintingHubV2,
 		},
 	},
