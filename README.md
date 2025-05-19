@@ -11,51 +11,23 @@ check out ".env.local" file to adjust environment.
 For SQLite, REMOVE THE DATABASE_URL LINE.
 
 ```
-# Select Profile/Chain
-PONDER_PROFILE=mainnet
+# Select port and profile
+PORT=42069
+PONDER_PROFILE=testnet
 
-# Mainnet RPC URL used for fetching blockchain data. Alchemy is recommended.
-PONDER_RPC_URL_MAINNET=https://eth-mainnet.g.alchemy.com/v2/...
-PONDER_RPC_URL_POLYGON=... # For testing purposes only
+# RPC URL used for fetching blockchain data. Alchemy is recommended.
+RPC_URL_MAINNET=https://eth-mainnet.g.alchemy.com/v2...
+RPC_URL_POLYGON=https://polygon-mainnet.g.alchemy.com/v2...
 
 # (Optional) Postgres database URL. If not provided, SQLite will be used.
 DATABASE_URL=
 ```
 
-## Ponder config
+## Config Files for Multichain Setup
 
-You can adjust the default chain and chain specific parameters in "ponder.config.ts".
+Since Frankencoin transitioned to multichain and updated to the latest Ponder version, there are now two separate configuration files to manage mainnet and testnet deployments.
 
-```
-// mainnet (default) or polygon
-export const chain = (process.env.PONDER_PROFILE as string) == 'polygon' ? polygon : mainnet;
-export const Id = chain.id!;
-export const ADDR = ADDRESS[chain.id]!;
-
-export const CONFIG = {
-	[mainnet.id]: {
-		rpc: process.env.RPC_URL_MAINNET ?? mainnet.rpcUrls.default.http[0],
-		startFrankencoin: 18451518,
-		startMintingHubV1: 18451536,
-		startMintingHubV2: 18451536,
-		blockrange: undefined,
-		maxRequestsPerSecond: 5,
-		pollingInterval: 5_000,
-	},
-	[polygon.id]: {
-		rpc: process.env.RPC_URL_POLYGON ?? polygon.rpcUrls.default.http[0],
-		startFrankencoin: 63633900,
-		startMintingHubV1: 63633900,
-		startMintingHubV2: 63633900,
-		blockrange: undefined,
-		maxRequestsPerSecond: 5,
-		pollingInterval: 5_000,
-	},
-};
-
-	...
-}
-```
+You can adjust the default chain settings as well as chain-specific parameters in either `ponder.config.mainnet.ts` or `ponder.config.testnet.ts`, depending on your deployment needs.Config Files for Multichain Setup\*\*
 
 ## Add / Adjust custom chain(s)
 

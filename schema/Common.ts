@@ -1,4 +1,4 @@
-import { onchainTable } from '@ponder/core';
+import { onchainTable } from 'ponder';
 
 export const CommonActiveUser = onchainTable('ActiveUser', (t) => ({
 	id: t.text().primaryKey(),

@@ -1,4 +1,4 @@
-import { onchainTable } from '@ponder/core';
+import { onchainTable } from 'ponder';
 
 export const EquityBalanceMapping = onchainTable('BalanceMapping', (t) => ({
 	id: t.hex().primaryKey(),

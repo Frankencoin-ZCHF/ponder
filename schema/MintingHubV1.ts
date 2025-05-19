@@ -1,4 +1,4 @@
-import { onchainTable } from '@ponder/core';
+import { onchainTable } from 'ponder';
 
 export const MintingHubV1PositionV1 = onchainTable('PositionV1', (t) => ({
 	id: t.text().primaryKey(),

@@ -1,4 +1,4 @@
-import { onchainTable } from '@ponder/core';
+import { onchainTable } from 'ponder';
 
 export const FrankencoinMint = onchainTable('Mint', (t) => ({
 	id: t.text().primaryKey(),
