@@ -15,10 +15,9 @@ import {
 
 // mainnet (default) or polygon (test) environment
 export const chain = polygon;
-export const Id = chain.id!;
-export const ADDR = testing.ADDRESS;
-
-export const CONFIG = {
+export const id = chain.id!;
+export const addr = testing.ADDRESS;
+export const config = {
 	[polygon.id]: {
 		rpc: process.env.RPC_URL_POLYGON ?? polygon.rpcUrls.default.http[0],
 		startFrankencoin: 63633900,
@@ -30,8 +29,6 @@ export const CONFIG = {
 	},
 };
 
-export const config = CONFIG[Id];
-
 const openPositionEventV1 = MintingHubV1ABI.find((a) => a.type === 'event' && a.name === 'PositionOpened');
 if (openPositionEventV1 === undefined) throw new Error('openPositionEventV1 not found.');
 
@@ -40,77 +37,88 @@ if (openPositionEventV2 === undefined) throw new Error('openPositionEventV2 not 
 
 export default createConfig({
 	chains: {
+		// ### NATIVE CHAIN ###
 		[chain.name]: {
-			id: Id,
-			maxRequestsPerSecond: config.maxRequestsPerSecond,
-			pollingInterval: config.pollingInterval,
-			rpc: http(config.rpc),
+			id: id,
+			maxRequestsPerSecond: config[chain.id].maxRequestsPerSecond,
+			pollingInterval: config[chain.id].pollingInterval,
+			rpc: http(config[chain.id].rpc),
 		},
+
+		// ### MULTI CHAIN ###
+		// [polygon.name]: {
+		// 	id: polygon.id,
+		// 	maxRequestsPerSecond: config[chain.id].maxRequestsPerSecond,
+		// 	pollingInterval: config[chain.id].pollingInterval,
+		// 	rpc: http(config[chain.id].rpc),
+		// },
 	},
 	contracts: {
 		Frankencoin: {
 			// Core
 			chain: chain.name,
 			abi: FrankencoinABI,
-			address: ADDR[polygon.id].frankencoin as Address,
-			startBlock: config.startFrankencoin,
+			address: addr[chain.id].frankencoin,
+			startBlock: config[chain.id].startFrankencoin,
 		},
 		Equity: {
 			// Core
 			chain: chain.name,
 			abi: EquityABI,
-			address: ADDR[polygon.id].equity,
-			startBlock: config.startFrankencoin,
+			address: addr[chain.id].equity,
+			startBlock: config[chain.id].startFrankencoin,
 		},
 		MintingHubV1: {
 			// V1
 			chain: chain.name,
 			abi: MintingHubV1ABI,
-			address: ADDR[polygon.id].mintingHubV1,
-			startBlock: config.startMintingHubV1,
+			address: addr[chain.id].mintingHubV1,
+			startBlock: config[chain.id].startMintingHubV1,
 		},
 		PositionV1: {
 			// V1
 			chain: chain.name,
 			abi: PositionV1ABI,
 			address: {
-				address: ADDR[polygon.id].mintingHubV1,
+				address: addr[chain.id].mintingHubV1,
 				event: openPositionEventV1,
 				parameter: 'position',
 			},
-			startBlock: config.startMintingHubV1,
+			startBlock: config[chain.id].startMintingHubV1,
 		},
 		MintingHubV2: {
 			// V2
 			chain: chain.name,
 			abi: MintingHubV2ABI,
-			address: ADDR[polygon.id].mintingHubV2,
-			startBlock: config.startMintingHubV2,
+			address: addr[chain.id].mintingHubV2,
+			startBlock: config[chain.id].startMintingHubV2,
 		},
 		PositionV2: {
 			// V2
 			chain: chain.name,
 			abi: PositionV2ABI,
 			address: {
-				address: ADDR[polygon.id].mintingHubV2,
+				address: addr[chain.id].mintingHubV2,
 				event: openPositionEventV2,
 				parameter: 'position',
 			},
-			startBlock: config.startMintingHubV2,
+			startBlock: config[chain.id].startMintingHubV2,
 		},
 		Savings: {
 			// V2
 			chain: chain.name,
 			abi: SavingsABI,
-			address: ADDR[polygon.id].savings,
-			startBlock: config.startMintingHubV2,
+			address: addr[chain.id].savings,
+			startBlock: config[chain.id].startMintingHubV2,
 		},
 		Roller: {
 			// V2
 			chain: chain.name,
 			abi: PositionRollerABI,
-			address: ADDR[polygon.id].roller,
-			startBlock: config.startMintingHubV2,
+			address: addr[chain.id].roller,
+			startBlock: config[chain.id].startMintingHubV2,
 		},
+
+		// ### MULTI CHAIN CONTRACTS ###
 	},
 });

@@ -11,7 +11,7 @@ check out ".env.local" file to adjust environment.
 For SQLite, REMOVE THE DATABASE_URL LINE.
 
 ```
-# Select port and profile
+# Select port (default: 3000) and profile
 PORT=42069
 PONDER_PROFILE=testnet
 

@@ -1,6 +1,6 @@
 import { createConfig } from 'ponder';
 import { mainnet } from 'viem/chains';
-import { Address, http } from 'viem';
+import { http } from 'viem';
 import {
 	deployment,
 	EquityABI,
@@ -14,11 +14,10 @@ import {
 } from '@frankencoin/zchf';
 
 export const chain = mainnet;
-export const Id = chain.id!;
-export const ADDR = deployment.ADDRESS;
-
-export const CONFIG = {
-	[mainnet.id]: {
+export const id = chain.id!;
+export const addr = deployment.ADDRESS;
+export const config = {
+	[chain.id]: {
 		rpc: process.env.RPC_URL_MAINNET ?? mainnet.rpcUrls.default.http[0],
 		startFrankencoin: 18451518,
 		startMintingHubV1: 18451536,
@@ -29,8 +28,6 @@ export const CONFIG = {
 	},
 };
 
-export const config = CONFIG[Id];
-
 const openPositionEventV1 = MintingHubV1ABI.find((a) => a.type === 'event' && a.name === 'PositionOpened');
 if (openPositionEventV1 === undefined) throw new Error('openPositionEventV1 not found.');
 
@@ -39,19 +36,20 @@ if (openPositionEventV2 === undefined) throw new Error('openPositionEventV2 not 
 
 export default createConfig({
 	chains: {
+		// ### NATIVE CHAIN ###
 		[chain.name]: {
-			id: Id,
-			maxRequestsPerSecond: config.maxRequestsPerSecond,
-			pollingInterval: config.pollingInterval,
-			rpc: http(config.rpc),
+			id: id,
+			maxRequestsPerSecond: config[chain.id].maxRequestsPerSecond,
+			pollingInterval: config[chain.id].pollingInterval,
+			rpc: http(config[chain.id].rpc),
 		},
 
-		// ### MULTICHAINS ###
+		// ### MULTI CHAIN ###
 		// [polygon.name]: {
 		// 	id: polygon.id,
-		// 	maxRequestsPerSecond: config.maxRequestsPerSecond,
-		// 	pollingInterval: config.pollingInterval,
-		// 	rpc: http(config.rpc),
+		// 	maxRequestsPerSecond: config[chain.id].maxRequestsPerSecond,
+		// 	pollingInterval: config[chain.id].pollingInterval,
+		// 	rpc: http(config[chain.id].rpc),
 		// },
 	},
 	contracts: {
@@ -59,67 +57,67 @@ export default createConfig({
 			// Core
 			chain: chain.name,
 			abi: FrankencoinABI,
-			address: ADDR[mainnet.id].frankencoin,
-			startBlock: config.startFrankencoin,
+			address: addr[chain.id].frankencoin,
+			startBlock: config[chain.id].startFrankencoin,
 		},
 		Equity: {
 			// Core
 			chain: chain.name,
 			abi: EquityABI,
-			address: ADDR[mainnet.id].equity,
-			startBlock: config.startFrankencoin,
+			address: addr[chain.id].equity,
+			startBlock: config[chain.id].startFrankencoin,
 		},
 		MintingHubV1: {
 			// V1
 			chain: chain.name,
 			abi: MintingHubV1ABI,
-			address: ADDR[mainnet.id].mintingHubV1,
-			startBlock: config.startMintingHubV1,
+			address: addr[chain.id].mintingHubV1,
+			startBlock: config[chain.id].startMintingHubV1,
 		},
 		PositionV1: {
 			// V1
 			chain: chain.name,
 			abi: PositionV1ABI,
 			address: {
-				address: ADDR[mainnet.id].mintingHubV1,
+				address: addr[chain.id].mintingHubV1,
 				event: openPositionEventV1,
 				parameter: 'position',
 			},
-			startBlock: config.startMintingHubV1,
+			startBlock: config[chain.id].startMintingHubV1,
 		},
 		MintingHubV2: {
 			// V2
 			chain: chain.name,
 			abi: MintingHubV2ABI,
-			address: ADDR[mainnet.id].mintingHubV2,
-			startBlock: config.startMintingHubV2,
+			address: addr[chain.id].mintingHubV2,
+			startBlock: config[chain.id].startMintingHubV2,
 		},
 		PositionV2: {
 			// V2
 			chain: chain.name,
 			abi: PositionV2ABI,
 			address: {
-				address: ADDR[mainnet.id].mintingHubV2,
+				address: addr[chain.id].mintingHubV2,
 				event: openPositionEventV2,
 				parameter: 'position',
 			},
-			startBlock: config.startMintingHubV2,
+			startBlock: config[chain.id].startMintingHubV2,
 		},
 		Savings: {
 			// V2
 			chain: chain.name,
 			abi: SavingsABI,
-			address: ADDR[mainnet.id].savings,
-			startBlock: config.startMintingHubV2,
+			address: addr[chain.id].savings,
+			startBlock: config[chain.id].startMintingHubV2,
 		},
 		Roller: {
 			// V2
 			chain: chain.name,
 			abi: PositionRollerABI,
-			address: ADDR[mainnet.id].roller,
-			startBlock: config.startMintingHubV2,
+			address: addr[chain.id].roller,
+			startBlock: config[chain.id].startMintingHubV2,
 		},
 
-		// ### MULTICHAIN CONTRACTS ###
+		// ### MULTI CHAIN CONTRACTS ###
 	},
 });
