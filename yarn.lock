@@ -1094,10 +1094,10 @@
   resolved "https://registry.yarnpkg.com/@fastify/busboy/-/busboy-2.1.1.tgz#b9da6a878a371829a0502c9b6c1c143ef6663f4d"
   integrity sha512-vBZP4NlzfOlerQTnba4aqZoMhE/a9HY7HRqoOPaETQcSQuWEIyZMHGfVu6w9wGtGK5fED5qRs2DteVCjOH60sA==
 
-"@frankencoin/zchf@^0.3.4":
-  version "0.3.4"
-  resolved "https://registry.yarnpkg.com/@frankencoin/zchf/-/zchf-0.3.4.tgz#2ad46620f17fa89b6c44cdcb05157012caec6842"
-  integrity sha512-YfK/oqzre1nTx3CLjp23oQEX4kKSwszF9lGY1AyahsYWoSPdPIO+HbhCUzTGjNluMwT4fzHgCy6+2q06q9WV+w==
+"@frankencoin/zchf@^0.3.5":
+  version "0.3.5"
+  resolved "https://registry.yarnpkg.com/@frankencoin/zchf/-/zchf-0.3.5.tgz#decabb8890dac05f2a551624f9f627afef8e0ff9"
+  integrity sha512-E14H2V8zfcl4Gxtg8jOfoLRPFUoVW6LaGt1YabZDmRULbGBdFJy3V2+RZ06WUTT6XXTi0tkfIf5bAmn5faxl0w==
   dependencies:
     "@chainlink/contracts-ccip" "1.5.1-beta.2"
     "@chainlink/local" "0.2.3"

@@ -7,10 +7,10 @@ import {
 	FrankencoinABI,
 	MintingHubV1ABI,
 	MintingHubV2ABI,
-	PositionRollerABI,
+	PositionRollerV2ABI,
 	PositionV1ABI,
 	PositionV2ABI,
-	SavingsABI,
+	SavingsV2ABI,
 } from '@frankencoin/zchf';
 
 export const chain = mainnet;
@@ -104,17 +104,17 @@ export default createConfig({
 			},
 			startBlock: config[chain.id].startMintingHubV2,
 		},
-		Savings: {
+		SavingsV2: {
 			// V2
 			chain: chain.name,
-			abi: SavingsABI,
+			abi: SavingsV2ABI,
 			address: addr[chain.id].savings,
 			startBlock: config[chain.id].startMintingHubV2,
 		},
-		Roller: {
+		RollerV2: {
 			// V2
 			chain: chain.name,
-			abi: PositionRollerABI,
+			abi: PositionRollerV2ABI,
 			address: addr[chain.id].roller,
 			startBlock: config[chain.id].startMintingHubV2,
 		},
@@ -138,6 +138,7 @@ export default createConfig({
 				event: openPositionEventV1,
 				parameter: 'collateral',
 			}),
+			startBlock: config[chain.id].startMintingHubV1,
 		},
 
 		ERC20PositionV2: {
@@ -148,6 +149,7 @@ export default createConfig({
 				event: openPositionEventV2,
 				parameter: 'collateral',
 			}),
+			startBlock: config[chain.id].startMintingHubV2,
 		},
 
 		// ### MULTI CHAIN CONTRACTS ###
