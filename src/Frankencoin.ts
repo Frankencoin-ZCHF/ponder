@@ -1,239 +1,218 @@
-import { ponder } from '@/generated';
-import { Address, parseEther, zeroAddress } from 'viem';
-import { updateTransactionLog } from './Analytic';
-import { EquityABI } from '@frankencoin/zchf';
-import { ADDR } from '../ponder.config';
+import { ponder } from 'ponder:registry';
+import { CommonEcosystem, FrankencoinMinter, FrankencoinProfitLoss } from 'ponder:schema';
+import { Address, parseEther } from 'viem';
 
 ponder.on('Frankencoin:Profit', async ({ event, context }) => {
-	const { FPS, ActiveUser, Ecosystem, ProfitLoss } = context.db;
-
+	const minter = event.args.reportingMinter.toLowerCase() as Address;
 	const fpsTotalSupply = await context.client.readContract({
-		abi: EquityABI,
-		address: ADDR.equity,
+		abi: context.contracts.Equity.abi,
+		address: context.contracts.Equity.address,
 		functionName: 'totalSupply',
 	});
+	const perToken = (event.args.amount * parseEther('1')) / fpsTotalSupply;
 
-	const counter = await Ecosystem.upsert({
-		id: 'Equity:ProfitLossCounter',
-		create: {
+	// upsert ProfitLossCounter
+	const counter = await context.db
+		.insert(CommonEcosystem)
+		.values({
+			id: 'Equity:ProfitLossCounter',
 			value: '',
 			amount: 1n,
-		},
-		update: ({ current }) => ({
+		})
+		.onConflictDoUpdate((current) => ({
 			amount: current.amount + 1n,
-		}),
-	});
+		}));
 
-	await Ecosystem.upsert({
-		id: 'Equity:ProfitCounter',
-		create: {
+	// upsert ProfitCounter
+	await context.db
+		.insert(CommonEcosystem)
+		.values({
+			id: 'Equity:ProfitCounter',
 			value: '',
 			amount: 1n,
-		},
-		update: ({ current }) => ({
+		})
+		.onConflictDoUpdate((current) => ({
 			amount: current.amount + 1n,
-		}),
-	});
+		}));
 
-	await Ecosystem.upsert({
-		id: 'Equity:Profits',
-		create: {
+	// upsert Profits
+	const profits = await context.db
+		.insert(CommonEcosystem)
+		.values({
+			id: 'Equity:Profits',
 			value: '',
 			amount: event.args.amount,
-		},
-		update: ({ current }) => ({
+		})
+		.onConflictDoUpdate((current) => ({
 			amount: current.amount + event.args.amount,
-		}),
-	});
+		}));
 
-	const perFPS = (event.args.amount * parseEther('1')) / fpsTotalSupply;
-
-	await Ecosystem.upsert({
-		id: 'Equity:EarningsPerFPS',
-		create: {
+	// upsert Losses
+	const losses = await context.db
+		.insert(CommonEcosystem)
+		.values({
+			id: 'Equity:Losses',
 			value: '',
-			amount: perFPS,
-		},
-		update: ({ current }) => ({
-			amount: current.amount + perFPS,
-		}),
-	});
+			amount: 0n,
+		})
+		.onConflictDoUpdate((current) => ({
+			amount: current.amount + 0n,
+		}));
 
-	await FPS.upsert({
-		id: event.log.address,
-		create: {
-			profits: event.args.amount,
-			loss: 0n,
-			reserve: 0n,
-		},
-		update: ({ current }) => ({
-			profits: current.profits + event.args.amount,
-		}),
-	});
+	// upsert EarningsPerFPS
+	const earnings = await context.db
+		.insert(CommonEcosystem)
+		.values({
+			id: 'Equity:EarningsPerFPS',
+			value: '',
+			amount: perToken,
+		})
+		.onConflictDoUpdate((current) => ({
+			amount: current.amount + perToken,
+		}));
 
-	await ProfitLoss.upsert({
-		id: `${event.args.reportingMinter}-${event.block.timestamp}-Profit-${counter.amount}`,
-		create: {
-			count: counter.amount,
-			created: event.block.timestamp,
-			kind: 'Profit',
-			amount: event.args.amount,
-			perFPS,
-		},
-		update: ({ current }) => ({
-			amount: current.amount + event.args.amount,
-			perFPS,
-		}),
-	});
-
-	await ActiveUser.upsert({
-		id: event.transaction.from,
-		create: {
-			lastActiveTime: event.block.timestamp,
-		},
-		update: () => ({
-			lastActiveTime: event.block.timestamp,
-		}),
-	});
-
-	await updateTransactionLog({
-		context,
-		timestamp: event.block.timestamp,
-		kind: 'Equity:Profit',
+	// flat indexing earnings
+	await context.db.insert(FrankencoinProfitLoss).values({
+		count: counter.amount,
+		created: event.block.timestamp,
+		kind: 'Profit',
 		amount: event.args.amount,
-		txHash: event.transaction.hash,
+		minter: minter,
+		profits: profits.amount,
+		losses: losses.amount,
+		perFPS: earnings.amount,
 	});
+
+	// update analytics
+	// await updateTransactionLog({
+	// 	context,
+	// 	timestamp: event.block.timestamp,
+	// 	kind: 'Equity:Profit',
+	// 	amount: event.args.amount,
+	// 	txHash: event.transaction.hash,
+	// });
 });
 
 ponder.on('Frankencoin:Loss', async ({ event, context }) => {
-	const { FPS, ActiveUser, Ecosystem, ProfitLoss } = context.db;
-
+	const minter = event.args.reportingMinter.toLowerCase() as Address;
 	const fpsTotalSupply = await context.client.readContract({
-		abi: EquityABI,
-		address: ADDR.equity,
+		abi: context.contracts.Equity.abi,
+		address: context.contracts.Equity.address,
 		functionName: 'totalSupply',
 	});
+	const perToken = -(event.args.amount * parseEther('1')) / fpsTotalSupply;
 
-	const counter = await Ecosystem.upsert({
-		id: 'Equity:ProfitLossCounter',
-		create: {
+	// upsert ProfitLossCounter
+	const counter = await context.db
+		.insert(CommonEcosystem)
+		.values({
+			id: 'Equity:ProfitLossCounter',
 			value: '',
 			amount: 1n,
-		},
-		update: ({ current }) => ({
+		})
+		.onConflictDoUpdate((current) => ({
 			amount: current.amount + 1n,
-		}),
-	});
+		}));
 
-	await Ecosystem.upsert({
-		id: 'Equity:LossCounter',
-		create: {
+	// upsert ProfitCounter
+	await context.db
+		.insert(CommonEcosystem)
+		.values({
+			id: 'Equity:LossCounter',
 			value: '',
 			amount: 1n,
-		},
-		update: ({ current }) => ({
+		})
+		.onConflictDoUpdate((current) => ({
 			amount: current.amount + 1n,
-		}),
-	});
+		}));
 
-	await Ecosystem.upsert({
-		id: 'Equity:Losses',
-		create: {
+	// upsert Profits
+	const profits = await context.db
+		.insert(CommonEcosystem)
+		.values({
+			id: 'Equity:Profits',
+			value: '',
+			amount: 0n,
+		})
+		.onConflictDoUpdate((current) => ({
+			amount: current.amount + 0n,
+		}));
+
+	// upsert Losses
+	const losses = await context.db
+		.insert(CommonEcosystem)
+		.values({
+			id: 'Equity:Losses',
 			value: '',
 			amount: event.args.amount,
-		},
-		update: ({ current }) => ({
+		})
+		.onConflictDoUpdate((current) => ({
 			amount: current.amount + event.args.amount,
-		}),
-	});
+		}));
 
-	const perFPS = -(event.args.amount * parseEther('1')) / fpsTotalSupply;
-
-	await Ecosystem.upsert({
-		id: 'Equity:EarningsPerFPS',
-		create: {
+	// upsert EarningsPerFPS
+	const earnings = await context.db
+		.insert(CommonEcosystem)
+		.values({
+			id: 'Equity:EarningsPerFPS',
 			value: '',
-			amount: perFPS,
-		},
-		update: ({ current }) => ({
-			amount: current.amount + perFPS,
-		}),
-	});
+			amount: perToken,
+		})
+		.onConflictDoUpdate((current) => ({
+			amount: current.amount + perToken,
+		}));
 
-	await FPS.upsert({
-		id: event.log.address,
-		create: {
-			profits: 0n,
-			loss: event.args.amount,
-			reserve: 0n,
-		},
-		update: ({ current }) => ({
-			loss: current.loss + event.args.amount,
-		}),
-	});
-
-	await ProfitLoss.upsert({
-		id: `${event.args.reportingMinter}-${event.block.timestamp}-Loss-${counter.amount}`,
-		create: {
-			count: counter.amount,
-			created: event.block.timestamp,
-			kind: 'Loss',
-			amount: event.args.amount,
-			perFPS,
-		},
-		update: ({ current }) => ({
-			amount: current.amount + event.args.amount,
-			perFPS,
-		}),
-	});
-
-	await ActiveUser.upsert({
-		id: event.transaction.from,
-		create: {
-			lastActiveTime: event.block.timestamp,
-		},
-		update: () => ({
-			lastActiveTime: event.block.timestamp,
-		}),
-	});
-
-	await updateTransactionLog({
-		context,
-		timestamp: event.block.timestamp,
-		kind: 'Equity:Loss',
+	// flat indexing earnings
+	await context.db.insert(FrankencoinProfitLoss).values({
+		count: counter.amount,
+		created: event.block.timestamp,
+		kind: 'Loss',
 		amount: event.args.amount,
-		txHash: event.transaction.hash,
+		minter: minter,
+		profits: profits.amount,
+		losses: losses.amount,
+		perFPS: earnings.amount,
 	});
+
+	// update analytics
+	// await updateTransactionLog({
+	// 	context,
+	// 	timestamp: event.block.timestamp,
+	// 	kind: 'Equity:Loss',
+	// 	amount: event.args.amount,
+	// 	txHash: event.transaction.hash,
+	// });
 });
 
 ponder.on('Frankencoin:MinterApplied', async ({ event, context }) => {
-	const { Minter, ActiveUser, Ecosystem } = context.db;
+	const minter = event.args.minter.toLowerCase() as Address;
 
-	await Ecosystem.upsert({
-		id: 'Frankencoin:MinterAppliedCounter',
-		create: {
+	// upsert status
+	await context.db
+		.insert(CommonEcosystem)
+		.values({
+			id: 'Frankencoin:MinterAppliedCounter',
 			value: '',
 			amount: 1n,
-		},
-		update: ({ current }) => ({
+		})
+		.onConflictDoUpdate((current) => ({
 			amount: current.amount + 1n,
-		}),
-	});
+		}));
 
-	await Minter.upsert({
-		id: event.args.minter,
-		create: {
+	// upsert minter mapping
+	await context.db
+		.insert(FrankencoinMinter)
+		.values({
 			txHash: event.transaction.hash,
-			minter: event.args.minter,
+			minter: minter,
 			applicationPeriod: event.args.applicationPeriod,
 			applicationFee: event.args.applicationFee,
 			applyMessage: event.args.message,
 			applyDate: event.block.timestamp,
 			suggestor: event.transaction.from,
-		},
-		update: ({ current }) => ({
+		})
+		.onConflictDoUpdate((current) => ({
 			txHash: event.transaction.hash,
-			minter: event.args.minter,
 			applicationPeriod: event.args.applicationPeriod,
 			applicationFee: event.args.applicationFee,
 			applyMessage: event.args.message,
@@ -243,194 +222,29 @@ ponder.on('Frankencoin:MinterApplied', async ({ event, context }) => {
 			denyMessage: undefined,
 			denyTxHash: undefined,
 			vetor: undefined,
-		}),
-	});
-
-	await ActiveUser.upsert({
-		id: event.transaction.from,
-		create: {
-			lastActiveTime: event.block.timestamp,
-		},
-		update: () => ({
-			lastActiveTime: event.block.timestamp,
-		}),
-	});
+		}));
 });
 
 ponder.on('Frankencoin:MinterDenied', async ({ event, context }) => {
-	const { Minter, ActiveUser, Ecosystem } = context.db;
+	const minter = event.args.minter.toLowerCase() as Address;
 
-	await Ecosystem.upsert({
-		id: 'Frankencoin:MinterDeniedCounter',
-		create: {
+	// upsert status
+	await context.db
+		.insert(CommonEcosystem)
+		.values({
+			id: 'Frankencoin:MinterDeniedCounter',
 			value: '',
 			amount: 1n,
-		},
-		update: ({ current }) => ({
+		})
+		.onConflictDoUpdate((current) => ({
 			amount: current.amount + 1n,
-		}),
-	});
+		}));
 
-	await Minter.update({
-		id: event.args.minter,
-		data: {
-			denyMessage: event.args.message,
-			denyDate: event.block.timestamp,
-			denyTxHash: event.transaction.hash,
-			vetor: event.transaction.from,
-		},
-	});
-
-	await ActiveUser.upsert({
-		id: event.transaction.from,
-		create: {
-			lastActiveTime: event.block.timestamp,
-		},
-		update: () => ({
-			lastActiveTime: event.block.timestamp,
-		}),
-	});
-});
-
-ponder.on('Frankencoin:Transfer', async ({ event, context }) => {
-	const { Mint, Burn, MintBurnAddressMapper, ActiveUser, Ecosystem } = context.db;
-
-	await Ecosystem.upsert({
-		id: 'Frankencoin:TransferCounter',
-		create: {
-			value: '',
-			amount: 1n,
-		},
-		update: ({ current }) => ({
-			amount: current.amount + 1n,
-		}),
-	});
-
-	// emit Transfer(address(0), recipient, amount);
-	if (event.args.from === zeroAddress) {
-		const counter = await Ecosystem.upsert({
-			id: 'Frankencoin:MintCounter',
-			create: {
-				value: '',
-				amount: 1n,
-			},
-			update: ({ current }) => ({
-				amount: current.amount + 1n,
-			}),
-		});
-
-		await Mint.create({
-			id: `${event.args.to}-${event.block.number}-mint-${counter.amount}`,
-			data: {
-				to: event.args.to,
-				value: event.args.value,
-				blockheight: event.block.number,
-				timestamp: event.block.timestamp,
-			},
-		});
-
-		await Ecosystem.upsert({
-			id: 'Frankencoin:Mint',
-			create: {
-				value: '',
-				amount: event.args.value,
-			},
-			update: ({ current }) => ({
-				amount: current.amount + event.args.value,
-			}),
-		});
-
-		await MintBurnAddressMapper.upsert({
-			id: event.args.to.toLowerCase(),
-			create: {
-				mint: event.args.value,
-				burn: 0n,
-			},
-			update: ({ current }) => ({
-				mint: current.mint + event.args.value,
-			}),
-		});
-
-		await ActiveUser.upsert({
-			id: event.transaction.to as Address,
-			create: {
-				lastActiveTime: event.block.timestamp,
-			},
-			update: () => ({
-				lastActiveTime: event.block.timestamp,
-			}),
-		});
-
-		await updateTransactionLog({
-			context,
-			timestamp: event.block.timestamp,
-			kind: 'Frankencoin:Mint',
-			amount: event.args.value,
-			txHash: event.transaction.hash,
-		});
-	}
-
-	// emit Transfer(account, address(0), amount);
-	if (event.args.to === zeroAddress) {
-		const counter = await Ecosystem.upsert({
-			id: 'Frankencoin:BurnCounter',
-			create: {
-				value: '',
-				amount: 1n,
-			},
-			update: ({ current }) => ({
-				amount: current.amount + 1n,
-			}),
-		});
-
-		await Burn.create({
-			id: `${event.args.from}-${event.block.number}-burn-${counter.amount}`,
-			data: {
-				from: event.args.from,
-				value: event.args.value,
-				blockheight: event.block.number,
-				timestamp: event.block.timestamp,
-			},
-		});
-
-		await Ecosystem.upsert({
-			id: 'Frankencoin:Burn',
-			create: {
-				value: '',
-				amount: event.args.value,
-			},
-			update: ({ current }) => ({
-				amount: current.amount + event.args.value,
-			}),
-		});
-
-		await MintBurnAddressMapper.upsert({
-			id: event.args.from.toLowerCase(),
-			create: {
-				mint: 0n,
-				burn: event.args.value,
-			},
-			update: ({ current }) => ({
-				burn: current.burn + event.args.value,
-			}),
-		});
-
-		await ActiveUser.upsert({
-			id: event.transaction.from,
-			create: {
-				lastActiveTime: event.block.timestamp,
-			},
-			update: () => ({
-				lastActiveTime: event.block.timestamp,
-			}),
-		});
-
-		await updateTransactionLog({
-			context,
-			timestamp: event.block.timestamp,
-			kind: 'Frankencoin:Burn',
-			amount: event.args.value,
-			txHash: event.transaction.hash,
-		});
-	}
+	// upsert minter mapping
+	await context.db.update(FrankencoinMinter, { minter }).set((current) => ({
+		denyMessage: event.args.message,
+		denyDate: event.block.timestamp,
+		denyTxHash: event.transaction.hash,
+		vetor: event.transaction.from,
+	}));
 });
