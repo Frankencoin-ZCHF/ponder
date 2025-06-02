@@ -6,6 +6,6 @@ ponder.on('ERC20:Transfer', async ({ event, context }) => {
 	console.log(event.log.address);
 	console.log(event.args);
 
-	indexERC20MintBurn(event, context);
-	indexERC20Balance(event, context);
+	await indexERC20MintBurn(event, context);
+	await indexERC20Balance(event, context);
 });

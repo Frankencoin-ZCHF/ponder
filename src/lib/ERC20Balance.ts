@@ -32,6 +32,15 @@ export async function indexERC20Balance(
 	let balanceFrom = 0n;
 	let balanceTo = 0n;
 
+	// update balance from
+	if (from != zeroAddress) {
+		const balance = await context.db.update(ERC20BalanceMapping, { token, account: from }).set((current) => ({
+			updated,
+			balance: current.balance - value, // deduct balance
+		}));
+		balanceFrom = balance.balance;
+	}
+
 	// update balance to
 	if (to != zeroAddress) {
 		const balance = await context.db
@@ -49,15 +58,6 @@ export async function indexERC20Balance(
 				balance: current.balance + value,
 			}));
 		balanceTo = balance.balance;
-	}
-
-	// update balance from
-	if (from != zeroAddress) {
-		const balance = await context.db.update(ERC20BalanceMapping, { token, account: from }).set((current) => ({
-			updated,
-			balance: current.balance - value, // deduct balance
-		}));
-		balanceFrom = balance.balance;
 	}
 
 	// index balance history, entry
