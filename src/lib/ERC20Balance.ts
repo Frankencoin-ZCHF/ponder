@@ -4,7 +4,12 @@ import { Address, zeroAddress } from 'viem';
 
 export async function indexERC20Balance(
 	event: Event<'ERC20:Transfer' | 'ERC20PositionV1:Transfer' | 'ERC20PositionV2:Transfer'>,
-	context: Context<'ERC20:Transfer' | 'ERC20PositionV1:Transfer' | 'ERC20PositionV2:Transfer'>
+	context: Context<'ERC20:Transfer' | 'ERC20PositionV1:Transfer' | 'ERC20PositionV2:Transfer'>,
+	{
+		indexFrom = true,
+		indexTo = true,
+		indexEntry = true,
+	}: { indexFrom?: boolean; indexTo?: boolean; indexEntry?: boolean }
 ) {
 	const token = event.log.address.toLowerCase() as Address;
 	const from = event.args.from.toLowerCase() as Address;
@@ -33,7 +38,7 @@ export async function indexERC20Balance(
 	let balanceTo = 0n;
 
 	// update balance from
-	if (from != zeroAddress) {
+	if (from != zeroAddress && indexFrom) {
 		const balance = await context.db.update(ERC20BalanceMapping, { token, account: from }).set((current) => ({
 			updated,
 			balance: current.balance - value, // deduct balance
@@ -42,7 +47,7 @@ export async function indexERC20Balance(
 	}
 
 	// update balance to
-	if (to != zeroAddress) {
+	if (to != zeroAddress && indexTo) {
 		const balance = await context.db
 			.insert(ERC20BalanceMapping)
 			.values({
@@ -61,18 +66,19 @@ export async function indexERC20Balance(
 	}
 
 	// index balance history, entry
-	const entry = await context.db.insert(ERC20Balance).values({
-		txHash: event.transaction.hash,
-		token,
-		created: updated,
-		blockheight: event.block.number,
-		count: status.balance,
-		from,
-		to,
-		amount: value,
-		balanceFrom,
-		balanceTo,
-	});
-
-	// console.log(entry);
+	if (indexEntry) {
+		const entry = await context.db.insert(ERC20Balance).values({
+			txHash: event.transaction.hash,
+			token,
+			created: updated,
+			blockheight: event.block.number,
+			count: status.balance,
+			from,
+			to,
+			amount: value,
+			balanceFrom,
+			balanceTo,
+		});
+		// console.log(entry);
+	}
 }

@@ -1,12 +1,18 @@
-import { onchainTable } from 'ponder';
+import { onchainTable, primaryKey } from 'ponder';
 
 export const CommonActiveUser = onchainTable('ActiveUser', (t) => ({
 	id: t.text().primaryKey(),
 	lastActiveTime: t.bigint().notNull(),
 }));
 
-export const CommonEcosystem = onchainTable('Ecosystem', (t) => ({
-	id: t.text().primaryKey(),
-	value: t.text(),
-	amount: t.bigint(),
-}));
+export const CommonEcosystem = onchainTable(
+	'Ecosystem',
+	(t) => ({
+		id: t.text().notNull(),
+		value: t.text().notNull(),
+		amount: t.bigint().notNull(),
+	}),
+	(table) => ({
+		pk: primaryKey({ columns: [table.id] }),
+	})
+);
