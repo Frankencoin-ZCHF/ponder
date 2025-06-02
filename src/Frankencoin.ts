@@ -1,12 +1,13 @@
 import { ponder } from 'ponder:registry';
 import { CommonEcosystem, FrankencoinMinter, FrankencoinProfitLoss } from 'ponder:schema';
-import { Address, parseEther } from 'viem';
+import { Address, erc20Abi, parseEther } from 'viem';
+import { addr, chain } from '../ponder.config';
 
 ponder.on('Frankencoin:Profit', async ({ event, context }) => {
 	const minter = event.args.reportingMinter.toLowerCase() as Address;
 	const fpsTotalSupply = await context.client.readContract({
-		abi: context.contracts.Equity.abi,
-		address: context.contracts.Equity.address,
+		abi: erc20Abi,
+		address: addr[chain.id].equity,
 		functionName: 'totalSupply',
 	});
 	const perToken = (event.args.amount * parseEther('1')) / fpsTotalSupply;
@@ -96,8 +97,8 @@ ponder.on('Frankencoin:Profit', async ({ event, context }) => {
 ponder.on('Frankencoin:Loss', async ({ event, context }) => {
 	const minter = event.args.reportingMinter.toLowerCase() as Address;
 	const fpsTotalSupply = await context.client.readContract({
-		abi: context.contracts.Equity.abi,
-		address: context.contracts.Equity.address,
+		abi: erc20Abi,
+		address: addr[chain.id].equity,
 		functionName: 'totalSupply',
 	});
 	const perToken = -(event.args.amount * parseEther('1')) / fpsTotalSupply;
