@@ -24,7 +24,7 @@ export const config = {
 		startMintingHubV1: 63633900,
 		startMintingHubV2: 63633900,
 		blockrange: undefined,
-		maxRequestsPerSecond: 5,
+		maxRequestsPerSecond: 10,
 		pollingInterval: 5_000,
 	},
 };

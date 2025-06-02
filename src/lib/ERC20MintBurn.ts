@@ -47,16 +47,16 @@ export async function indexERC20MintBurn(
 		}));
 
 		// global updating
-		await context.db
-			.insert(CommonEcosystem)
-			.values({
-				id: 'Frankencoin:Mint',
-				value: '',
-				amount: value,
-			})
-			.onConflictDoUpdate((current) => ({
-				amount: current.amount ? current.amount + value : value,
-			}));
+		// await context.db
+		// 	.insert(CommonEcosystem)
+		// 	.values({
+		// 		id: 'Frankencoin:Mint',
+		// 		value: '',
+		// 		amount: value,
+		// 	})
+		// 	.onConflictDoUpdate((current) => ({
+		// 		amount: current.amount ? current.amount + value : value,
+		// 	}));
 
 		// balance updating
 		await context.db
@@ -107,7 +107,7 @@ export async function indexERC20MintBurn(
 			token,
 			created: updated,
 			blockheight: event.block.number,
-			count: counter.mint,
+			count: counter.burn,
 			from,
 			amount: value,
 		});
@@ -117,17 +117,17 @@ export async function indexERC20MintBurn(
 			supply: current.supply - value,
 		}));
 
-		// global updating
-		await context.db
-			.insert(CommonEcosystem)
-			.values({
-				id: 'Frankencoin:Burn',
-				value: '',
-				amount: value,
-			})
-			.onConflictDoUpdate((current) => ({
-				amount: current.amount ? current.amount + value : value,
-			}));
+		// // global updating
+		// await context.db
+		// 	.insert(CommonEcosystem)
+		// 	.values({
+		// 		id: 'Frankencoin:Burn',
+		// 		value: '',
+		// 		amount: value,
+		// 	})
+		// 	.onConflictDoUpdate((current) => ({
+		// 		amount: current.amount ? current.amount + value : value,
+		// 	}));
 
 		// mint burn mapper updating
 		await context.db
