@@ -1,5 +1,5 @@
 import { createConfig, factory } from 'ponder';
-import { mainnet } from 'viem/chains';
+import { arbitrum, avalanche, base, gnosis, mainnet, optimism, polygon, sonic } from 'viem/chains';
 import { erc20Abi, http } from 'viem';
 import {
 	deployment,
@@ -16,13 +16,69 @@ import {
 export const chain = mainnet;
 export const id = chain.id!;
 export const addr = deployment.ADDRESS;
+
 export const config = {
+	// core deployment
 	[chain.id]: {
-		rpc: process.env.RPC_URL_MAINNET ?? mainnet.rpcUrls.default.http[0],
+		rpc: `https://eth-mainnet.g.alchemy.com/v2/${process.env.ALCHEMY_RPC_KEY}`,
+		maxRequestsPerSecond: 5,
+		pollingInterval: 5_000,
 		startFrankencoin: 18451518,
 		startMintingHubV1: 18451536,
 		startMintingHubV2: 18451536,
-		blockrange: undefined,
+	},
+
+	// multichain support
+	[polygon.id]: {
+		rpc: `https://polygon-mainnet.g.alchemy.com/v2/${process.env.ALCHEMY_RPC_KEY}`,
+		maxRequestsPerSecond: 5,
+		pollingInterval: 5_000,
+	},
+	[arbitrum.id]: {
+		rpc: `https://arb-mainnet.g.alchemy.com/v2/${process.env.ALCHEMY_RPC_KEY}`,
+		startFrankencoin: 18451518,
+		startMintingHubV1: 18451536,
+		startMintingHubV2: 18451536,
+		maxRequestsPerSecond: 5,
+		pollingInterval: 5_000,
+	},
+	[optimism.id]: {
+		rpc: `https://opt-mainnet.g.alchemy.com/v2/${process.env.ALCHEMY_RPC_KEY}`,
+		startFrankencoin: 18451518,
+		startMintingHubV1: 18451536,
+		startMintingHubV2: 18451536,
+		maxRequestsPerSecond: 5,
+		pollingInterval: 5_000,
+	},
+	[base.id]: {
+		rpc: `https://base-mainnet.g.alchemy.com/v2/${process.env.ALCHEMY_RPC_KEY}`,
+		startFrankencoin: 18451518,
+		startMintingHubV1: 18451536,
+		startMintingHubV2: 18451536,
+		maxRequestsPerSecond: 5,
+		pollingInterval: 5_000,
+	},
+	[avalanche.id]: {
+		rpc: `https://avax-mainnet.g.alchemy.com/v2/${process.env.ALCHEMY_RPC_KEY}`,
+		startFrankencoin: 18451518,
+		startMintingHubV1: 18451536,
+		startMintingHubV2: 18451536,
+		maxRequestsPerSecond: 5,
+		pollingInterval: 5_000,
+	},
+	[gnosis.id]: {
+		rpc: `https://gnosis-mainnet.g.alchemy.com/v2/${process.env.ALCHEMY_RPC_KEY}`,
+		startFrankencoin: 18451518,
+		startMintingHubV1: 18451536,
+		startMintingHubV2: 18451536,
+		maxRequestsPerSecond: 5,
+		pollingInterval: 5_000,
+	},
+	[sonic.id]: {
+		rpc: `https://sonic-mainnet.g.alchemy.com/v2/${process.env.ALCHEMY_RPC_KEY}`,
+		startFrankencoin: 18451518,
+		startMintingHubV1: 18451536,
+		startMintingHubV2: 18451536,
 		maxRequestsPerSecond: 5,
 		pollingInterval: 5_000,
 	},
@@ -36,7 +92,7 @@ if (openPositionEventV2 === undefined) throw new Error('openPositionEventV2 not 
 
 export default createConfig({
 	chains: {
-		// ### NATIVE CHAIN ###
+		// ### NATIVE CHAIN SUPPORT ###
 		[chain.name]: {
 			id: id,
 			maxRequestsPerSecond: config[chain.id].maxRequestsPerSecond,
@@ -44,13 +100,49 @@ export default createConfig({
 			rpc: http(config[chain.id].rpc),
 		},
 
-		// ### MULTI CHAIN ###
-		// [polygon.name]: {
-		// 	id: polygon.id,
-		// 	maxRequestsPerSecond: config[chain.id].maxRequestsPerSecond,
-		// 	pollingInterval: config[chain.id].pollingInterval,
-		// 	rpc: http(config[chain.id].rpc),
-		// },
+		// ### MULTI CHAIN SUPPORT ###
+		[polygon.name]: {
+			id: polygon.id,
+			maxRequestsPerSecond: config[polygon.id].maxRequestsPerSecond,
+			pollingInterval: config[polygon.id].pollingInterval,
+			rpc: http(config[polygon.id].rpc),
+		},
+		[arbitrum.name]: {
+			id: arbitrum.id,
+			maxRequestsPerSecond: config[arbitrum.id].maxRequestsPerSecond,
+			pollingInterval: config[arbitrum.id].pollingInterval,
+			rpc: http(config[arbitrum.id].rpc),
+		},
+		[optimism.name]: {
+			id: optimism.id,
+			maxRequestsPerSecond: config[optimism.id].maxRequestsPerSecond,
+			pollingInterval: config[optimism.id].pollingInterval,
+			rpc: http(config[optimism.id].rpc),
+		},
+		[base.name]: {
+			id: base.id,
+			maxRequestsPerSecond: config[base.id].maxRequestsPerSecond,
+			pollingInterval: config[base.id].pollingInterval,
+			rpc: http(config[base.id].rpc),
+		},
+		[avalanche.name]: {
+			id: avalanche.id,
+			maxRequestsPerSecond: config[avalanche.id].maxRequestsPerSecond,
+			pollingInterval: config[avalanche.id].pollingInterval,
+			rpc: http(config[avalanche.id].rpc),
+		},
+		[gnosis.name]: {
+			id: gnosis.id,
+			maxRequestsPerSecond: config[gnosis.id].maxRequestsPerSecond,
+			pollingInterval: config[gnosis.id].pollingInterval,
+			rpc: http(config[gnosis.id].rpc),
+		},
+		[sonic.name]: {
+			id: sonic.id,
+			maxRequestsPerSecond: config[sonic.id].maxRequestsPerSecond,
+			pollingInterval: config[sonic.id].pollingInterval,
+			rpc: http(config[sonic.id].rpc),
+		},
 	},
 	contracts: {
 		// ### NATIVE CONTRACT ###
@@ -127,6 +219,11 @@ export default createConfig({
 					address: [addr[chain.id].frankencoin, addr[chain.id].equity],
 					startBlock: config[chain.id].startFrankencoin,
 				},
+				// bridged frankencoin in multichains
+				// [polygon.name]: {
+				// 	address: [addr[polygon.id]],
+				// 	startBlock: config[polygon.id].startBridgedFrankencoin
+				// }
 			},
 		},
 
@@ -152,6 +249,18 @@ export default createConfig({
 			startBlock: config[chain.id].startMintingHubV2,
 		},
 
+		// ### CROSS CHAIN SUPPORT ###
+		// transferReference
+		// savingsReferral
+
+		// ccipAdmin
+		// ccipTokenPool
+		// ccipBridgeAccounting
+		// ccipGovernanceSender
+
 		// ### MULTI CHAIN CONTRACTS ###
+		// ccipAdmin
+		// ccipBridgedFrankencoin
+		// ccipBridgedGovernance
 	},
 });
