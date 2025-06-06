@@ -418,6 +418,96 @@ export default createSchema((p) => ({
 	}),
 
 	// -------------------------------------------------------------------------
+	// SavingsRef
+	// -------------------------------------------------------------------------
+	SavingsRefRateProposed: p.createTable({
+		id: p.string(),
+		created: p.bigint(),
+		blockheight: p.bigint(),
+		txHash: p.string(),
+		proposer: p.string(),
+		nextRate: p.int(),
+		nextChange: p.int(),
+	}),
+
+	SavingsRefRateChanged: p.createTable({
+		id: p.string(),
+		created: p.bigint(),
+		blockheight: p.bigint(),
+		txHash: p.string(),
+		approvedRate: p.int(),
+	}),
+
+	SavingsRefBalance: p.createTable({
+		id: p.string(), // address in lower case
+		created: p.bigint(), // first timestamp
+		blockheight: p.bigint(), // first blockheight
+		updated: p.bigint(),
+		interest: p.bigint(),
+		balance: p.bigint(), // balance of account
+	}),
+
+	SavingsRefSaved: p.createTable({
+		id: p.string(),
+		created: p.bigint(),
+		blockheight: p.bigint(),
+		txHash: p.string(),
+		account: p.string(),
+		amount: p.bigint(),
+		rate: p.int(),
+		total: p.bigint(),
+		balance: p.bigint(),
+	}),
+
+	SavingsRefSavedMapping: p.createTable({
+		id: p.string(), // address in lower case
+		created: p.bigint(), // first timestamp
+		blockheight: p.bigint(), // first blockheight
+		updated: p.bigint(), // latest timestamp
+		amount: p.bigint(), // total amount
+	}),
+
+	SavingsRefInterest: p.createTable({
+		id: p.string(),
+		created: p.bigint(),
+		blockheight: p.bigint(),
+		txHash: p.string(),
+		account: p.string(),
+		amount: p.bigint(),
+		rate: p.int(),
+		total: p.bigint(),
+		balance: p.bigint(),
+	}),
+
+	SavingsRefInterestMapping: p.createTable({
+		id: p.string(),
+		created: p.bigint(),
+		blockheight: p.bigint(),
+		updated: p.bigint(),
+		amount: p.bigint(),
+	}),
+
+	SavingsRefWithdrawn: p.createTable({
+		id: p.string(),
+		created: p.bigint(),
+		blockheight: p.bigint(),
+		txHash: p.string(),
+		account: p.string(),
+		amount: p.bigint(),
+		rate: p.int(),
+		total: p.bigint(),
+		balance: p.bigint(),
+	}),
+
+	SavingsRefWithdrawnMapping: p.createTable({
+		id: p.string(),
+		created: p.bigint(),
+		blockheight: p.bigint(),
+		updated: p.bigint(),
+		amount: p.bigint(),
+	}),
+
+	// -------------------------------------------------------------------------
 	// COMMON
 	// -------------------------------------------------------------------------
 	ActiveUser: p.createTable({

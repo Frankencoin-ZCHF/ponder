@@ -26,7 +26,7 @@ export const CONFIG = {
 		startMintingHubV1: 18451536,
 		startMintingHubV2: 18451536,
 		startReferenceTransfer: 22438054,
-		startSavingsDetached: 22438054, // FIXME: update block height
+		startSavingsDetached: 22536327,
 		blockrange: undefined,
 		maxRequestsPerSecond: 5,
 		pollingInterval: 5_000,
@@ -141,12 +141,13 @@ export default createConfig({
 			startBlock: config.startReferenceTransfer,
 			maxBlockRange: config.blockrange,
 		},
-		// SavingsDetached: {
-		// 	network: chain.name,
-		// 	abi: SavingsABI,
-		// 	address: ADDR.savingsDetached as Address,
-		// 	startBlock: config.startSavingsDetached,
-		// 	maxBlockRange: config.blockrange,
-		// },
+		SavingsRef: {
+			network: chain.name,
+			abi: SavingsABI,
+			// hardcoded for now to avoid conflicts with NPM version and multichain
+			address: (ADDR.savingsDetached as Address) ?? '0x27d9AD987BdE08a0d083ef7e0e4043C857A17B38',
+			startBlock: config.startSavingsDetached,
+			maxBlockRange: config.blockrange,
+		},
 	},
 });
