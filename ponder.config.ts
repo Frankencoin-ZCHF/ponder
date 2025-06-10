@@ -122,7 +122,8 @@ export default createConfig({
 			// V2
 			network: chain.name,
 			abi: SavingsABI,
-			address: ADDR.savings as Address,
+			// hardcoded for now to avoid conflicts with NPM version and multichain
+			address: (ADDR.savingsDetached as Address) ?? '0x27d9AD987BdE08a0d083ef7e0e4043C857A17B38',
 			startBlock: config.startMintingHubV2,
 			maxBlockRange: config.blockrange,
 		},
