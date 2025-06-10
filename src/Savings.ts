@@ -1,7 +1,7 @@
 import { ponder } from '@/generated';
-import { ADDRESS, SavingsABI } from '@frankencoin/zchf';
+import { SavingsABI } from '@frankencoin/zchf';
 import { ADDR } from '../ponder.config';
-import { Address, Chain, parseEther } from 'viem';
+import { Address, parseEther } from 'viem';
 import { updateTransactionLog } from './Analytic';
 
 ponder.on('Savings:RateProposed', async ({ event, context }) => {
@@ -36,8 +36,6 @@ ponder.on('Savings:RateProposed', async ({ event, context }) => {
 ponder.on('Savings:RateChanged', async ({ event, context }) => {
 	const { SavingsRateChanged, Ecosystem } = context.db;
 	const { newRate } = event.args;
-
-	console.log(newRate);
 
 	const counter = await Ecosystem.upsert({
 		id: 'Savings:RateChangedCounter',
@@ -85,7 +83,7 @@ ponder.on('Savings:Saved', async ({ event, context }) => {
 
 	const ratePPM = await client.readContract({
 		abi: SavingsABI,
-		address: (ADDR.savingsDetached as Address) ?? '0x27d9AD987BdE08a0d083ef7e0e4043C857A17B38',
+		address: '0x27d9AD987BdE08a0d083ef7e0e4043C857A17B38',
 		functionName: 'currentRatePPM',
 	});
 
@@ -199,7 +197,7 @@ ponder.on('Savings:InterestCollected', async ({ event, context }) => {
 
 	const ratePPM = await client.readContract({
 		abi: SavingsABI,
-		address: (ADDR.savingsDetached as Address) ?? '0x27d9AD987BdE08a0d083ef7e0e4043C857A17B38',
+		address: '0x27d9AD987BdE08a0d083ef7e0e4043C857A17B38',
 		functionName: 'currentRatePPM',
 	});
 
@@ -313,7 +311,7 @@ ponder.on('Savings:Withdrawn', async ({ event, context }) => {
 
 	const ratePPM = await client.readContract({
 		abi: SavingsABI,
-		address: (ADDR.savingsDetached as Address) ?? '0x27d9AD987BdE08a0d083ef7e0e4043C857A17B38',
+		address: '0x27d9AD987BdE08a0d083ef7e0e4043C857A17B38',
 		functionName: 'currentRatePPM',
 	});
 
