@@ -1,5 +1,6 @@
 import { ponder } from '@/generated';
-import { PositionV2ABI as PositionABI } from '@frankencoin/zchf';
+import { ADDRESS, PositionV2ABI as PositionABI } from '@frankencoin/zchf';
+import { Address, Chain } from 'viem';
 
 ponder.on('PositionV2:MintingUpdate', async ({ event, context }) => {
 	const { client } = context;
@@ -42,7 +43,7 @@ ponder.on('PositionV2:MintingUpdate', async ({ event, context }) => {
 
 	const baseRatePPM = await client.readContract({
 		abi: Savings.abi,
-		address: Savings.address,
+		address: ADDRESS[context.network!.chainId as Chain['id']].savings as Address,
 		functionName: 'currentRatePPM',
 	});
 
