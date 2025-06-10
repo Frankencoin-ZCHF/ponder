@@ -26,7 +26,7 @@ export const CONFIG = {
 		startMintingHubV1: 18451536,
 		startMintingHubV2: 18451536,
 		startReferenceTransfer: 22438054,
-		startSavingsDetached: 22438054, // FIXME: update block height
+		startSavingsDetached: 22536327, // FIXME: update block height
 		blockrange: undefined,
 		maxRequestsPerSecond: 5,
 		pollingInterval: 5_000,
