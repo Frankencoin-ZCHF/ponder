@@ -2,6 +2,7 @@ import { createConfig, factory } from 'ponder';
 import { arbitrum, avalanche, base, gnosis, mainnet, optimism, polygon, sonic } from 'viem/chains';
 import { erc20Abi, http } from 'viem';
 import {
+	BridgedFrankencoinABI,
 	deployment,
 	EquityABI,
 	FrankencoinABI,
@@ -33,54 +34,43 @@ export const config = {
 		rpc: `https://polygon-mainnet.g.alchemy.com/v2/${process.env.ALCHEMY_RPC_KEY}`,
 		maxRequestsPerSecond: 5,
 		pollingInterval: 5_000,
+		startBridgedFrankencoin: 72307201,
 	},
 	[arbitrum.id]: {
 		rpc: `https://arb-mainnet.g.alchemy.com/v2/${process.env.ALCHEMY_RPC_KEY}`,
-		startFrankencoin: 18451518,
-		startMintingHubV1: 18451536,
-		startMintingHubV2: 18451536,
 		maxRequestsPerSecond: 5,
 		pollingInterval: 5_000,
+		startBridgedFrankencoin: 343470012,
 	},
 	[optimism.id]: {
 		rpc: `https://opt-mainnet.g.alchemy.com/v2/${process.env.ALCHEMY_RPC_KEY}`,
-		startFrankencoin: 18451518,
-		startMintingHubV1: 18451536,
-		startMintingHubV2: 18451536,
 		maxRequestsPerSecond: 5,
 		pollingInterval: 5_000,
+		startBridgedFrankencoin: 136678320,
 	},
 	[base.id]: {
 		rpc: `https://base-mainnet.g.alchemy.com/v2/${process.env.ALCHEMY_RPC_KEY}`,
-		startFrankencoin: 18451518,
-		startMintingHubV1: 18451536,
-		startMintingHubV2: 18451536,
 		maxRequestsPerSecond: 5,
 		pollingInterval: 5_000,
+		startBridgedFrankencoin: 31080190,
 	},
 	[avalanche.id]: {
 		rpc: `https://avax-mainnet.g.alchemy.com/v2/${process.env.ALCHEMY_RPC_KEY}`,
-		startFrankencoin: 18451518,
-		startMintingHubV1: 18451536,
-		startMintingHubV2: 18451536,
 		maxRequestsPerSecond: 5,
 		pollingInterval: 5_000,
+		startBridgedFrankencoin: 63235410,
 	},
 	[gnosis.id]: {
 		rpc: `https://gnosis-mainnet.g.alchemy.com/v2/${process.env.ALCHEMY_RPC_KEY}`,
-		startFrankencoin: 18451518,
-		startMintingHubV1: 18451536,
-		startMintingHubV2: 18451536,
 		maxRequestsPerSecond: 5,
 		pollingInterval: 5_000,
+		startBridgedFrankencoin: 40394536,
 	},
 	[sonic.id]: {
 		rpc: `https://sonic-mainnet.g.alchemy.com/v2/${process.env.ALCHEMY_RPC_KEY}`,
-		startFrankencoin: 18451518,
-		startMintingHubV1: 18451536,
-		startMintingHubV2: 18451536,
 		maxRequestsPerSecond: 5,
 		pollingInterval: 5_000,
+		startBridgedFrankencoin: 31589491,
 	},
 };
 
@@ -148,10 +138,41 @@ export default createConfig({
 		// ### NATIVE CONTRACT ###
 		Frankencoin: {
 			// Core
-			chain: chain.name,
 			abi: FrankencoinABI,
-			address: addr[chain.id].frankencoin,
-			startBlock: config[chain.id].startFrankencoin,
+			chain: {
+				[chain.name]: {
+					address: addr[chain.id].frankencoin,
+					startBlock: config[chain.id].startFrankencoin,
+				},
+				[polygon.name]: {
+					address: addr[polygon.id].ccipBridgedFrankencoin,
+					startBlock: config[polygon.id].startBridgedFrankencoin,
+				},
+				[arbitrum.name]: {
+					address: addr[arbitrum.id].ccipBridgedFrankencoin,
+					startBlock: config[arbitrum.id].startBridgedFrankencoin,
+				},
+				[optimism.name]: {
+					address: addr[optimism.id].ccipBridgedFrankencoin,
+					startBlock: config[optimism.id].startBridgedFrankencoin,
+				},
+				[base.name]: {
+					address: addr[base.id].ccipBridgedFrankencoin,
+					startBlock: config[base.id].startBridgedFrankencoin,
+				},
+				[avalanche.name]: {
+					address: addr[avalanche.id].ccipBridgedFrankencoin,
+					startBlock: config[avalanche.id].startBridgedFrankencoin,
+				},
+				[gnosis.name]: {
+					address: addr[gnosis.id].ccipBridgedFrankencoin,
+					startBlock: config[gnosis.id].startBridgedFrankencoin,
+				},
+				[sonic.name]: {
+					address: addr[sonic.id].ccipBridgedFrankencoin,
+					startBlock: config[sonic.id].startBridgedFrankencoin,
+				},
+			},
 		},
 		Equity: {
 			// Core
@@ -200,14 +221,14 @@ export default createConfig({
 			// V2
 			chain: chain.name,
 			abi: SavingsV2ABI,
-			address: addr[chain.id].savings,
+			address: addr[chain.id].savingsV2,
 			startBlock: config[chain.id].startMintingHubV2,
 		},
 		RollerV2: {
 			// V2
 			chain: chain.name,
 			abi: PositionRollerV2ABI,
-			address: addr[chain.id].roller,
+			address: addr[chain.id].rollerV2,
 			startBlock: config[chain.id].startMintingHubV2,
 		},
 
@@ -262,5 +283,21 @@ export default createConfig({
 		// ccipAdmin
 		// ccipBridgedFrankencoin
 		// ccipBridgedGovernance
+
+		// ### Bridged Frankencoin Events
+		// BridgedFrankencoin: {
+		// 	abi: BridgedFrankencoinABI,
+		// 	chain: {
+		// 		[polygon.name]: {
+		// 			address: addr[polygon.id].ccipBridgedFrankencoin,
+		// 			startBlock: config[polygon.id].startBridgedFrankencoin,
+		// 		},
+		// 		// bridged frankencoin in multichains
+		// 		// [polygon.name]: {
+		// 		// 	address: [addr[polygon.id]],
+		// 		// 	startBlock: config[polygon.id].startBridgedFrankencoin
+		// 		// }
+		// 	},
+		// },
 	},
 });
