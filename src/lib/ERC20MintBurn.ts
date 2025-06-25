@@ -11,6 +11,7 @@ export async function indexERC20MintBurn(
 	const to = event.args.to.toLowerCase() as Address;
 	const value = event.args.value;
 	const updated = event.block.timestamp;
+	const chainId = context.chain.id;
 
 	// ### minting tokens ###
 	if (from == zeroAddress) {
@@ -18,6 +19,7 @@ export async function indexERC20MintBurn(
 		const status = await context.db
 			.insert(ERC20Status)
 			.values({
+				chainId,
 				token,
 				updated,
 				mint: 1n,
@@ -32,6 +34,7 @@ export async function indexERC20MintBurn(
 
 		// flat indexing
 		await context.db.insert(ERC20Mint).values({
+			chainId,
 			txHash: event.transaction.hash,
 			token,
 			created: updated,
@@ -42,7 +45,7 @@ export async function indexERC20MintBurn(
 		});
 
 		// update status
-		await context.db.update(ERC20Status, { token }).set((current) => ({
+		await context.db.update(ERC20Status, { chainId, token }).set((current) => ({
 			supply: current.supply + value,
 		}));
 
@@ -62,6 +65,7 @@ export async function indexERC20MintBurn(
 		await context.db
 			.insert(ERC20BalanceMapping)
 			.values({
+				chainId,
 				token,
 				updated,
 				account: to,
@@ -89,6 +93,7 @@ export async function indexERC20MintBurn(
 		const counter = await context.db
 			.insert(ERC20Status)
 			.values({
+				chainId,
 				token,
 				updated,
 				mint: 0n,
@@ -103,6 +108,7 @@ export async function indexERC20MintBurn(
 
 		// flat indexing
 		await context.db.insert(ERC20Burn).values({
+			chainId,
 			txHash: event.transaction.hash,
 			token,
 			created: updated,
@@ -113,7 +119,7 @@ export async function indexERC20MintBurn(
 		});
 
 		// update status
-		await context.db.update(ERC20Status, { token }).set((current) => ({
+		await context.db.update(ERC20Status, { chainId, token }).set((current) => ({
 			supply: current.supply - value,
 		}));
 
@@ -133,6 +139,7 @@ export async function indexERC20MintBurn(
 		await context.db
 			.insert(ERC20BalanceMapping)
 			.values({
+				chainId,
 				token,
 				account: from,
 				updated,

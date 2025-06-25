@@ -4,6 +4,15 @@ import { CommonEcosystem, FrankencoinMinter, FrankencoinProfitLoss } from 'ponde
 import { Address, erc20Abi, parseEther } from 'viem';
 import { mainnet } from 'viem/chains';
 
+/*
+Events
+
+Frankencoin:Profit
+Frankencoin:Loss
+Frankencoin:MinterApplied
+Frankencoin:MinterDenied
+*/
+
 ponder.on('Frankencoin:Profit', async ({ event, context }) => {
 	const minter = event.args.reportingMinter.toLowerCase() as Address;
 	const fpsTotalSupply = await context.client.readContract({

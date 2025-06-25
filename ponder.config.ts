@@ -13,7 +13,6 @@ import {
 	PositionV2ABI,
 	SavingsV2ABI,
 	UniswapV3PoolABI,
-	OCR2AggregatorABI,
 } from '@frankencoin/zchf';
 
 export const addr = ADDRESS;
@@ -22,7 +21,7 @@ export const config = {
 	// core deployment
 	[mainnet.id]: {
 		rpc: `https://eth-mainnet.g.alchemy.com/v2/${process.env.ALCHEMY_RPC_KEY}`,
-		// maxRequestsPerSecond: 5,
+		maxRequestsPerSecond: 5,
 		pollingInterval: 5_000,
 		startFrankencoin: 18451518,
 		startMintingHubV1: 18451536,
@@ -87,7 +86,7 @@ export default createConfig({
 		// ### NATIVE CHAIN SUPPORT ###
 		[mainnet.name]: {
 			id: mainnet.id,
-			// maxRequestsPerSecond: config[mainnet.id].maxRequestsPerSecond,
+			maxRequestsPerSecond: config[mainnet.id].maxRequestsPerSecond,
 			pollingInterval: config[mainnet.id].pollingInterval,
 			rpc: http(config[mainnet.id].rpc),
 		},
@@ -249,11 +248,34 @@ export default createConfig({
 					address: [addr[mainnet.id].frankencoin, addr[mainnet.id].equity],
 					startBlock: config[mainnet.id].startFrankencoin,
 				},
-				// bridged frankencoin in multichains
-				// [polygon.name]: {
-				// 	address: [addr[polygon.id]],
-				// 	startBlock: config[polygon.id].startBridgedFrankencoin
-				// }
+				[polygon.name]: {
+					address: [addr[polygon.id].ccipBridgedFrankencoin],
+					startBlock: config[polygon.id].startBridgedFrankencoin,
+				},
+				[arbitrum.name]: {
+					address: [addr[arbitrum.id].ccipBridgedFrankencoin],
+					startBlock: config[arbitrum.id].startBridgedFrankencoin,
+				},
+				[optimism.name]: {
+					address: [addr[optimism.id].ccipBridgedFrankencoin],
+					startBlock: config[optimism.id].startBridgedFrankencoin,
+				},
+				[base.name]: {
+					address: [addr[base.id].ccipBridgedFrankencoin],
+					startBlock: config[base.id].startBridgedFrankencoin,
+				},
+				[avalanche.name]: {
+					address: [addr[avalanche.id].ccipBridgedFrankencoin],
+					startBlock: config[avalanche.id].startBridgedFrankencoin,
+				},
+				[gnosis.name]: {
+					address: [addr[gnosis.id].ccipBridgedFrankencoin],
+					startBlock: config[gnosis.id].startBridgedFrankencoin,
+				},
+				[sonic.name]: {
+					address: [addr[sonic.id].ccipBridgedFrankencoin],
+					startBlock: config[sonic.id].startBridgedFrankencoin,
+				},
 			},
 		},
 

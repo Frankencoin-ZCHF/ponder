@@ -5,6 +5,7 @@ import { onchainTable, primaryKey } from 'ponder';
 export const ERC20Status = onchainTable(
 	'Status',
 	(t) => ({
+		chainId: t.integer().notNull(), // chain id
 		token: t.hex().notNull(), // token contract
 		updated: t.bigint().notNull(), // latest timestamp
 		mint: t.bigint().notNull(), // counters
@@ -13,7 +14,7 @@ export const ERC20Status = onchainTable(
 		supply: t.bigint().notNull(), // amount of tokens
 	}),
 	(table) => ({
-		pk: primaryKey({ columns: [table.token] }),
+		pk: primaryKey({ columns: [table.chainId, table.token] }),
 	})
 );
 
@@ -22,6 +23,7 @@ export const ERC20Status = onchainTable(
 export const ERC20Mint = onchainTable(
 	'Mint',
 	(t) => ({
+		chainId: t.integer().notNull(),
 		txHash: t.hex(),
 		token: t.hex().notNull(),
 		created: t.bigint().notNull(),
@@ -31,13 +33,14 @@ export const ERC20Mint = onchainTable(
 		amount: t.bigint().notNull(),
 	}),
 	(table) => ({
-		pk: primaryKey({ columns: [table.token, table.to, table.count] }),
+		pk: primaryKey({ columns: [table.chainId, table.token, table.to, table.count] }),
 	})
 );
 
 export const ERC20Burn = onchainTable(
 	'Burn',
 	(t) => ({
+		chainId: t.integer().notNull(),
 		txHash: t.hex(),
 		token: t.hex().notNull(),
 		created: t.bigint().notNull(),
@@ -47,7 +50,7 @@ export const ERC20Burn = onchainTable(
 		amount: t.bigint().notNull(),
 	}),
 	(table) => ({
-		pk: primaryKey({ columns: [table.token, table.from, table.count] }),
+		pk: primaryKey({ columns: [table.chainId, table.token, table.from, table.count] }),
 	})
 );
 
@@ -56,6 +59,7 @@ export const ERC20Burn = onchainTable(
 export const ERC20Balance = onchainTable(
 	'Balance',
 	(t) => ({
+		chainId: t.integer().notNull(),
 		txHash: t.hex().notNull(),
 		token: t.hex().notNull(),
 		created: t.bigint().notNull(),
@@ -68,13 +72,14 @@ export const ERC20Balance = onchainTable(
 		balanceTo: t.bigint().notNull(),
 	}),
 	(table) => ({
-		pk: primaryKey({ columns: [table.token, table.count] }),
+		pk: primaryKey({ columns: [table.chainId, table.token, table.count] }),
 	})
 );
 
 export const ERC20BalanceMapping = onchainTable(
 	'Mapping',
 	(t) => ({
+		chainId: t.integer().notNull(),
 		token: t.hex().notNull(),
 		updated: t.bigint().notNull(),
 		account: t.hex().notNull(),
@@ -83,6 +88,6 @@ export const ERC20BalanceMapping = onchainTable(
 		balance: t.bigint().notNull(),
 	}),
 	(table) => ({
-		pk: primaryKey({ columns: [table.token, table.account] }),
+		pk: primaryKey({ columns: [table.chainId, table.token, table.account] }),
 	})
 );

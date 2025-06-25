@@ -16,11 +16,13 @@ export async function indexERC20Balance(
 	const to = event.args.to.toLowerCase() as Address;
 	const value = event.args.value;
 	const updated = event.block.timestamp;
+	const chainId = context.chain.id;
 
 	// update status
 	const status = await context.db
 		.insert(ERC20Status)
 		.values({
+			chainId,
 			token,
 			updated,
 			mint: 0n,
@@ -39,10 +41,12 @@ export async function indexERC20Balance(
 
 	// update balance from
 	if (from != zeroAddress && indexFrom) {
-		const balance = await context.db.update(ERC20BalanceMapping, { token, account: from }).set((current) => ({
-			updated,
-			balance: current.balance - value, // deduct balance
-		}));
+		const balance = await context.db
+			.update(ERC20BalanceMapping, { chainId, token, account: from })
+			.set((current) => ({
+				updated,
+				balance: current.balance - value, // deduct balance
+			}));
 		balanceFrom = balance.balance;
 	}
 
@@ -51,6 +55,7 @@ export async function indexERC20Balance(
 		const balance = await context.db
 			.insert(ERC20BalanceMapping)
 			.values({
+				chainId,
 				token,
 				updated,
 				account: to,
@@ -68,6 +73,7 @@ export async function indexERC20Balance(
 	// index balance history, entry
 	if (indexEntry) {
 		const entry = await context.db.insert(ERC20Balance).values({
+			chainId,
 			txHash: event.transaction.hash,
 			token,
 			created: updated,
