@@ -3,6 +3,7 @@ import { onchainTable, primaryKey } from 'ponder';
 export const FrankencoinMinter = onchainTable(
 	'Minter',
 	(t) => ({
+		chainId: t.integer().notNull(),
 		txHash: t.hex().notNull(),
 		minter: t.hex().notNull(),
 		applicationPeriod: t.bigint().notNull(),
@@ -16,13 +17,14 @@ export const FrankencoinMinter = onchainTable(
 		vetor: t.hex(),
 	}),
 	(table) => ({
-		pk: primaryKey({ columns: [table.minter] }),
+		pk: primaryKey({ columns: [table.chainId, table.minter] }),
 	})
 );
 
 export const FrankencoinProfitLoss = onchainTable(
 	'ProfitLoss',
 	(t) => ({
+		chainId: t.integer().notNull(),
 		minter: t.hex().notNull(),
 		created: t.bigint().notNull(),
 		count: t.bigint().notNull(),
@@ -33,6 +35,6 @@ export const FrankencoinProfitLoss = onchainTable(
 		perFPS: t.bigint().notNull(),
 	}),
 	(table) => ({
-		pk: primaryKey({ columns: [table.minter, table.created, table.count] }),
+		pk: primaryKey({ columns: [table.chainId, table.minter, table.created, table.count] }),
 	})
 );

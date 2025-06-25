@@ -75,6 +75,7 @@ ponder.on('Frankencoin:Profit', async ({ event, context }) => {
 
 	// flat indexing earnings
 	await context.db.insert(FrankencoinProfitLoss).values({
+		chainId: context.chain.id,
 		count: counter.amount,
 		created: event.block.timestamp,
 		kind: 'Profit',
@@ -166,6 +167,7 @@ ponder.on('Frankencoin:Loss', async ({ event, context }) => {
 
 	// flat indexing earnings
 	await context.db.insert(FrankencoinProfitLoss).values({
+		chainId: context.chain.id,
 		count: counter.amount,
 		created: event.block.timestamp,
 		kind: 'Loss',
@@ -189,8 +191,6 @@ ponder.on('Frankencoin:Loss', async ({ event, context }) => {
 ponder.on('Frankencoin:MinterApplied', async ({ event, context }) => {
 	const minter = event.args.minter.toLowerCase() as Address;
 
-	console.log(context.chain);
-
 	// upsert status
 	await context.db
 		.insert(CommonEcosystem)
@@ -207,6 +207,7 @@ ponder.on('Frankencoin:MinterApplied', async ({ event, context }) => {
 	await context.db
 		.insert(FrankencoinMinter)
 		.values({
+			chainId: context.chain.id,
 			txHash: event.transaction.hash,
 			minter: minter,
 			applicationPeriod: event.args.applicationPeriod,
@@ -245,7 +246,7 @@ ponder.on('Frankencoin:MinterDenied', async ({ event, context }) => {
 		}));
 
 	// upsert minter mapping
-	await context.db.update(FrankencoinMinter, { minter }).set((current) => ({
+	await context.db.update(FrankencoinMinter, { chainId: context.chain.id, minter }).set((current) => ({
 		denyMessage: event.args.message,
 		denyDate: event.block.timestamp,
 		denyTxHash: event.transaction.hash,
