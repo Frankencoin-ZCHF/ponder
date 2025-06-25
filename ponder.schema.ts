@@ -5,5 +5,6 @@ export * from './schema/ERC20';
 export * from './schema/Frankencoin';
 export * from './schema/MintingHubV1';
 export * from './schema/MintingHubV2';
+export * from './schema/PriceDiscovery';
 export * from './schema/Roller';
 export * from './schema/Savings';

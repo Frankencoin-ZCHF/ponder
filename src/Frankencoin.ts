@@ -1,13 +1,14 @@
+import { ADDRESS } from '@frankencoin/zchf';
 import { ponder } from 'ponder:registry';
 import { CommonEcosystem, FrankencoinMinter, FrankencoinProfitLoss } from 'ponder:schema';
 import { Address, erc20Abi, parseEther } from 'viem';
-import { addr, chain } from '../ponder.config';
+import { mainnet } from 'viem/chains';
 
 ponder.on('Frankencoin:Profit', async ({ event, context }) => {
 	const minter = event.args.reportingMinter.toLowerCase() as Address;
 	const fpsTotalSupply = await context.client.readContract({
 		abi: erc20Abi,
-		address: addr[chain.id].equity,
+		address: ADDRESS[mainnet.id].equity,
 		functionName: 'totalSupply',
 	});
 	const perToken = (event.args.amount * parseEther('1')) / fpsTotalSupply;
@@ -98,7 +99,7 @@ ponder.on('Frankencoin:Loss', async ({ event, context }) => {
 	const minter = event.args.reportingMinter.toLowerCase() as Address;
 	const fpsTotalSupply = await context.client.readContract({
 		abi: erc20Abi,
-		address: addr[chain.id].equity,
+		address: ADDRESS[mainnet.id].equity,
 		functionName: 'totalSupply',
 	});
 	const perToken = -(event.args.amount * parseEther('1')) / fpsTotalSupply;
@@ -187,6 +188,8 @@ ponder.on('Frankencoin:Loss', async ({ event, context }) => {
 
 ponder.on('Frankencoin:MinterApplied', async ({ event, context }) => {
 	const minter = event.args.minter.toLowerCase() as Address;
+
+	console.log(context.chain);
 
 	// upsert status
 	await context.db
