@@ -1,7 +1,7 @@
 import { onchainTable, primaryKey } from 'ponder';
 
 export const FrankencoinMinter = onchainTable(
-	'Minter',
+	'FrankencoinMinter',
 	(t) => ({
 		chainId: t.integer().notNull(),
 		txHash: t.hex().notNull(),
@@ -22,7 +22,7 @@ export const FrankencoinMinter = onchainTable(
 );
 
 export const FrankencoinProfitLoss = onchainTable(
-	'ProfitLoss',
+	'FrankencoinProfitLoss',
 	(t) => ({
 		chainId: t.integer().notNull(),
 		minter: t.hex().notNull(),

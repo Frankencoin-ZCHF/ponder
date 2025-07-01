@@ -6,7 +6,7 @@ export const CommonActiveUser = onchainTable('ActiveUser', (t) => ({
 }));
 
 export const CommonEcosystem = onchainTable(
-	'Ecosystem',
+	'CommonEcosystem',
 	(t) => ({
 		id: t.text().notNull(),
 		value: t.text().notNull(),
