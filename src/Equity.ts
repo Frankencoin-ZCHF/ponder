@@ -1,7 +1,6 @@
-import { ADDRESS } from '@frankencoin/zchf';
 import { ponder } from 'ponder:registry';
 import { CommonEcosystem, EquityDelegation, EquityTrade, EquityTradeChart } from 'ponder:schema';
-import { Address, zeroAddress } from 'viem';
+import { Address } from 'viem';
 
 /*
 Events
@@ -17,10 +16,21 @@ ponder.on('Equity:Trade', async ({ event, context }) => {
 	const price: bigint = event.args.newprice;
 	const time: bigint = event.block.timestamp;
 
+	const counter = await context.db
+		.insert(CommonEcosystem)
+		.values({
+			id: 'Equity:TradeCounter',
+			value: '',
+			amount: 1n,
+		})
+		.onConflictDoUpdate((current) => ({
+			amount: current.amount + 1n,
+		}));
+
 	// invested or redeemed
 	if (shares > 0n) {
-		// cnt
-		const counter = await context.db
+		// cnt invested
+		await context.db
 			.insert(CommonEcosystem)
 			.values({
 				id: 'Equity:InvestedCounter',
@@ -75,8 +85,8 @@ ponder.on('Equity:Trade', async ({ event, context }) => {
 		// 	txHash: event.transaction.hash,
 		// });
 	} else {
-		// cnt
-		const counter = await context.db
+		// cnt redeemed
+		await context.db
 			.insert(CommonEcosystem)
 			.values({
 				id: 'Equity:RedeemedCounter',
