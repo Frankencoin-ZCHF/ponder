@@ -5,11 +5,7 @@ import { Address, zeroAddress } from 'viem';
 export async function indexERC20Balance(
 	event: Event<'ERC20:Transfer' | 'ERC20PositionV1:Transfer' | 'ERC20PositionV2:Transfer'>,
 	context: Context<'ERC20:Transfer' | 'ERC20PositionV1:Transfer' | 'ERC20PositionV2:Transfer'>,
-	{
-		indexFrom = true,
-		indexTo = true,
-		indexEntry = true,
-	}: { indexFrom?: boolean; indexTo?: boolean; indexEntry?: boolean }
+	{ indexFrom = true, indexTo = true, indexEntry = true }: { indexFrom?: boolean; indexTo?: boolean; indexEntry?: boolean }
 ) {
 	const token = event.log.address.toLowerCase() as Address;
 	const from = event.args.from.toLowerCase() as Address;
@@ -41,12 +37,10 @@ export async function indexERC20Balance(
 
 	// update balance from
 	if (from != zeroAddress && indexFrom) {
-		const balance = await context.db
-			.update(ERC20BalanceMapping, { chainId, token, account: from })
-			.set((current) => ({
-				updated,
-				balance: current.balance - value, // deduct balance
-			}));
+		const balance = await context.db.update(ERC20BalanceMapping, { chainId, token, account: from }).set((current) => ({
+			updated,
+			balance: current.balance - value, // deduct balance
+		}));
 		balanceFrom = balance.balance;
 	}
 
@@ -85,6 +79,5 @@ export async function indexERC20Balance(
 			balanceFrom,
 			balanceTo,
 		});
-		// console.log(entry);
 	}
 }

@@ -13,6 +13,9 @@ import { Address } from 'viem';
 Events
 
 MintingHubV1:PositionOpened
+MintingHubV1:ChallengeStarted
+MintingHubV1:ChallengeAverted
+MintingHubV1:ChallengeSucceeded
 */
 
 ponder.on('MintingHubV1:PositionOpened', async ({ event, context }) => {
