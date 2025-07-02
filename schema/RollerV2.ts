@@ -1,7 +1,7 @@
 import { onchainTable, primaryKey } from 'ponder';
 
-export const RollerRolled = onchainTable(
-	'RollerRolled',
+export const RollerV2Rolled = onchainTable(
+	'RollerV2Rolled',
 	(t) => ({
 		created: t.bigint().notNull(),
 		count: t.bigint().notNull(),

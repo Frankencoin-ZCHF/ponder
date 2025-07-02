@@ -1,5 +1,5 @@
 import { ponder } from 'ponder:registry';
-import { CommonEcosystem, RollerRolled } from 'ponder:schema';
+import { CommonEcosystem, RollerV2Rolled } from 'ponder:schema';
 
 ponder.on('RollerV2:Roll', async ({ event, context }) => {
 	const { source, collWithdraw, repay, target, collDeposit, mint } = event.args;
@@ -15,7 +15,7 @@ ponder.on('RollerV2:Roll', async ({ event, context }) => {
 			amount: current.amount + 1n,
 		}));
 
-	await context.db.insert(RollerRolled).values({
+	await context.db.insert(RollerV2Rolled).values({
 		created: event.block.timestamp,
 		count: counter.amount,
 		blockheight: event.block.number,
