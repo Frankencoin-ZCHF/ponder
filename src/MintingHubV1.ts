@@ -228,6 +228,17 @@ ponder.on('MintingHubV1:PositionOpened', async ({ event, context }) => {
 		.onConflictDoUpdate((current) => ({
 			amount: current.amount + 1n,
 		}));
+
+	await context.db
+		.insert(MintingHubV1Status)
+		.values({
+			position: event.args.position.toLowerCase() as Address,
+			mintingUpdatesCounter: 0n,
+			challengeStartedCounter: 0n,
+			challengeAvertedBidsCounter: 0n,
+			challengeSucceededBidsCounter: 0n,
+		})
+		.onConflictDoNothing();
 });
 
 /**
