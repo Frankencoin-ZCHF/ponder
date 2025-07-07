@@ -26,10 +26,9 @@ export const config = {
 		pollingInterval: 5_000,
 		startFrankencoin: 18451518,
 		startMintingHubV1: 18451536,
-		startMintingHubV2: 18451536,
+		startMintingHubV2: 21280757,
 		startSavingsReferal: 22536327,
 		startUniswapPoolV3: 19122801,
-		startchainlinkOCR2Aggregator: 19122801,
 	},
 
 	// multichain support

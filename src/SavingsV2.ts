@@ -27,12 +27,30 @@ ponder.on('SavingsV2:Saved', async ({ event, context }) => {
 	});
 
 	// update global status
-	const status = await context.db.update(SavingsStatus, { chainId, module }).set((current) => ({
-		updated,
-		save: current.save + amount,
-		balance: current.balance + amount,
-		counterSave: current.counterSave + 1n,
-	}));
+	const status = await context.db
+		.insert(SavingsStatus)
+		.values({
+			chainId,
+			module,
+			updated,
+			save: amount,
+			withdraw: 0n,
+			interest: 0n,
+			balance: amount,
+			rate: ratePPM,
+			counterSave: 1n,
+			counterWithdraw: 0n,
+			counterInterest: 0n,
+			counterRateProposed: 0n,
+			counterRateChanged: 0n,
+		})
+		.onConflictDoUpdate((current) => ({
+			updated,
+			rate: ratePPM,
+			save: current.save + amount,
+			balance: current.balance + amount,
+			counterSave: current.counterSave + 1n,
+		}));
 
 	// update mapping
 	const mapping = await context.db
@@ -102,6 +120,7 @@ ponder.on('SavingsV2:InterestCollected', async ({ event, context }) => {
 	// update global status
 	const status = await context.db.update(SavingsStatus, { chainId, module }).set((current) => ({
 		updated,
+		rate: ratePPM,
 		interest: current.interest + interest,
 		balance: current.balance + interest,
 		counterInterest: current.counterInterest + 1n,
@@ -159,6 +178,7 @@ ponder.on('SavingsV2:Withdrawn', async ({ event, context }) => {
 	// update global status
 	const status = await context.db.update(SavingsStatus, { chainId, module }).set((current) => ({
 		updated,
+		rate: ratePPM,
 		withdraw: current.withdraw + amount, // double entry
 		balance: current.balance - amount, // deduct from balance
 		counterWithdraw: current.counterWithdraw + 1n,
