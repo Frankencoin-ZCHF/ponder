@@ -62,78 +62,89 @@ export const LeadRateProposed = onchainTable(
 
 // savings module
 
-export const SavingsBalance = onchainTable(
-	'SavingsBalance',
+export const SavingsMapping = onchainTable(
+	'SavingsMapping',
 	(t) => ({
 		chainId: t.integer().notNull(),
 		module: t.text().notNull(),
-		created: t.bigint(), // first timestamp
-		blockheight: t.bigint(), // first blockheight
-		updated: t.bigint(),
-		interest: t.bigint(),
-		balance: t.bigint(), // balance of account
+		account: t.text().notNull(),
+		created: t.bigint().notNull(), // first timestamp
+		updated: t.bigint().notNull(), // latest timestamp
+		save: t.bigint().notNull(), // accum. into savings
+		withdraw: t.bigint().notNull(), // accum. into withdraw
+		interest: t.bigint().notNull(), // accum. into interest paid
+		balance: t.bigint().notNull(), // current balance excl. accuring real-time interest
+		counterSave: t.bigint().notNull(),
+		counterWithdraw: t.bigint().notNull(),
+		counterInterest: t.bigint().notNull(),
 	}),
 	(table) => ({
-		pk: primaryKey({ columns: [table.chainId, table.module] }),
+		pk: primaryKey({ columns: [table.chainId, table.module, table.account] }),
 	})
 );
 
-export const SavingsSaved = onchainTable('SavingsSaved', (t) => ({
-	id: t.text().primaryKey(),
-	created: t.bigint(),
-	blockheight: t.bigint(),
-	txHash: t.hex(),
-	account: t.hex(),
-	amount: t.bigint(),
-	rate: t.integer(),
-	total: t.bigint(),
-	balance: t.bigint(),
-}));
+export const SavingsSaved = onchainTable(
+	'SavingsSaved',
+	(t) => ({
+		chainId: t.integer().notNull(),
+		module: t.text().notNull(),
+		account: t.text().notNull(),
+		created: t.bigint().notNull(),
+		blockheight: t.bigint(),
+		count: t.bigint().notNull(),
+		txHash: t.hex().notNull(),
+		amount: t.bigint().notNull(),
+		rate: t.integer().notNull(),
+		save: t.bigint().notNull(), // accum. into savings
+		withdraw: t.bigint().notNull(), // accum. into withdraw
+		interest: t.bigint().notNull(), // accum. into interest paid
+		balance: t.bigint().notNull(), // current balance excl. accuring real-time interest
+	}),
+	(table) => ({
+		pk: primaryKey({ columns: [table.chainId, table.module, table.account, table.count] }),
+	})
+);
 
-export const SavingsSavedMapping = onchainTable('SavingsSavedMapping', (t) => ({
-	id: t.text().primaryKey(), // address in lower case
-	created: t.bigint(), // first timestamp
-	blockheight: t.bigint(), // first blockheight
-	updated: t.bigint(), // latest timestamp
-	amount: t.bigint(), // total amount
-}));
+export const SavingsInterest = onchainTable(
+	'SavingsInterest',
+	(t) => ({
+		chainId: t.integer().notNull(),
+		module: t.text().notNull(),
+		account: t.text().notNull(),
+		created: t.bigint().notNull(),
+		blockheight: t.bigint().notNull(),
+		count: t.bigint().notNull(),
+		txHash: t.hex().notNull(),
+		amount: t.bigint().notNull(),
+		rate: t.integer().notNull(),
+		save: t.bigint().notNull(), // accum. into savings
+		withdraw: t.bigint().notNull(), // accum. into withdraw
+		interest: t.bigint().notNull(), // accum. into interest paid
+		balance: t.bigint().notNull(), // current balance excl. accuring real-time interest
+	}),
+	(table) => ({
+		pk: primaryKey({ columns: [table.chainId, table.module, table.account, table.count] }),
+	})
+);
 
-export const SavingsInterest = onchainTable('SavingsInterest', (t) => ({
-	id: t.text().primaryKey(),
-	created: t.bigint(),
-	blockheight: t.bigint(),
-	txHash: t.hex(),
-	account: t.hex(),
-	amount: t.bigint(),
-	rate: t.integer(),
-	total: t.bigint(),
-	balance: t.bigint(),
-}));
-
-export const SavingsInterestMapping = onchainTable('SavingsInterestMapping', (t) => ({
-	id: t.text().primaryKey(),
-	created: t.bigint(),
-	blockheight: t.bigint(),
-	updated: t.bigint(),
-	amount: t.bigint(),
-}));
-
-export const SavingsWithdrawn = onchainTable('SavingsWithdrawn', (t) => ({
-	id: t.text().primaryKey(),
-	created: t.bigint(),
-	blockheight: t.bigint(),
-	txHash: t.hex(),
-	account: t.hex(),
-	amount: t.bigint(),
-	rate: t.integer(),
-	total: t.bigint(),
-	balance: t.bigint(),
-}));
-
-export const SavingsWithdrawnMapping = onchainTable('SavingsWithdrawnMapping', (t) => ({
-	id: t.text().primaryKey(),
-	created: t.bigint(),
-	blockheight: t.bigint(),
-	updated: t.bigint(),
-	amount: t.bigint(),
-}));
+export const SavingsWithdrawn = onchainTable(
+	'SavingsWithdrawn',
+	(t) => ({
+		chainId: t.integer().notNull(),
+		module: t.text().notNull(),
+		account: t.text().notNull(),
+		created: t.bigint().notNull(),
+		blockheight: t.bigint(),
+		count: t.bigint().notNull(),
+		txHash: t.hex().notNull(),
+		amount: t.bigint().notNull(),
+		rate: t.integer().notNull(),
+		save: t.bigint().notNull(), // accum. into savings
+		withdraw: t.bigint().notNull(), // accum. into withdraw
+		interest: t.bigint().notNull(), // accum. into interest paid
+		balance: t.bigint().notNull(), // current balance excl. accuring real-time interest
+	}),
+	(table) => ({
+		pk: primaryKey({ columns: [table.chainId, table.module, table.account, table.count] }),
+	})
+);

@@ -11,9 +11,9 @@ import {
 	PositionRollerV2ABI,
 	PositionV1ABI,
 	PositionV2ABI,
-	SavingsV2ABI,
 	UniswapV3PoolABI,
-	LeadrateABI,
+	LeadrateV2ABI,
+	SavingsABI,
 } from '@frankencoin/zchf';
 
 export const addr = ADDRESS;
@@ -220,13 +220,6 @@ export default createConfig({
 			},
 			startBlock: config[mainnet.id].startMintingHubV2,
 		},
-		SavingsV2: {
-			// V2
-			chain: mainnet.name,
-			abi: SavingsV2ABI,
-			address: addr[mainnet.id].savingsV2,
-			startBlock: config[mainnet.id].startMintingHubV2,
-		},
 		RollerV2: {
 			// V2
 			chain: mainnet.name,
@@ -236,7 +229,7 @@ export default createConfig({
 		},
 		Leadrate: {
 			// incl. SavingsV2, SavingsReferal, BridgedSavingsReferal
-			abi: LeadrateABI,
+			abi: LeadrateV2ABI,
 			chain: {
 				[mainnet.name]: {
 					address: [addr[mainnet.id].savingsV2, addr[mainnet.id].savingsReferral],
@@ -271,6 +264,46 @@ export default createConfig({
 					startBlock: config[sonic.id].startBridgedFrankencoin,
 				},
 			},
+		},
+		Savings: {
+			// incl. SavingsV2, SavingsReferal, BridgedSavingsReferal
+			abi: SavingsABI,
+			chain: {
+				[mainnet.name]: {
+					address: [addr[mainnet.id].savingsV2, addr[mainnet.id].savingsReferral],
+					startBlock: config[mainnet.id].startMintingHubV2,
+				},
+				[polygon.name]: {
+					address: [addr[polygon.id].ccipBridgedSavings],
+					startBlock: config[polygon.id].startBridgedFrankencoin,
+				},
+				[arbitrum.name]: {
+					address: [addr[arbitrum.id].ccipBridgedSavings],
+					startBlock: config[arbitrum.id].startBridgedFrankencoin,
+				},
+				[optimism.name]: {
+					address: [addr[optimism.id].ccipBridgedSavings],
+					startBlock: config[optimism.id].startBridgedFrankencoin,
+				},
+				[base.name]: {
+					address: [addr[base.id].ccipBridgedSavings],
+					startBlock: config[base.id].startBridgedFrankencoin,
+				},
+				[avalanche.name]: {
+					address: [addr[avalanche.id].ccipBridgedSavings],
+					startBlock: config[avalanche.id].startBridgedFrankencoin,
+				},
+				[gnosis.name]: {
+					address: [addr[gnosis.id].ccipBridgedSavings],
+					startBlock: config[gnosis.id].startBridgedFrankencoin,
+				},
+				[sonic.name]: {
+					address: [addr[sonic.id].ccipBridgedSavings],
+					startBlock: config[sonic.id].startBridgedFrankencoin,
+				},
+			},
+			// address: addr[mainnet.id].savingsV2,
+			// startBlock: config[mainnet.id].startMintingHubV2,
 		},
 
 		// ### COMMON CONTRACTS ###

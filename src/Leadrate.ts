@@ -1,5 +1,6 @@
 import { ponder } from 'ponder:registry';
 import { SavingsStatus, LeadrateRateChanged, LeadRateProposed } from 'ponder:schema';
+import { Address } from 'viem';
 
 /*
 Events
@@ -12,7 +13,7 @@ ponder.on('Leadrate:RateChanged', async ({ event, context }) => {
 	const { newRate } = event.args;
 	const updated = event.block.timestamp;
 	const chainId = context.chain.id;
-	const module = event.log.address;
+	const module = event.log.address.toLowerCase() as Address;
 
 	// update status
 	const status = await context.db
@@ -63,7 +64,8 @@ ponder.on('Leadrate:RateProposed', async ({ event, context }) => {
 
 	const updated = event.block.timestamp;
 	const chainId = context.chain.id;
-	const module = event.log.address;
+	const module = event.log.address.toLowerCase() as Address;
+	const proposer = who.toLowerCase() as Address;
 
 	// update status
 	const status = await context.db.update(SavingsStatus, { chainId, module }).set((current) => ({
@@ -79,7 +81,7 @@ ponder.on('Leadrate:RateProposed', async ({ event, context }) => {
 		count: status.counterRateChanged,
 		module,
 		txHash: event.transaction.hash,
-		proposer: who,
+		proposer,
 		nextRate,
 		nextChange,
 	});
