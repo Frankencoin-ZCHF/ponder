@@ -13,6 +13,7 @@ import {
 	PositionV2ABI,
 	SavingsV2ABI,
 	UniswapV3PoolABI,
+	LeadrateABI,
 } from '@frankencoin/zchf';
 
 export const addr = ADDRESS;
@@ -26,6 +27,7 @@ export const config = {
 		startFrankencoin: 18451518,
 		startMintingHubV1: 18451536,
 		startMintingHubV2: 18451536,
+		startSavingsReferal: 22536327,
 		startUniswapPoolV3: 19122801,
 		startchainlinkOCR2Aggregator: 19122801,
 	},
@@ -232,6 +234,44 @@ export default createConfig({
 			address: addr[mainnet.id].rollerV2,
 			startBlock: config[mainnet.id].startMintingHubV2,
 		},
+		Leadrate: {
+			// incl. SavingsV2, SavingsReferal, BridgedSavingsReferal
+			abi: LeadrateABI,
+			chain: {
+				[mainnet.name]: {
+					address: [addr[mainnet.id].savingsV2, addr[mainnet.id].savingsReferral],
+					startBlock: config[mainnet.id].startMintingHubV2,
+				},
+				[polygon.name]: {
+					address: [addr[polygon.id].ccipBridgedSavings],
+					startBlock: config[polygon.id].startBridgedFrankencoin,
+				},
+				[arbitrum.name]: {
+					address: [addr[arbitrum.id].ccipBridgedSavings],
+					startBlock: config[arbitrum.id].startBridgedFrankencoin,
+				},
+				[optimism.name]: {
+					address: [addr[optimism.id].ccipBridgedSavings],
+					startBlock: config[optimism.id].startBridgedFrankencoin,
+				},
+				[base.name]: {
+					address: [addr[base.id].ccipBridgedSavings],
+					startBlock: config[base.id].startBridgedFrankencoin,
+				},
+				[avalanche.name]: {
+					address: [addr[avalanche.id].ccipBridgedSavings],
+					startBlock: config[avalanche.id].startBridgedFrankencoin,
+				},
+				[gnosis.name]: {
+					address: [addr[gnosis.id].ccipBridgedSavings],
+					startBlock: config[gnosis.id].startBridgedFrankencoin,
+				},
+				[sonic.name]: {
+					address: [addr[sonic.id].ccipBridgedSavings],
+					startBlock: config[sonic.id].startBridgedFrankencoin,
+				},
+			},
+		},
 
 		// ### COMMON CONTRACTS ###
 		UniswapV3Pool: {
@@ -287,10 +327,7 @@ export default createConfig({
 				event: openPositionEventV1,
 				parameter: 'collateral',
 			}),
-			startBlock:
-				process.env.INDEX_ERC20POSITION_V1 == 'true'
-					? config[mainnet.id].startMintingHubV1
-					: Number.MAX_SAFE_INTEGER,
+			startBlock: process.env.INDEX_ERC20POSITION_V1 == 'true' ? config[mainnet.id].startMintingHubV1 : Number.MAX_SAFE_INTEGER,
 		},
 
 		ERC20PositionV2: {
@@ -301,10 +338,7 @@ export default createConfig({
 				event: openPositionEventV2,
 				parameter: 'collateral',
 			}),
-			startBlock:
-				process.env.INDEX_ERC20POSITION_V1 == 'true'
-					? config[mainnet.id].startMintingHubV2
-					: Number.MAX_SAFE_INTEGER,
+			startBlock: process.env.INDEX_ERC20POSITION_V1 == 'true' ? config[mainnet.id].startMintingHubV2 : Number.MAX_SAFE_INTEGER,
 		},
 
 		// ### CROSS CHAIN SUPPORT ###

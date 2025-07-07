@@ -3,7 +3,7 @@ import { onchainTable, primaryKey } from 'ponder';
 // status
 
 export const ERC20Status = onchainTable(
-	'Status',
+	'ERC20Status',
 	(t) => ({
 		chainId: t.integer().notNull(), // chain id
 		token: t.hex().notNull(), // token contract
@@ -21,7 +21,7 @@ export const ERC20Status = onchainTable(
 // mint and burn indexing
 
 export const ERC20Mint = onchainTable(
-	'Mint',
+	'ERC20Mint',
 	(t) => ({
 		chainId: t.integer().notNull(),
 		txHash: t.hex(),
@@ -38,7 +38,7 @@ export const ERC20Mint = onchainTable(
 );
 
 export const ERC20Burn = onchainTable(
-	'Burn',
+	'ERC20Burn',
 	(t) => ({
 		chainId: t.integer().notNull(),
 		txHash: t.hex(),
@@ -57,7 +57,7 @@ export const ERC20Burn = onchainTable(
 // balance indexing
 
 export const ERC20Balance = onchainTable(
-	'Balance',
+	'ERC20Balance',
 	(t) => ({
 		chainId: t.integer().notNull(),
 		txHash: t.hex().notNull(),
@@ -77,7 +77,7 @@ export const ERC20Balance = onchainTable(
 );
 
 export const ERC20BalanceMapping = onchainTable(
-	'Mapping',
+	'ERC20BalanceMapping',
 	(t) => ({
 		chainId: t.integer().notNull(),
 		token: t.hex().notNull(),

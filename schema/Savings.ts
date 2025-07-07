@@ -1,31 +1,82 @@
-import { onchainTable } from 'ponder';
+import { onchainTable, primaryKey } from 'ponder';
 
-export const SavingsRateProposed = onchainTable('SavingsRateProposed', (t) => ({
-	id: t.text().primaryKey(),
-	created: t.bigint(),
-	blockheight: t.bigint(),
-	txHash: t.hex(),
-	proposer: t.hex(),
-	nextRate: t.integer(),
-	nextChange: t.integer(),
-}));
+// status
 
-export const SavingsRateChanged = onchainTable('SavingsRateChanged', (t) => ({
-	id: t.text().primaryKey(),
-	created: t.bigint(),
-	blockheight: t.bigint(),
-	txHash: t.hex(),
-	approvedRate: t.integer(),
-}));
+export const SavingsStatus = onchainTable(
+	'SavingsStatus',
+	(t) => ({
+		chainId: t.integer().notNull(), // chain id
+		module: t.hex().notNull(), // savings contract
+		updated: t.bigint().notNull(), // latest timestamp
+		save: t.bigint().notNull(), // accum. into savings
+		withdraw: t.bigint().notNull(), // accum. into withdraw
+		interest: t.bigint().notNull(), // accum. into interest paid
+		balance: t.bigint().notNull(), // current balance excl. accuring real-time interest
+		rate: t.integer().notNull(), // current applied rate
+		counterSave: t.bigint().notNull(),
+		counterWithdraw: t.bigint().notNull(),
+		counterInterest: t.bigint().notNull(),
+		counterRateProposed: t.bigint().notNull(),
+		counterRateChanged: t.bigint().notNull(),
+	}),
+	(table) => ({
+		pk: primaryKey({ columns: [table.chainId, table.module] }),
+	})
+);
 
-export const SavingsBalance = onchainTable('SavingsBalance', (t) => ({
-	id: t.text().primaryKey(), // address in lower case
-	created: t.bigint(), // first timestamp
-	blockheight: t.bigint(), // first blockheight
-	updated: t.bigint(),
-	interest: t.bigint(),
-	balance: t.bigint(), // balance of account
-}));
+// leadrate
+
+export const LeadrateRateChanged = onchainTable(
+	'LeadrateRateChanged',
+	(t) => ({
+		chainId: t.integer().notNull(),
+		created: t.bigint().notNull(),
+		blockheight: t.bigint().notNull(),
+		count: t.bigint().notNull(),
+		module: t.text().notNull(),
+		txHash: t.hex().notNull(),
+		approvedRate: t.integer().notNull(),
+	}),
+	(table) => ({
+		pk: primaryKey({ columns: [table.chainId, table.module, table.count] }),
+	})
+);
+
+export const LeadRateProposed = onchainTable(
+	'LeadRateProposed',
+	(t) => ({
+		chainId: t.integer().notNull(),
+		created: t.bigint().notNull(),
+		blockheight: t.bigint().notNull(),
+		count: t.bigint().notNull(),
+		module: t.text().notNull(),
+		txHash: t.hex().notNull(),
+		proposer: t.hex().notNull(),
+		nextRate: t.integer().notNull(),
+		nextChange: t.integer().notNull(),
+	}),
+	(table) => ({
+		pk: primaryKey({ columns: [table.chainId, table.module, table.count] }),
+	})
+);
+
+// savings module
+
+export const SavingsBalance = onchainTable(
+	'SavingsBalance',
+	(t) => ({
+		chainId: t.integer().notNull(),
+		module: t.text().notNull(),
+		created: t.bigint(), // first timestamp
+		blockheight: t.bigint(), // first blockheight
+		updated: t.bigint(),
+		interest: t.bigint(),
+		balance: t.bigint(), // balance of account
+	}),
+	(table) => ({
+		pk: primaryKey({ columns: [table.chainId, table.module] }),
+	})
+);
 
 export const SavingsSaved = onchainTable('SavingsSaved', (t) => ({
 	id: t.text().primaryKey(),
