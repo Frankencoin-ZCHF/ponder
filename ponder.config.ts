@@ -2,7 +2,6 @@ import { createConfig, factory } from 'ponder';
 import { arbitrum, avalanche, base, gnosis, mainnet, optimism, polygon, sonic } from 'viem/chains';
 import { erc20Abi, http } from 'viem';
 import {
-	BridgedFrankencoinABI,
 	ADDRESS,
 	EquityABI,
 	FrankencoinABI,
@@ -14,6 +13,7 @@ import {
 	UniswapV3PoolABI,
 	LeadrateV2ABI,
 	SavingsABI,
+	SavingsV2ABI,
 } from '@frankencoin/zchf';
 
 export const addr = ADDRESS;
@@ -220,6 +220,13 @@ export default createConfig({
 			},
 			startBlock: config[mainnet.id].startMintingHubV2,
 		},
+		SavingsV2: {
+			// V2
+			chain: mainnet.name,
+			abi: SavingsV2ABI,
+			address: addr[mainnet.id].savingsV2,
+			startBlock: config[mainnet.id].startMintingHubV2,
+		},
 		RollerV2: {
 			// V2
 			chain: mainnet.name,
@@ -265,12 +272,12 @@ export default createConfig({
 				},
 			},
 		},
-		Savings: {
-			// incl. SavingsV2, SavingsReferal, BridgedSavingsReferal
+		SavingsReferal: {
+			// incl. SavingsReferal, BridgedSavingsReferal
 			abi: SavingsABI,
 			chain: {
 				[mainnet.name]: {
-					address: [addr[mainnet.id].savingsV2, addr[mainnet.id].savingsReferral],
+					address: [addr[mainnet.id].savingsReferral],
 					startBlock: config[mainnet.id].startMintingHubV2,
 				},
 				[polygon.name]: {
@@ -302,10 +309,7 @@ export default createConfig({
 					startBlock: config[sonic.id].startBridgedFrankencoin,
 				},
 			},
-			// address: addr[mainnet.id].savingsV2,
-			// startBlock: config[mainnet.id].startMintingHubV2,
 		},
-
 		// ### COMMON CONTRACTS ###
 		UniswapV3Pool: {
 			chain: mainnet.name,
