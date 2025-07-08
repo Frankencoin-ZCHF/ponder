@@ -22,7 +22,7 @@ export const config = {
 	// core deployment
 	[mainnet.id]: {
 		rpc: `https://eth-mainnet.g.alchemy.com/v2/${process.env.ALCHEMY_RPC_KEY}`,
-		maxRequestsPerSecond: 5,
+		maxRequestsPerSecond: parseInt(process.env.MAX_REQUESTS_PER_SECOND || '50'),
 		pollingInterval: 5_000,
 		startFrankencoin: 18451518,
 		startMintingHubV1: 18451536,
@@ -34,43 +34,43 @@ export const config = {
 	// multichain support
 	[polygon.id]: {
 		rpc: `https://polygon-mainnet.g.alchemy.com/v2/${process.env.ALCHEMY_RPC_KEY}`,
-		maxRequestsPerSecond: 5,
+		maxRequestsPerSecond: parseInt(process.env.MAX_REQUESTS_PER_SECOND || '50'),
 		pollingInterval: 5_000,
 		startBridgedFrankencoin: 72307201,
 	},
 	[arbitrum.id]: {
 		rpc: `https://arb-mainnet.g.alchemy.com/v2/${process.env.ALCHEMY_RPC_KEY}`,
-		maxRequestsPerSecond: 5,
+		maxRequestsPerSecond: parseInt(process.env.MAX_REQUESTS_PER_SECOND || '50'),
 		pollingInterval: 5_000,
 		startBridgedFrankencoin: 343470012,
 	},
 	[optimism.id]: {
 		rpc: `https://opt-mainnet.g.alchemy.com/v2/${process.env.ALCHEMY_RPC_KEY}`,
-		maxRequestsPerSecond: 5,
+		maxRequestsPerSecond: parseInt(process.env.MAX_REQUESTS_PER_SECOND || '50'),
 		pollingInterval: 5_000,
 		startBridgedFrankencoin: 136678320,
 	},
 	[base.id]: {
 		rpc: `https://base-mainnet.g.alchemy.com/v2/${process.env.ALCHEMY_RPC_KEY}`,
-		maxRequestsPerSecond: 5,
+		maxRequestsPerSecond: parseInt(process.env.MAX_REQUESTS_PER_SECOND || '50'),
 		pollingInterval: 5_000,
 		startBridgedFrankencoin: 31080190,
 	},
 	[avalanche.id]: {
 		rpc: `https://avax-mainnet.g.alchemy.com/v2/${process.env.ALCHEMY_RPC_KEY}`,
-		maxRequestsPerSecond: 5,
+		maxRequestsPerSecond: parseInt(process.env.MAX_REQUESTS_PER_SECOND || '50'),
 		pollingInterval: 5_000,
 		startBridgedFrankencoin: 63235410,
 	},
 	[gnosis.id]: {
 		rpc: `https://gnosis-mainnet.g.alchemy.com/v2/${process.env.ALCHEMY_RPC_KEY}`,
-		maxRequestsPerSecond: 5,
+		maxRequestsPerSecond: parseInt(process.env.MAX_REQUESTS_PER_SECOND || '50'),
 		pollingInterval: 5_000,
 		startBridgedFrankencoin: 40394536,
 	},
 	[sonic.id]: {
 		rpc: `https://sonic-mainnet.g.alchemy.com/v2/${process.env.ALCHEMY_RPC_KEY}`,
-		maxRequestsPerSecond: 5,
+		maxRequestsPerSecond: parseInt(process.env.MAX_REQUESTS_PER_SECOND || '50'),
 		pollingInterval: 5_000,
 		startBridgedFrankencoin: 31589491,
 	},
