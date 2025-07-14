@@ -14,6 +14,7 @@ import {
 	LeadrateV2ABI,
 	SavingsABI,
 	SavingsV2ABI,
+	BridgeAccountingABI,
 } from '@frankencoin/zchf';
 
 export const addr = ADDRESS;
@@ -28,6 +29,7 @@ export const config = {
 		startMintingHubV1: 18451536,
 		startMintingHubV2: 21280757,
 		startSavingsReferal: 22536327,
+		startCCIP: 22623046,
 		startUniswapPoolV3: 19122801,
 	},
 
@@ -379,32 +381,21 @@ export default createConfig({
 
 		// ### CROSS CHAIN SUPPORT ###
 		// transferReference
-		// savingsReferral
 
 		// ccipAdmin
 		// ccipTokenPool
-		// ccipBridgeAccounting
 		// ccipGovernanceSender
+
+		CCIPBridgedAccounting: {
+			abi: BridgeAccountingABI,
+			chain: mainnet.name,
+			address: addr[mainnet.id].ccipBridgeAccounting,
+			startBlock: config[mainnet.id].startCCIP,
+		},
 
 		// ### MULTI CHAIN CONTRACTS ###
 		// ccipAdmin
 		// ccipBridgedFrankencoin
 		// ccipBridgedGovernance
-
-		// ### Bridged Frankencoin Events
-		// BridgedFrankencoin: {
-		// 	abi: BridgedFrankencoinABI,
-		// 	chain: {
-		// 		[polygon.name]: {
-		// 			address: addr[polygon.id].ccipBridgedFrankencoin,
-		// 			startBlock: config[polygon.id].startBridgedFrankencoin,
-		// 		},
-		// 		// bridged frankencoin in multichains
-		// 		// [polygon.name]: {
-		// 		// 	address: [addr[polygon.id]],
-		// 		// 	startBlock: config[polygon.id].startBridgedFrankencoin
-		// 		// }
-		// 	},
-		// },
 	},
 });
