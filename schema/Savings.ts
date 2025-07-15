@@ -83,60 +83,17 @@ export const SavingsMapping = onchainTable(
 	})
 );
 
-export const SavingsSaved = onchainTable(
-	'SavingsSaved',
+export const SavingsActivity = onchainTable(
+	'SavingsActivity',
 	(t) => ({
 		chainId: t.integer().notNull(),
 		module: t.text().notNull(),
 		account: t.text().notNull(),
 		created: t.bigint().notNull(),
 		blockheight: t.bigint(),
-		count: t.bigint().notNull(),
+		count: t.bigint().notNull(), // accum. counter, saved + interest. + withdrawn
 		txHash: t.hex().notNull(),
-		amount: t.bigint().notNull(),
-		rate: t.integer().notNull(),
-		save: t.bigint().notNull(), // accum. into savings
-		withdraw: t.bigint().notNull(), // accum. into withdraw
-		interest: t.bigint().notNull(), // accum. into interest paid
-		balance: t.bigint().notNull(), // current balance excl. accuring real-time interest
-	}),
-	(table) => ({
-		pk: primaryKey({ columns: [table.chainId, table.module, table.account, table.count] }),
-	})
-);
-
-export const SavingsInterest = onchainTable(
-	'SavingsInterest',
-	(t) => ({
-		chainId: t.integer().notNull(),
-		module: t.text().notNull(),
-		account: t.text().notNull(),
-		created: t.bigint().notNull(),
-		blockheight: t.bigint().notNull(),
-		count: t.bigint().notNull(),
-		txHash: t.hex().notNull(),
-		amount: t.bigint().notNull(),
-		rate: t.integer().notNull(),
-		save: t.bigint().notNull(), // accum. into savings
-		withdraw: t.bigint().notNull(), // accum. into withdraw
-		interest: t.bigint().notNull(), // accum. into interest paid
-		balance: t.bigint().notNull(), // current balance excl. accuring real-time interest
-	}),
-	(table) => ({
-		pk: primaryKey({ columns: [table.chainId, table.module, table.account, table.count] }),
-	})
-);
-
-export const SavingsWithdrawn = onchainTable(
-	'SavingsWithdrawn',
-	(t) => ({
-		chainId: t.integer().notNull(),
-		module: t.text().notNull(),
-		account: t.text().notNull(),
-		created: t.bigint().notNull(),
-		blockheight: t.bigint(),
-		count: t.bigint().notNull(),
-		txHash: t.hex().notNull(),
+		kind: t.text().notNull(),
 		amount: t.bigint().notNull(),
 		rate: t.integer().notNull(),
 		save: t.bigint().notNull(), // accum. into savings

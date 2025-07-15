@@ -1,6 +1,6 @@
 import { LeadrateABI } from '@frankencoin/zchf';
 import { ponder } from 'ponder:registry';
-import { SavingsInterest, SavingsMapping, SavingsSaved, SavingsStatus, SavingsWithdrawn } from 'ponder:schema';
+import { SavingsActivity, SavingsMapping, SavingsStatus } from 'ponder:schema';
 import { Address } from 'viem';
 
 /*
@@ -76,15 +76,18 @@ ponder.on('SavingsV2:Saved', async ({ event, context }) => {
 			counterSave: current.counterSave + 1n, // count
 		}));
 
+	const counter = mapping.counterSave + mapping.counterInterest + mapping.counterWithdraw;
+
 	// flat indexing
-	const entry = await context.db.insert(SavingsSaved).values({
+	await context.db.insert(SavingsActivity).values({
 		chainId,
 		module,
 		account,
 		created: updated,
 		blockheight: event.block.number,
-		count: mapping.counterSave,
+		count: counter,
 		txHash: event.transaction.hash,
+		kind: 'Saved',
 		amount,
 		rate: ratePPM,
 		save: mapping.save,
@@ -134,15 +137,18 @@ ponder.on('SavingsV2:InterestCollected', async ({ event, context }) => {
 		counterInterest: current.counterInterest + 1n, // count
 	}));
 
+	const counter = mapping.counterSave + mapping.counterInterest + mapping.counterWithdraw;
+
 	// flat indexing
-	await context.db.insert(SavingsInterest).values({
+	await context.db.insert(SavingsActivity).values({
 		chainId,
 		module,
 		account,
 		created: updated,
 		blockheight: event.block.number,
-		count: mapping.counterInterest,
+		count: counter,
 		txHash: event.transaction.hash,
+		kind: 'InterestCollected',
 		amount: interest,
 		rate: ratePPM,
 		save: mapping.save,
@@ -192,15 +198,18 @@ ponder.on('SavingsV2:Withdrawn', async ({ event, context }) => {
 		counterWithdraw: current.counterWithdraw + 1n, // count
 	}));
 
+	const counter = mapping.counterSave + mapping.counterInterest + mapping.counterWithdraw;
+
 	// flat indexing
-	await context.db.insert(SavingsWithdrawn).values({
+	await context.db.insert(SavingsActivity).values({
 		chainId,
 		module,
 		account,
 		created: updated,
 		blockheight: event.block.number,
-		count: mapping.counterWithdraw,
+		count: counter,
 		txHash: event.transaction.hash,
+		kind: 'Withdrawn',
 		amount: amount,
 		rate: ratePPM,
 		save: mapping.save,
