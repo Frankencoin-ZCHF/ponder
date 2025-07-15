@@ -65,7 +65,7 @@ ponder.on('SavingsReferal:Saved', async ({ event, context }) => {
 			withdraw: 0n,
 			interest: 0n,
 			balance: amount,
-			counterSave: 0n,
+			counterSave: 1n,
 			counterWithdraw: 0n,
 			counterInterest: 0n,
 		})
