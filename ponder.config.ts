@@ -1,6 +1,6 @@
 import { createConfig, factory } from 'ponder';
 import { arbitrum, avalanche, base, gnosis, mainnet, optimism, polygon, sonic } from 'viem/chains';
-import { erc20Abi, http } from 'viem';
+import { createPublicClient, erc20Abi, http } from 'viem';
 import {
 	ADDRESS,
 	EquityABI,
@@ -77,6 +77,11 @@ export const config = {
 		startBridgedFrankencoin: 31589491,
 	},
 };
+
+export const mainnetClient = createPublicClient({
+	chain: mainnet,
+	transport: http(config[mainnet.id].rpc),
+});
 
 const openPositionEventV1 = MintingHubV1ABI.find((a) => a.type === 'event' && a.name === 'PositionOpened');
 if (openPositionEventV1 === undefined) throw new Error('openPositionEventV1 not found.');

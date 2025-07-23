@@ -2,7 +2,9 @@ import { ADDRESS } from '@frankencoin/zchf';
 import { ponder } from 'ponder:registry';
 import { CommonEcosystem, FrankencoinMinter, FrankencoinProfitLoss } from 'ponder:schema';
 import { Address, erc20Abi, parseEther } from 'viem';
+import { readContract } from 'viem/actions';
 import { mainnet } from 'viem/chains';
+import { mainnetClient } from '../ponder.config';
 
 /*
 Events
@@ -13,9 +15,15 @@ Frankencoin:MinterApplied
 Frankencoin:MinterDenied
 */
 
+/*
+@dev
+Ponder doesn’t allow context.client.readContract to switch chains dynamically, because context.client is tied to the chain of the event source.
+To perform a contract read on a different chain, you need to create a separate public client in your event handler or in a utility file using viem's createPublicClient.
+*/
+
 ponder.on('Frankencoin:Profit', async ({ event, context }) => {
 	const minter = event.args.reportingMinter.toLowerCase() as Address;
-	const fpsTotalSupply = await context.client.readContract({
+	const fpsTotalSupply = await readContract(mainnetClient, {
 		abi: erc20Abi,
 		address: ADDRESS[mainnet.id].equity,
 		functionName: 'totalSupply',
@@ -107,7 +115,7 @@ ponder.on('Frankencoin:Profit', async ({ event, context }) => {
 
 ponder.on('Frankencoin:Loss', async ({ event, context }) => {
 	const minter = event.args.reportingMinter.toLowerCase() as Address;
-	const fpsTotalSupply = await context.client.readContract({
+	const fpsTotalSupply = await readContract(mainnetClient, {
 		abi: erc20Abi,
 		address: ADDRESS[mainnet.id].equity,
 		functionName: 'totalSupply',
