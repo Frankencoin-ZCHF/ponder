@@ -1,5 +1,5 @@
 import { Event, type Context } from 'ponder:registry';
-import { CommonEcosystem, ERC20Burn, ERC20Status, ERC20Mint, ERC20BalanceMapping } from 'ponder:schema';
+import { ERC20Burn, ERC20Status, ERC20Mint, ERC20BalanceMapping } from 'ponder:schema';
 import { Address, zeroAddress } from 'viem';
 
 export async function indexERC20MintBurn(

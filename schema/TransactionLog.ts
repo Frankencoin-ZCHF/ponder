@@ -1,8 +1,9 @@
 import { onchainTable, primaryKey } from 'ponder';
 
 export const AnalyticTransactionLog = onchainTable(
-	'TransactionLog',
+	'AnalyticTransactionLog',
 	(t) => ({
+		chainId: t.integer().notNull(),
 		count: t.bigint().notNull(),
 		timestamp: t.bigint().notNull(),
 		kind: t.text().notNull(),
@@ -41,13 +42,13 @@ export const AnalyticTransactionLog = onchainTable(
 	}),
 	(table) => ({
 		pk: primaryKey({
-			columns: [table.timestamp, table.kind, table.count],
+			columns: [table.chainId, table.timestamp, table.kind, table.count],
 		}),
 	})
 );
 
 export const AnalyticDailyLog = onchainTable(
-	'DailyLog',
+	'AnalyticDailyLog',
 	(t) => ({
 		date: t.text().notNull(),
 		timestamp: t.bigint().notNull(),

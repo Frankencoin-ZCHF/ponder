@@ -1,9 +1,8 @@
 import { ADDRESS } from '@frankencoin/zchf';
 import { ponder } from 'ponder:registry';
-import { CommonEcosystem, FrankencoinProfitLoss } from 'ponder:schema';
+import { CommonEcosystem, FrankencoinProfitLoss, BridgedAccountingReceivedSettlement } from 'ponder:schema';
 import { Address, erc20Abi, parseEther } from 'viem';
 import { mainnet } from 'viem/chains';
-import { BridgedAccountingReceivedSettlement } from '../schema/BridgedAccounting';
 
 /*
 Events to correct accounting. P/L events emitted double, needs to be deducted once

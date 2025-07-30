@@ -1,4 +1,4 @@
-export * from './schema/Analytic';
+export * from './schema/BridgedAccounting';
 export * from './schema/Common';
 export * from './schema/Equity';
 export * from './schema/ERC20';
@@ -8,3 +8,4 @@ export * from './schema/MintingHubV2';
 export * from './schema/PriceDiscovery';
 export * from './schema/RollerV2';
 export * from './schema/Savings';
+export * from './schema/TransactionLog';
