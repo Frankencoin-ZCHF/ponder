@@ -2,6 +2,7 @@ import { LeadrateABI } from '@frankencoin/zchf';
 import { ponder } from 'ponder:registry';
 import { SavingsActivity, SavingsMapping, SavingsStatus } from 'ponder:schema';
 import { Address } from 'viem';
+import { updateTransactionLog } from './lib/TransactionLog';
 
 /*
 Events
@@ -96,13 +97,14 @@ ponder.on('SavingsReferal:Saved', async ({ event, context }) => {
 		balance: mapping.balance,
 	});
 
-	// 	await updateTransactionLog({
-	// 	context,
-	// 	timestamp: event.block.timestamp,
-	// 	kind: 'Savings:Saved',
-	// 	amount: event.args.amount,
-	// 	txHash: event.transaction.hash,
-	// });
+	await updateTransactionLog({
+		db: context.db,
+		chainId,
+		timestamp: event.block.timestamp,
+		kind: 'Savings:Saved',
+		amount: event.args.amount,
+		txHash: event.transaction.hash,
+	});
 });
 
 ponder.on('SavingsReferal:InterestCollected', async ({ event, context }) => {
@@ -157,13 +159,14 @@ ponder.on('SavingsReferal:InterestCollected', async ({ event, context }) => {
 		balance: mapping.balance,
 	});
 
-	// 	await updateTransactionLog({
-	// 	context,
-	// 	timestamp: event.block.timestamp,
-	// 	kind: 'Savings:InterestCollected',
-	// 	amount: event.args.interest,
-	// 	txHash: event.transaction.hash,
-	// });
+	await updateTransactionLog({
+		db: context.db,
+		chainId,
+		timestamp: event.block.timestamp,
+		kind: 'Savings:InterestCollected',
+		amount: event.args.interest,
+		txHash: event.transaction.hash,
+	});
 });
 
 ponder.on('SavingsReferal:Withdrawn', async ({ event, context }) => {
@@ -218,11 +221,12 @@ ponder.on('SavingsReferal:Withdrawn', async ({ event, context }) => {
 		balance: mapping.balance,
 	});
 
-	// 	await updateTransactionLog({
-	// 	context,
-	// 	timestamp: event.block.timestamp,
-	// 	kind: 'Savings:Withdrawn',
-	// 	amount: event.args.amount,
-	// 	txHash: event.transaction.hash,
-	// });
+	await updateTransactionLog({
+		db: context.db,
+		chainId,
+		timestamp: event.block.timestamp,
+		kind: 'Savings:Withdrawn',
+		amount: event.args.amount,
+		txHash: event.transaction.hash,
+	});
 });

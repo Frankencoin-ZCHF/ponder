@@ -1,6 +1,7 @@
 import { Event, type Context } from 'ponder:registry';
 import { ERC20Burn, ERC20Status, ERC20Mint, ERC20BalanceMapping } from 'ponder:schema';
 import { Address, zeroAddress } from 'viem';
+import { updateTransactionLog } from './TransactionLog';
 
 export async function indexERC20MintBurn(
 	event: Event<'ERC20:Transfer' | 'ERC20PositionV1:Transfer' | 'ERC20PositionV2:Transfer'>,
@@ -78,13 +79,14 @@ export async function indexERC20MintBurn(
 			}));
 
 		// make transaction log entry
-		// await updateTransactionLog({
-		// 	context,
-		// 	timestamp: event.block.timestamp,
-		// 	kind: 'Frankencoin:Mint',
-		// 	amount: event.args.value,
-		// 	txHash: event.transaction.hash,
-		// });
+		await updateTransactionLog({
+			db: context.db,
+			chainId,
+			timestamp: event.block.timestamp,
+			kind: 'Frankencoin:Mint',
+			amount: event.args.value,
+			txHash: event.transaction.hash,
+		});
 	}
 
 	// ### burning tokens ###
@@ -152,12 +154,13 @@ export async function indexERC20MintBurn(
 			}));
 
 		// make transaction log entry
-		// await updateTransactionLog({
-		// 	context,
-		// 	timestamp: event.block.timestamp,
-		// 	kind: 'Frankencoin:Burn',
-		// 	amount: event.args.value,
-		// 	txHash: event.transaction.hash,
-		// });
+		await updateTransactionLog({
+			db: context.db,
+			chainId,
+			timestamp: event.block.timestamp,
+			kind: 'Frankencoin:Burn',
+			amount: event.args.value,
+			txHash: event.transaction.hash,
+		});
 	}
 }

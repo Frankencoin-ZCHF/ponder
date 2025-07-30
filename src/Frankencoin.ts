@@ -5,6 +5,7 @@ import { Address, erc20Abi, parseEther } from 'viem';
 import { readContract } from 'viem/actions';
 import { mainnet } from 'viem/chains';
 import { mainnetClient } from '../ponder.config';
+import { updateTransactionLog } from './lib/TransactionLog';
 
 /*
 Events
@@ -104,13 +105,14 @@ ponder.on('Frankencoin:Profit', async ({ event, context }) => {
 	});
 
 	// update analytics
-	// await updateTransactionLog({
-	// 	context,
-	// 	timestamp: event.block.timestamp,
-	// 	kind: 'Equity:Profit',
-	// 	amount: event.args.amount,
-	// 	txHash: event.transaction.hash,
-	// });
+	await updateTransactionLog({
+		db: context.db,
+		chainId: context.chain.id,
+		timestamp: event.block.timestamp,
+		kind: 'Equity:Profit',
+		amount: event.args.amount,
+		txHash: event.transaction.hash,
+	});
 });
 
 ponder.on('Frankencoin:Loss', async ({ event, context }) => {
@@ -196,13 +198,14 @@ ponder.on('Frankencoin:Loss', async ({ event, context }) => {
 	});
 
 	// update analytics
-	// await updateTransactionLog({
-	// 	context,
-	// 	timestamp: event.block.timestamp,
-	// 	kind: 'Equity:Loss',
-	// 	amount: event.args.amount,
-	// 	txHash: event.transaction.hash,
-	// });
+	await updateTransactionLog({
+		db: context.db,
+		chainId: context.chain.id,
+		timestamp: event.block.timestamp,
+		kind: 'Equity:Loss',
+		amount: event.args.amount,
+		txHash: event.transaction.hash,
+	});
 });
 
 ponder.on('Frankencoin:MinterApplied', async ({ event, context }) => {

@@ -3,6 +3,7 @@ import { ponder } from 'ponder:registry';
 import { CommonEcosystem, FrankencoinProfitLoss, BridgedAccountingReceivedSettlement } from 'ponder:schema';
 import { Address, erc20Abi, parseEther } from 'viem';
 import { mainnet } from 'viem/chains';
+import { updateTransactionLog } from './lib/TransactionLog';
 
 /*
 Events to correct accounting. P/L events emitted double, needs to be deducted once
@@ -74,13 +75,14 @@ ponder.on('CCIPBridgedAccounting:ReceivedProfits', async ({ event, context }) =>
 	});
 
 	// update analytics
-	// await updateTransactionLog({
-	// 	context,
-	// 	timestamp: event.block.timestamp,
-	// 	kind: 'Equity:Profit',
-	// 	amount: event.args.amount,
-	// 	txHash: event.transaction.hash,
-	// });
+	await updateTransactionLog({
+		db: context.db,
+		chainId: context.chain.id,
+		timestamp: event.block.timestamp,
+		kind: 'BridgedAccounting:ReceivedProfits',
+		amount: event.args.amount,
+		txHash: event.transaction.hash,
+	});
 });
 
 ponder.on('CCIPBridgedAccounting:ReceivedLosses', async ({ event, context }) => {
@@ -146,24 +148,25 @@ ponder.on('CCIPBridgedAccounting:ReceivedLosses', async ({ event, context }) => 
 	});
 
 	// update analytics
-	// await updateTransactionLog({
-	// 	context,
-	// 	timestamp: event.block.timestamp,
-	// 	kind: 'Equity:Loss',
-	// 	amount: event.args.amount,
-	// 	txHash: event.transaction.hash,
-	// });
+	await updateTransactionLog({
+		db: context.db,
+		chainId: context.chain.id,
+		timestamp: event.block.timestamp,
+		kind: 'BridgedAccounting:ReceivedLosses',
+		amount: amount,
+		txHash: event.transaction.hash,
+	});
 });
 
 ponder.on('CCIPBridgedAccounting:ReceivedSettlement', async ({ event, context }) => {
 	const { chain, sender, losses, profits } = event.args;
 	const created = event.block.timestamp;
 
-	// upsert ReceivedSettlement
+	// upsert ReceivedSettlementCounter
 	const counter = await context.db
 		.insert(CommonEcosystem)
 		.values({
-			id: 'Equity:ReceivedSettlement',
+			id: 'Equity:ReceivedSettlementCounter',
 			value: '',
 			amount: 1n,
 		})
@@ -205,13 +208,4 @@ ponder.on('CCIPBridgedAccounting:ReceivedSettlement', async ({ event, context })
 		profits,
 		losses,
 	});
-
-	// update analytics
-	// await updateTransactionLog({
-	// 	context,
-	// 	timestamp: event.block.timestamp,
-	// 	kind: 'Equity:Loss',
-	// 	amount: event.args.amount,
-	// 	txHash: event.transaction.hash,
-	// });
 });

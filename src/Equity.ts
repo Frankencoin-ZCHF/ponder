@@ -1,6 +1,7 @@
 import { ponder } from 'ponder:registry';
 import { CommonEcosystem, EquityDelegation, EquityTrade, EquityTradeChart } from 'ponder:schema';
 import { Address } from 'viem';
+import { updateTransactionLog } from './lib/TransactionLog';
 
 /*
 Events
@@ -77,13 +78,14 @@ ponder.on('Equity:Trade', async ({ event, context }) => {
 			txHash: event.transaction.hash,
 		});
 
-		// await updateTransactionLog({
-		// 	context,
-		// 	timestamp: event.block.timestamp,
-		// 	kind: 'Equity:Invested',
-		// 	amount,
-		// 	txHash: event.transaction.hash,
-		// });
+		await updateTransactionLog({
+			db: context.db,
+			chainId: context.chain.id,
+			timestamp: event.block.timestamp,
+			kind: 'Equity:Invested',
+			amount,
+			txHash: event.transaction.hash,
+		});
 	} else {
 		// cnt redeemed
 		await context.db
@@ -133,13 +135,14 @@ ponder.on('Equity:Trade', async ({ event, context }) => {
 			txHash: event.transaction.hash,
 		});
 
-		// await updateTransactionLog({
-		// 	context,
-		// 	timestamp: event.block.timestamp,
-		// 	kind: 'Equity:Redeemed',
-		// 	amount,
-		// 	txHash: event.transaction.hash,
-		// });
+		await updateTransactionLog({
+			db: context.db,
+			chainId: context.chain.id,
+			timestamp: event.block.timestamp,
+			kind: 'Equity:Redeemed',
+			amount,
+			txHash: event.transaction.hash,
+		});
 	}
 
 	await context.db

@@ -14,7 +14,7 @@ import { addr, mainnetClient } from '../../ponder.config';
 import { mainnet } from 'viem/chains';
 
 interface updateTransactionLogProps {
-	context: Context;
+	db: Context['db'];
 	chainId: number;
 	timestamp: bigint;
 	kind: string;
@@ -22,29 +22,29 @@ interface updateTransactionLogProps {
 	txHash: string;
 }
 
-export async function updateTransactionLog({ context, chainId, timestamp, kind, amount, txHash }: updateTransactionLogProps) {
+export async function updateTransactionLog({ db, chainId, timestamp, kind, amount, txHash }: updateTransactionLogProps) {
 	const mainnetAddress = addr[mainnet.id];
 
 	// Get ecosystem data
-	const profitFees = await context.db.find(CommonEcosystem, { id: `Equity:Profits` });
+	const profitFees = await db.find(CommonEcosystem, { id: `Equity:Profits` });
 	const totalInflow = profitFees ? profitFees.amount : 0n;
-	const lossFees = await context.db.find(CommonEcosystem, { id: `Equity:Losses` });
+	const lossFees = await db.find(CommonEcosystem, { id: `Equity:Losses` });
 	const totalOutflow = lossFees ? lossFees.amount : 0n;
 
-	const investedFeePaidPPM = await context.db.find(CommonEcosystem, { id: `Equity:InvestedFeePaidPPM` });
+	const investedFeePaidPPM = await db.find(CommonEcosystem, { id: `Equity:InvestedFeePaidPPM` });
 	const investedFeePaid = investedFeePaidPPM ? investedFeePaidPPM.amount / 1_000_000n : 0n;
-	const redeemedFeePaidPPM = await context.db.find(CommonEcosystem, { id: `Equity:RedeemedFeePaidPPM` });
+	const redeemedFeePaidPPM = await db.find(CommonEcosystem, { id: `Equity:RedeemedFeePaidPPM` });
 	const redeemedFeePaid = redeemedFeePaidPPM ? redeemedFeePaidPPM.amount / 1_000_000n : 0n;
 	const totalTradeFee = investedFeePaid + redeemedFeePaid;
 
-	const _earningsPerFPS = await context.db.find(CommonEcosystem, { id: `Equity:EarningsPerFPS` });
+	const _earningsPerFPS = await db.find(CommonEcosystem, { id: `Equity:EarningsPerFPS` });
 	const earningsPerFPS = _earningsPerFPS ? _earningsPerFPS.amount : 0n;
 
-	const _totalSaved = await context.db.find(CommonEcosystem, { id: `Savings:TotalSaved` });
+	const _totalSaved = await db.find(CommonEcosystem, { id: `Savings:TotalSaved` });
 	const totalSaved = _totalSaved ? _totalSaved.amount : 0n;
-	const _totalInterestCollected = await context.db.find(CommonEcosystem, { id: `Savings:TotalInterestCollected` });
+	const _totalInterestCollected = await db.find(CommonEcosystem, { id: `Savings:TotalInterestCollected` });
 	const totalInterestCollected = _totalInterestCollected ? _totalInterestCollected.amount : 0n;
-	const _totalWithdrawn = await context.db.find(CommonEcosystem, { id: `Savings:TotalWithdrawn` });
+	const _totalWithdrawn = await db.find(CommonEcosystem, { id: `Savings:TotalWithdrawn` });
 	const totalWithdrawn = _totalWithdrawn ? _totalWithdrawn.amount : 0n;
 	const totalSavings = totalSaved + totalInterestCollected - totalWithdrawn;
 
@@ -73,7 +73,7 @@ export async function updateTransactionLog({ context, chainId, timestamp, kind, 
 		functionName: 'price',
 	});
 
-	const savingsSavedMapping = await context.db.sql.select().from(SavingsMapping).where(gt(SavingsMapping.balance, 0n));
+	const savingsSavedMapping = await db.sql.select().from(SavingsMapping).where(gt(SavingsMapping.balance, 0n));
 	const savers = savingsSavedMapping.map((i) => i.account as Address);
 
 	let claimableInterests: bigint = 0n;
@@ -104,7 +104,7 @@ export async function updateTransactionLog({ context, chainId, timestamp, kind, 
 	}
 
 	// V1	
-	const openPositionV1 = await context.db.sql.select().from(MintingHubV1PositionV1).where(and(
+	const openPositionV1 = await db.sql.select().from(MintingHubV1PositionV1).where(and(
 		eq(MintingHubV1PositionV1.closed, false),
 		eq(MintingHubV1PositionV1.denied, false),
 		gt(MintingHubV1PositionV1.minted, 0n),
@@ -118,7 +118,7 @@ export async function updateTransactionLog({ context, chainId, timestamp, kind, 
 
 
 	// V2
-	const openPositionV2 = await context.db.sql.select().from(MintingHubV2PositionV2).where(and(
+	const openPositionV2 = await db.sql.select().from(MintingHubV2PositionV2).where(and(
 		eq(MintingHubV2PositionV2.closed, false),
 		eq(MintingHubV2PositionV2.denied, false),
 		gt(MintingHubV2PositionV2.minted, 0n),
@@ -141,7 +141,7 @@ export async function updateTransactionLog({ context, chainId, timestamp, kind, 
 	const last365dayObj = new Date(parseInt(timestamp.toString()) * 1000 - 365 * 24 * 60 * 60 * 1000);
 	const last365dayTimestamp = last365dayObj.setUTCHours(0, 0, 0, 0);
 
-	const last356dayEntry = await context.db.sql
+	const last356dayEntry = await db.sql
 		.select().from(AnalyticDailyLog)
 		.where(gte(AnalyticDailyLog.timestamp, BigInt(last365dayTimestamp)))
 		.orderBy(AnalyticDailyLog.timestamp)
@@ -155,7 +155,7 @@ export async function updateTransactionLog({ context, chainId, timestamp, kind, 
 		realizedNetEarnings = inflowAdjusted - outflowAdjusted;
 	}
 
-	const counter = await context.db
+	const counter = await db
 		.insert(CommonEcosystem)
 		.values({
 			id: 'Analytics:TransactionLogCounter',
@@ -166,7 +166,7 @@ export async function updateTransactionLog({ context, chainId, timestamp, kind, 
 			amount: current.amount + 1n,
 		}));
 
-	await context.db.insert(AnalyticTransactionLog).values({
+	await db.insert(AnalyticTransactionLog).values({
 		chainId,
 		timestamp,
 		count: counter.amount,
@@ -239,6 +239,6 @@ export async function updateTransactionLog({ context, chainId, timestamp, kind, 
 		earningsPerFPS,
 	}
 
-	await context.db.insert(AnalyticDailyLog).values(dailyLogData)
+	await db.insert(AnalyticDailyLog).values(dailyLogData)
 	.onConflictDoUpdate(() => (dailyLogData));
 }
