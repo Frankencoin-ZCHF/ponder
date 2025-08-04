@@ -1,19 +1,19 @@
-import { and, eq, gt, gte } from "ponder";
+import { and, or, eq, gt, gte } from "ponder";
 import { type Context } from 'ponder:registry';
 import { 
 	AnalyticTransactionLog, 
 	AnalyticDailyLog, 
 	CommonEcosystem, 
-	SavingsMapping, 
 	MintingHubV1PositionV1, 
-	MintingHubV2PositionV2 
+	MintingHubV2PositionV2, 
 } from 'ponder:schema';
 import { EquityABI, FrankencoinABI, SavingsABI } from '@frankencoin/zchf';
 import { Address, parseEther, parseUnits } from 'viem';
-import { addr, mainnetClient } from '../../ponder.config';
-import { mainnet } from 'viem/chains';
+import { addr,  } from '../../ponder.config';
+import { mainnet} from 'viem/chains';
 
 interface updateTransactionLogProps {
+	client: Context['client'];
 	db: Context['db'];
 	chainId: number;
 	timestamp: bigint;
@@ -22,7 +22,13 @@ interface updateTransactionLogProps {
 	txHash: string;
 }
 
-export async function updateTransactionLog({ db, chainId, timestamp, kind, amount, txHash }: updateTransactionLogProps) {
+/**
+ * @dev: update transaction log for mainnet only
+ * this function need a rebuild to reflect multichain data. 
+ */
+export async function updateTransactionLog({ client, db, chainId, timestamp, kind, amount, txHash }: updateTransactionLogProps) {
+	if (chainId != mainnet.id) return;
+	
 	const mainnetAddress = addr[mainnet.id];
 
 	// Get ecosystem data
@@ -48,51 +54,37 @@ export async function updateTransactionLog({ db, chainId, timestamp, kind, amoun
 	const totalWithdrawn = _totalWithdrawn ? _totalWithdrawn.amount : 0n;
 	const totalSavings = totalSaved + totalInterestCollected - totalWithdrawn;
 
-	// FIXME: accumulate all frankencoin contracts
-	const totalSupply = await mainnetClient.readContract({
+	const totalSupply = await client.readContract({
 		abi: FrankencoinABI,
 		address: mainnetAddress.frankencoin,
 		functionName: 'totalSupply',
 	});
 
-	const totalEquity = await mainnetClient.readContract({
+	const totalEquity = await client.readContract({
 		abi: FrankencoinABI,
 		address: mainnetAddress.frankencoin,
 		functionName: 'equity',
 	});
 
-	const fpsTotalSupply = await mainnetClient.readContract({
+	const fpsTotalSupply = await client.readContract({
 		abi: EquityABI,
 		address: mainnetAddress.equity,
 		functionName: 'totalSupply',
 	});
 
-	const fpsPrice = await mainnetClient.readContract({
+	const fpsPrice = await client.readContract({
 		abi: EquityABI,
 		address: mainnetAddress.equity,
 		functionName: 'price',
 	});
 
-	const savingsSavedMapping = await db.sql.select().from(SavingsMapping).where(gt(SavingsMapping.balance, 0n));
-	const savers = savingsSavedMapping.map((i) => i.account as Address);
-
-	let claimableInterests: bigint = 0n;
-	for (let s of savers) {
-		const accruedInterest: bigint = await mainnetClient.readContract({
-			abi: SavingsABI,
-			address: mainnetAddress.savingsReferral,
-			functionName: 'accruedInterest',
-			args: [s as Address],
-		});
-
-		claimableInterests += accruedInterest;
-	}
-
 	let currentLeadRatePPM: number = 0;
 	let currentLeadRate: bigint = 0n;
 	let projectedInterests: bigint = 0n;
+
+	// FIXME: calculate projected interests multichain via savings status
 	if (totalSavings > 0n) {
-		const leadRatePPM = await mainnetClient.readContract({
+		const leadRatePPM = await client.readContract({
 			abi: SavingsABI,
 			address: mainnetAddress.savingsReferral,
 			functionName: 'currentRatePPM',
@@ -135,7 +127,7 @@ export async function updateTransactionLog({ db, chainId, timestamp, kind, amoun
 	const annualV2BorrowRate = totalMintedV2 > 0n ? (annualV2Interests * parseEther('1')) / totalMintedV2 : 0n;
 
 	// net calc
-	const annualNetEarnings = annualV1Interests + annualV2Interests - claimableInterests - projectedInterests;
+	const annualNetEarnings = annualV1Interests + annualV2Interests - projectedInterests;
 
 	// calc realized earnings, rolling latest 365days
 	const last365dayObj = new Date(parseInt(timestamp.toString()) * 1000 - 365 * 24 * 60 * 60 * 1000);
@@ -189,7 +181,6 @@ export async function updateTransactionLog({ db, chainId, timestamp, kind, amoun
 		totalMintedV2,
 
 		currentLeadRate,
-		claimableInterests,
 		projectedInterests,
 		annualV1Interests,
 		annualV2Interests,
@@ -226,7 +217,6 @@ export async function updateTransactionLog({ db, chainId, timestamp, kind, amoun
 		totalMintedV2,
 
 		currentLeadRate,
-		claimableInterests,
 		projectedInterests,
 		annualV1Interests,
 		annualV2Interests,

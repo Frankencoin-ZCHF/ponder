@@ -79,6 +79,7 @@ ponder.on('Equity:Trade', async ({ event, context }) => {
 		});
 
 		await updateTransactionLog({
+			client: context.client,
 			db: context.db,
 			chainId: context.chain.id,
 			timestamp: event.block.timestamp,
@@ -136,6 +137,7 @@ ponder.on('Equity:Trade', async ({ event, context }) => {
 		});
 
 		await updateTransactionLog({
+			client: context.client,
 			db: context.db,
 			chainId: context.chain.id,
 			timestamp: event.block.timestamp,

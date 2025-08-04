@@ -52,6 +52,7 @@ ponder.on('Leadrate:RateChanged', async ({ event, context }) => {
 	});
 
 	await updateTransactionLog({
+		client: context.client,
 		db: context.db,
 		chainId,
 		timestamp: event.block.timestamp,

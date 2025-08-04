@@ -80,6 +80,7 @@ export async function indexERC20MintBurn(
 
 		// make transaction log entry
 		await updateTransactionLog({
+			client: context.client,
 			db: context.db,
 			chainId,
 			timestamp: event.block.timestamp,
@@ -155,6 +156,7 @@ export async function indexERC20MintBurn(
 
 		// make transaction log entry
 		await updateTransactionLog({
+			client: context.client,
 			db: context.db,
 			chainId,
 			timestamp: event.block.timestamp,

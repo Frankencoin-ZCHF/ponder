@@ -98,6 +98,7 @@ ponder.on('SavingsReferal:Saved', async ({ event, context }) => {
 	});
 
 	await updateTransactionLog({
+		client: context.client,
 		db: context.db,
 		chainId,
 		timestamp: event.block.timestamp,
@@ -160,6 +161,7 @@ ponder.on('SavingsReferal:InterestCollected', async ({ event, context }) => {
 	});
 
 	await updateTransactionLog({
+		client: context.client,
 		db: context.db,
 		chainId,
 		timestamp: event.block.timestamp,
@@ -222,6 +224,7 @@ ponder.on('SavingsReferal:Withdrawn', async ({ event, context }) => {
 	});
 
 	await updateTransactionLog({
+		client: context.client,
 		db: context.db,
 		chainId,
 		timestamp: event.block.timestamp,

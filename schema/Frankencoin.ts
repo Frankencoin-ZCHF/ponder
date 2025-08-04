@@ -32,7 +32,6 @@ export const FrankencoinProfitLoss = onchainTable(
 		amount: t.bigint().notNull(),
 		profits: t.bigint().notNull(),
 		losses: t.bigint().notNull(),
-		perFPS: t.bigint().notNull(),
 	}),
 	(table) => ({
 		pk: primaryKey({ columns: [table.chainId, table.minter, table.created, table.count] }),

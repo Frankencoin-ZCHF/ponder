@@ -76,6 +76,7 @@ ponder.on('CCIPBridgedAccounting:ReceivedProfits', async ({ event, context }) =>
 
 	// update analytics
 	await updateTransactionLog({
+		client: context.client,
 		db: context.db,
 		chainId: context.chain.id,
 		timestamp: event.block.timestamp,
@@ -149,6 +150,7 @@ ponder.on('CCIPBridgedAccounting:ReceivedLosses', async ({ event, context }) => 
 
 	// update analytics
 	await updateTransactionLog({
+		client: context.client,
 		db: context.db,
 		chainId: context.chain.id,
 		timestamp: event.block.timestamp,

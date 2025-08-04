@@ -38,7 +38,7 @@ export const config = {
 		rpc: `https://polygon-mainnet.g.alchemy.com/v2/${process.env.ALCHEMY_RPC_KEY}`,
 		maxRequestsPerSecond: parseInt(process.env.MAX_REQUESTS_PER_SECOND || '50'),
 		pollingInterval: 5_000,
-		startBridgedFrankencoin: 72307201,
+		startBridgedFrankencoin: 72384538,
 	},
 	[arbitrum.id]: {
 		rpc: `https://arb-mainnet.g.alchemy.com/v2/${process.env.ALCHEMY_RPC_KEY}`,
