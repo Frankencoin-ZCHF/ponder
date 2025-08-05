@@ -2,9 +2,7 @@ import { ADDRESS } from '@frankencoin/zchf';
 import { ponder } from 'ponder:registry';
 import { CommonEcosystem, FrankencoinMinter, FrankencoinProfitLoss } from 'ponder:schema';
 import { Address, erc20Abi, parseEther } from 'viem';
-import { readContract } from 'viem/actions';
 import { mainnet } from 'viem/chains';
-import { mainnetClient } from '../ponder.config';
 import { updateTransactionLog } from './lib/TransactionLog';
 
 /*
@@ -24,13 +22,6 @@ To perform a contract read on a different chain, you need to create a separate p
 
 ponder.on('Frankencoin:Profit', async ({ event, context }) => {
 	const minter = event.args.reportingMinter.toLowerCase() as Address;
-	
-	// const fpsTotalSupply = await readContract(mainnetClient, {
-	// 	abi: erc20Abi,
-	// 	address: ADDRESS[mainnet.id].equity,
-	// 	functionName: 'totalSupply',
-	// });
-	// const perToken = (event.args.amount * parseEther('1')) / fpsTotalSupply;
 
 	// upsert ProfitLossCounter
 	const counter = await context.db
@@ -80,17 +71,27 @@ ponder.on('Frankencoin:Profit', async ({ event, context }) => {
 			amount: current.amount + 0n,
 		}));
 
-	// upsert EarningsPerFPS
-	// const earnings = await context.db
-	// 	.insert(CommonEcosystem)
-	// 	.values({
-	// 		id: 'Equity:EarningsPerFPS',
-	// 		value: '',
-	// 		amount: perToken,
-	// 	})
-	// 	.onConflictDoUpdate((current) => ({
-	// 		amount: current.amount + perToken,
-	// 	}));
+	let earnings = { amount: 0n };
+	if (context.chain.id === mainnet.id) {
+		const fpsTotalSupply = await context.client.readContract({
+			abi: erc20Abi,
+			address: ADDRESS[mainnet.id].equity,
+			functionName: 'totalSupply',
+		});
+		const perToken = (event.args.amount * parseEther('1')) / fpsTotalSupply;
+
+		// upsert EarningsPerFPS
+		earnings = await context.db
+			.insert(CommonEcosystem)
+			.values({
+				id: 'Equity:EarningsPerFPS',
+				value: '',
+				amount: perToken,
+			})
+			.onConflictDoUpdate((current) => ({
+				amount: current.amount + perToken,
+			}));
+	}
 
 	// flat indexing earnings
 	await context.db.insert(FrankencoinProfitLoss).values({
@@ -102,7 +103,7 @@ ponder.on('Frankencoin:Profit', async ({ event, context }) => {
 		minter: minter,
 		profits: profits.amount,
 		losses: losses.amount,
-		// perFPS: earnings.amount,
+		perFPS: earnings.amount,
 	});
 
 	// update analytics
@@ -119,13 +120,6 @@ ponder.on('Frankencoin:Profit', async ({ event, context }) => {
 
 ponder.on('Frankencoin:Loss', async ({ event, context }) => {
 	const minter = event.args.reportingMinter.toLowerCase() as Address;
-	
-	// const fpsTotalSupply = await readContract(mainnetClient, {
-	// 	abi: erc20Abi,
-	// 	address: ADDRESS[mainnet.id].equity,
-	// 	functionName: 'totalSupply',
-	// });
-	// const perToken = -(event.args.amount * parseEther('1')) / fpsTotalSupply;
 
 	// upsert ProfitLossCounter
 	const counter = await context.db
@@ -175,17 +169,27 @@ ponder.on('Frankencoin:Loss', async ({ event, context }) => {
 			amount: current.amount + event.args.amount,
 		}));
 
-	// upsert EarningsPerFPS
-	// const earnings = await context.db
-	// 	.insert(CommonEcosystem)
-	// 	.values({
-	// 		id: 'Equity:EarningsPerFPS',
-	// 		value: '',
-	// 		amount: perToken,
-	// 	})
-	// 	.onConflictDoUpdate((current) => ({
-	// 		amount: current.amount + perToken,
-	// 	}));
+	let earnings = { amount: 0n };
+	if (context.chain.id === mainnet.id) {
+		const fpsTotalSupply = await context.client.readContract({
+			abi: erc20Abi,
+			address: ADDRESS[mainnet.id].equity,
+			functionName: 'totalSupply',
+		});
+		const perToken = -(event.args.amount * parseEther('1')) / fpsTotalSupply;
+
+		// upsert EarningsPerFPS
+		earnings = await context.db
+			.insert(CommonEcosystem)
+			.values({
+				id: 'Equity:EarningsPerFPS',
+				value: '',
+				amount: perToken,
+			})
+			.onConflictDoUpdate((current) => ({
+				amount: current.amount + perToken,
+			}));
+	}
 
 	// flat indexing earnings
 	await context.db.insert(FrankencoinProfitLoss).values({
@@ -197,7 +201,7 @@ ponder.on('Frankencoin:Loss', async ({ event, context }) => {
 		minter: minter,
 		profits: profits.amount,
 		losses: losses.amount,
-		// perFPS: earnings.amount,
+		perFPS: earnings.amount,
 	});
 
 	// update analytics

@@ -6,7 +6,7 @@ import { mainnet } from 'viem/chains';
 import { updateTransactionLog } from './lib/TransactionLog';
 
 /*
-Events to correct accounting. P/L events emitted double, needs to be deducted once
+Events to correct accounting. P/L events emitted on sidechain and on sync, needs to be deducted once
 
 CCIPBridgedAccounting:ReceivedProfits
 CCIPBridgedAccounting:ReceivedLosses
