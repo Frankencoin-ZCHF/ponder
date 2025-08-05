@@ -82,7 +82,6 @@ export async function updateTransactionLog({ client, db, chainId, timestamp, kin
 	let currentLeadRate: bigint = 0n;
 	let projectedInterests: bigint = 0n;
 
-	// FIXME: calculate projected interests multichain via savings status
 	if (totalSavings > 0n) {
 		const leadRatePPM = await client.readContract({
 			abi: SavingsABI,

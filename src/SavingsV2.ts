@@ -1,6 +1,6 @@
 import { LeadrateABI } from '@frankencoin/zchf';
 import { ponder } from 'ponder:registry';
-import { SavingsActivity, SavingsMapping, SavingsStatus } from 'ponder:schema';
+import { CommonEcosystem, SavingsActivity, SavingsMapping, SavingsStatus } from 'ponder:schema';
 import { Address } from 'viem';
 import { updateTransactionLog } from './lib/TransactionLog';
 
@@ -26,6 +26,18 @@ ponder.on('SavingsV2:Saved', async ({ event, context }) => {
 		address: module,
 		functionName: 'currentRatePPM',
 	});
+
+	// update total saved
+	await context.db
+	.insert(CommonEcosystem)
+	.values({
+		id: 'Savings:TotalSaved',
+		value: '',
+		amount: amount,
+	})
+	.onConflictDoUpdate((current) => ({
+		amount: current.amount + amount,
+	}));
 
 	// update global status
 	const status = await context.db
@@ -123,6 +135,18 @@ ponder.on('SavingsV2:InterestCollected', async ({ event, context }) => {
 		functionName: 'currentRatePPM',
 	});
 
+	// update total interest collected
+	await context.db
+	.insert(CommonEcosystem)
+	.values({
+		id: 'Savings:TotalInterestCollected',
+		value: '',
+		amount: interest,
+	})
+	.onConflictDoUpdate((current) => ({
+		amount: current.amount + interest,
+	}));
+
 	// update global status
 	const status = await context.db.update(SavingsStatus, { chainId, module }).set((current) => ({
 		updated,
@@ -185,6 +209,18 @@ ponder.on('SavingsV2:Withdrawn', async ({ event, context }) => {
 		address: module,
 		functionName: 'currentRatePPM',
 	});
+
+	// update total withdrawn
+	await context.db
+	.insert(CommonEcosystem)
+	.values({
+		id: 'Savings:TotalWithdrawn',
+		value: '',
+		amount: amount,
+	})
+	.onConflictDoUpdate((current) => ({
+		amount: current.amount + amount,
+	}));
 
 	// update global status
 	const status = await context.db.update(SavingsStatus, { chainId, module }).set((current) => ({
