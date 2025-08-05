@@ -1,16 +1,10 @@
-import { and, or, eq, gt, gte } from "ponder";
+import { and, or, eq, gt, gte } from 'ponder';
 import { type Context } from 'ponder:registry';
-import { 
-	AnalyticTransactionLog, 
-	AnalyticDailyLog, 
-	CommonEcosystem, 
-	MintingHubV1PositionV1, 
-	MintingHubV2PositionV2, 
-} from 'ponder:schema';
+import { AnalyticTransactionLog, AnalyticDailyLog, CommonEcosystem, MintingHubV1PositionV1, MintingHubV2PositionV2 } from 'ponder:schema';
 import { EquityABI, FrankencoinABI, SavingsABI } from '@frankencoin/zchf';
 import { Address, parseEther, parseUnits } from 'viem';
-import { addr,  } from '../../ponder.config';
-import { mainnet} from 'viem/chains';
+import { addr, config } from '../../ponder.config';
+import { mainnet } from 'viem/chains';
 
 interface updateTransactionLogProps {
 	client: Context['client'];
@@ -24,11 +18,11 @@ interface updateTransactionLogProps {
 
 /**
  * @dev: update transaction log for mainnet only
- * this function need a rebuild to reflect multichain data. 
+ * this function need a rebuild to reflect multichain data.
  */
 export async function updateTransactionLog({ client, db, chainId, timestamp, kind, amount, txHash }: updateTransactionLogProps) {
 	if (chainId != mainnet.id) return;
-	
+
 	const mainnetAddress = addr[mainnet.id];
 
 	// Get ecosystem data
@@ -82,24 +76,27 @@ export async function updateTransactionLog({ client, db, chainId, timestamp, kin
 	let currentLeadRate: bigint = 0n;
 	let projectedInterests: bigint = 0n;
 
-	if (totalSavings > 0n) {
-		const leadRatePPM = await client.readContract({
-			abi: SavingsABI,
-			address: mainnetAddress.savingsReferral,
-			functionName: 'currentRatePPM',
-		});
+	try {
+		if (totalSavings > 0n) {
+			const leadRatePPM = await client.readContract({
+				abi: SavingsABI,
+				address: mainnetAddress.savingsReferral,
+				functionName: 'currentRatePPM',
+			});
 
-		currentLeadRate = parseUnits(leadRatePPM.toString(), 12);
-		currentLeadRatePPM = leadRatePPM;
-		projectedInterests = (totalSavings * BigInt(leadRatePPM)) / 1_000_000n;
-	}
+			currentLeadRate = parseUnits(leadRatePPM.toString(), 12);
+			currentLeadRatePPM = leadRatePPM;
+			projectedInterests = (totalSavings * BigInt(leadRatePPM)) / 1_000_000n;
+		}
+	} catch (error) {}
 
-	// V1	
-	const openPositionV1 = await db.sql.select().from(MintingHubV1PositionV1).where(and(
-		eq(MintingHubV1PositionV1.closed, false),
-		eq(MintingHubV1PositionV1.denied, false),
-		gt(MintingHubV1PositionV1.minted, 0n),
-	));
+	// V1
+	const openPositionV1 = await db.sql
+		.select()
+		.from(MintingHubV1PositionV1)
+		.where(
+			and(eq(MintingHubV1PositionV1.closed, false), eq(MintingHubV1PositionV1.denied, false), gt(MintingHubV1PositionV1.minted, 0n))
+		);
 	let annualV1Interests: bigint = 0n;
 	let totalMintedV1: bigint = 0n;
 	for (let p of openPositionV1) {
@@ -107,13 +104,13 @@ export async function updateTransactionLog({ client, db, chainId, timestamp, kin
 		totalMintedV1 += p.minted;
 	}
 
-
 	// V2
-	const openPositionV2 = await db.sql.select().from(MintingHubV2PositionV2).where(and(
-		eq(MintingHubV2PositionV2.closed, false),
-		eq(MintingHubV2PositionV2.denied, false),
-		gt(MintingHubV2PositionV2.minted, 0n),
-	));
+	const openPositionV2 = await db.sql
+		.select()
+		.from(MintingHubV2PositionV2)
+		.where(
+			and(eq(MintingHubV2PositionV2.closed, false), eq(MintingHubV2PositionV2.denied, false), gt(MintingHubV2PositionV2.minted, 0n))
+		);
 	let annualV2Interests: bigint = 0n;
 	let totalMintedV2: bigint = 0n;
 	for (let p of openPositionV2) {
@@ -133,7 +130,8 @@ export async function updateTransactionLog({ client, db, chainId, timestamp, kin
 	const last365dayTimestamp = last365dayObj.setUTCHours(0, 0, 0, 0);
 
 	const last356dayEntry = await db.sql
-		.select().from(AnalyticDailyLog)
+		.select()
+		.from(AnalyticDailyLog)
 		.where(gte(AnalyticDailyLog.timestamp, BigInt(last365dayTimestamp)))
 		.orderBy(AnalyticDailyLog.timestamp)
 		.limit(1);
@@ -226,8 +224,10 @@ export async function updateTransactionLog({ client, db, chainId, timestamp, kin
 		annualNetEarnings,
 		realizedNetEarnings,
 		earningsPerFPS,
-	}
+	};
 
-	await db.insert(AnalyticDailyLog).values(dailyLogData)
-	.onConflictDoUpdate(() => (dailyLogData));
+	await db
+		.insert(AnalyticDailyLog)
+		.values(dailyLogData)
+		.onConflictDoUpdate(() => dailyLogData);
 }
