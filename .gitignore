@@ -1,5 +1,6 @@
 # Dependencies
 /node_modules
+.dev
 
 # Debug
 npm-debug.log*
@@ -9,6 +10,7 @@ yarn-error.log*
 
 # Misc
 .DS_Store
+**.DS_Store
 
 # Env files
 .env*.local

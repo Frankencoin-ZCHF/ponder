@@ -3,7 +3,7 @@
 ## Deployment of service
 
 -   Main branch should auto. deploy to: **ponder.frankencoin.com**
--   test Deployment deploy to: **ponder.test.frankencoin.com**
+-   Test Deployment deploy to: **ponder.test.frankencoin.com**
 
 ## Ponder needs .env.local
 
@@ -11,44 +11,23 @@ check out ".env.local" file to adjust environment.
 For SQLite, REMOVE THE DATABASE_URL LINE.
 
 ```
-# Select Profile/Chain
-PONDER_PROFILE=mainnet
+# Select port (default: 3000) and profile
+PORT=42069
+PONDER_PROFILE=testnet
 
-# Mainnet RPC URL used for fetching blockchain data. Alchemy is recommended.
-PONDER_RPC_URL_MAINNET=https://eth-mainnet.g.alchemy.com/v2/...
-PONDER_RPC_URL_POLYGON=... # For testing purposes only
+# RPC URL used for fetching blockchain data. Alchemy is recommended.
+RPC_URL_MAINNET=https://eth-mainnet.g.alchemy.com/v2...
+RPC_URL_POLYGON=https://polygon-mainnet.g.alchemy.com/v2...
 
 # (Optional) Postgres database URL. If not provided, SQLite will be used.
 DATABASE_URL=
 ```
 
-## Ponder config
+## Config Files for Multichain Setup
 
-You can adjust the default chain and chain specific parameters in "ponder.config.ts".
+Since Frankencoin transitioned to multichain and updated to the latest Ponder version, there are now two separate configuration files to manage mainnet and testnet deployments.
 
-```
-// (add custom chain in ./ponder.address.ts)
-// mainnet (default), ethereum3, polygon
-const chain =
-	(process.env.PONDER_PROFILE as string) == 'polygon'
-		? polygon
-		: (process.env.PONDER_PROFILE as string) == 'ethereum3'
-		? ethereum3
-		: mainnet;
-
-const CONFIG = {
-	[mainnet.id]: {
-		rpc: process.env.RPC_URL_MAINNET ?? mainnet.rpcUrls.default.http[0],
-		startBlockA: 18451518,
-		startBlockB: 18451536,
-		blockrange: undefined,
-		maxRequestsPerSecond: undefined,
-		pollingInterval: undefined,
-	},
-
-	...
-}
-```
+You can adjust the default chain settings as well as chain-specific parameters in either `ponder.config.mainnet.ts` or `ponder.config.testnet.ts`, depending on your deployment needs.Config Files for Multichain Setup\*\*
 
 ## Add / Adjust custom chain(s)
 

@@ -1,9 +1,25 @@
-import { ponder } from '@/generated';
-import { PositionV1ABI as PositionABI, ERC20ABI } from '@frankencoin/zchf';
+import { ERC20ABI, PositionV1ABI } from '@frankencoin/zchf';
+import { ponder } from 'ponder:registry';
+import {
+	CommonEcosystem,
+	MintingHubV1ChallengeBidV1,
+	MintingHubV1ChallengeV1,
+	MintingHubV1PositionV1,
+	MintingHubV1Status,
+} from 'ponder:schema';
+import { Address } from 'viem';
+
+/*
+Events
+
+MintingHubV1:PositionOpened
+MintingHubV1:ChallengeStarted
+MintingHubV1:ChallengeAverted
+MintingHubV1:ChallengeSucceeded
+*/
 
 ponder.on('MintingHubV1:PositionOpened', async ({ event, context }) => {
 	const { client } = context;
-	const { PositionV1, ActiveUser, Ecosystem } = context.db;
 
 	// ------------------------------------------------------------------
 	// FROM EVENT & TRANSACTION
@@ -21,37 +37,37 @@ ponder.on('MintingHubV1:PositionOpened', async ({ event, context }) => {
 	// ------------------------------------------------------------------
 	// CONST
 	const minimumCollateral = await client.readContract({
-		abi: PositionABI,
+		abi: PositionV1ABI,
 		address: position,
 		functionName: 'minimumCollateral',
 	});
 
 	const annualInterestPPM = await client.readContract({
-		abi: PositionABI,
+		abi: PositionV1ABI,
 		address: position,
 		functionName: 'annualInterestPPM',
 	});
 
 	const reserveContribution = await client.readContract({
-		abi: PositionABI,
+		abi: PositionV1ABI,
 		address: position,
 		functionName: 'reserveContribution',
 	});
 
 	const start = await client.readContract({
-		abi: PositionABI,
+		abi: PositionV1ABI,
 		address: position,
 		functionName: 'start',
 	});
 
 	const expiration = await client.readContract({
-		abi: PositionABI,
+		abi: PositionV1ABI,
 		address: position,
 		functionName: 'expiration',
 	});
 
 	const challengePeriod = await client.readContract({
-		abi: PositionABI,
+		abi: PositionV1ABI,
 		address: position,
 		functionName: 'challengePeriod',
 	});
@@ -107,26 +123,26 @@ ponder.on('MintingHubV1:PositionOpened', async ({ event, context }) => {
 	// CHANGEABLE
 	// TODO: Keep in mind for developer, "limitForClones" is "limit" from SC
 	const limitForClones = await client.readContract({
-		abi: PositionABI,
+		abi: PositionV1ABI,
 		address: position,
 		functionName: 'limit',
 	});
 
 	// TODO: Keep in mind for developer, "availableForClones" is "limitForClones" from SC
 	const availableForClones = await client.readContract({
-		abi: PositionABI,
+		abi: PositionV1ABI,
 		address: position,
 		functionName: 'limitForClones',
 	});
 
 	const minted = await client.readContract({
-		abi: PositionABI,
+		abi: PositionV1ABI,
 		address: position,
 		functionName: 'minted',
 	});
 
 	const cooldown = await client.readContract({
-		abi: PositionABI,
+		abi: PositionV1ABI,
 		address: event.args.position,
 		functionName: 'cooldown',
 	});
@@ -143,23 +159,20 @@ ponder.on('MintingHubV1:PositionOpened', async ({ event, context }) => {
 	// If clone, update original position
 	if (isClone) {
 		const originalLimitForClones = await client.readContract({
-			abi: PositionABI,
+			abi: PositionV1ABI,
 			address: original,
 			functionName: 'limit',
 		});
 
 		const originalAvailableForClones = await client.readContract({
-			abi: PositionABI,
+			abi: PositionV1ABI,
 			address: original,
 			functionName: 'limitForClones',
 		});
 
-		await PositionV1.update({
-			id: original.toLowerCase(),
-			data: {
-				limitForClones: originalLimitForClones,
-				availableForClones: originalAvailableForClones,
-			},
+		await context.db.update(MintingHubV1PositionV1, { position: original.toLowerCase() as Address }).set({
+			limitForClones: originalLimitForClones,
+			availableForClones: originalAvailableForClones,
 		});
 	}
 
@@ -167,70 +180,68 @@ ponder.on('MintingHubV1:PositionOpened', async ({ event, context }) => {
 	// ------------------------------------------------------------------
 	// ------------------------------------------------------------------
 	// Create position entry for DB
-	await PositionV1.create({
-		id: position.toLowerCase(),
-		data: {
-			position,
-			owner,
-			zchf,
-			collateral,
-			price,
+	await context.db.insert(MintingHubV1PositionV1).values({
+		position: position.toLowerCase() as Address,
+		owner,
+		zchf,
+		collateral,
+		price,
 
-			created,
-			isOriginal,
-			isClone,
-			denied,
-			closed,
-			original,
+		created,
+		isOriginal,
+		isClone,
+		denied,
+		closed,
+		original,
 
-			minimumCollateral,
-			annualInterestPPM,
-			reserveContribution,
-			start,
-			cooldown,
-			expiration,
-			challengePeriod,
+		minimumCollateral,
+		annualInterestPPM,
+		reserveContribution,
+		start,
+		cooldown,
+		expiration,
+		challengePeriod,
 
-			zchfName,
-			zchfSymbol,
-			zchfDecimals,
+		zchfName,
+		zchfSymbol,
+		zchfDecimals,
 
-			collateralName,
-			collateralSymbol,
-			collateralDecimals,
-			collateralBalance,
+		collateralName,
+		collateralSymbol,
+		collateralDecimals,
+		collateralBalance,
 
-			limitForPosition,
-			limitForClones,
-			availableForPosition,
-			availableForClones,
-			minted,
-		},
+		limitForPosition,
+		limitForClones,
+		availableForPosition,
+		availableForClones,
+		minted,
 	});
 
 	// ------------------------------------------------------------------
 	// COMMON
 
-	await Ecosystem.upsert({
-		id: 'MintingHubV1:TotalPositions',
-		create: {
+	await context.db
+		.insert(CommonEcosystem)
+		.values({
+			id: 'MintingHubV1:TotalPositions',
 			value: '',
 			amount: 1n,
-		},
-		update: ({ current }) => ({
+		})
+		.onConflictDoUpdate((current) => ({
 			amount: current.amount + 1n,
-		}),
-	});
+		}));
 
-	await ActiveUser.upsert({
-		id: event.transaction.from,
-		create: {
-			lastActiveTime: event.block.timestamp,
-		},
-		update: () => ({
-			lastActiveTime: event.block.timestamp,
-		}),
-	});
+	await context.db
+		.insert(MintingHubV1Status)
+		.values({
+			position: event.args.position.toLowerCase() as Address,
+			mintingUpdatesCounter: 0n,
+			challengeStartedCounter: 0n,
+			challengeAvertedBidsCounter: 0n,
+			challengeSucceededBidsCounter: 0n,
+		})
+		.onConflictDoNothing();
 });
 
 /**
@@ -245,10 +256,7 @@ struct ChallengeV1 {
 // emit ChallengeStarted(msg.sender, address(position), _collateralAmount, pos);
 ponder.on('MintingHubV1:ChallengeStarted', async ({ event, context }) => {
 	const { client } = context;
-	const { ChallengeV1, ActiveUser, Ecosystem } = context.db;
 	const { MintingHubV1 } = context.contracts;
-
-	// console.log('MintingHubV1:ChallengeStarted', event.args);
 
 	const challenges = await client.readContract({
 		abi: MintingHubV1.abi,
@@ -258,68 +266,65 @@ ponder.on('MintingHubV1:ChallengeStarted', async ({ event, context }) => {
 	});
 
 	const period = await client.readContract({
-		abi: PositionABI,
+		abi: PositionV1ABI,
 		address: event.args.position,
 		functionName: 'challengePeriod',
 	});
 
 	const liqPrice = await client.readContract({
-		abi: PositionABI,
+		abi: PositionV1ABI,
 		address: event.args.position,
 		functionName: 'price',
 	});
 
-	await ChallengeV1.create({
-		id: getChallengeId(event.args.position, event.args.number),
-		data: {
-			position: event.args.position,
-			number: event.args.number,
+	await context.db.insert(MintingHubV1ChallengeV1).values({
+		position: event.args.position.toLowerCase() as Address,
+		number: event.args.number,
 
-			challenger: event.args.challenger,
-			start: challenges[1],
-			created: event.block.timestamp,
-			duration: period,
-			size: event.args.size,
-			liqPrice,
+		challenger: event.args.challenger,
+		start: challenges[1],
+		created: event.block.timestamp,
+		duration: period,
+		size: event.args.size,
+		liqPrice,
 
-			bids: 0n,
-			filledSize: 0n,
-			acquiredCollateral: 0n,
-			status: 'Active',
-		},
+		bids: 0n,
+		filledSize: 0n,
+		acquiredCollateral: 0n,
+		status: 'Active',
 	});
 
 	// ------------------------------------------------------------------
 	// COMMON
-	await Ecosystem.upsert({
-		id: 'MintingHubV1:TotalChallenges',
-		create: {
+	await context.db
+		.insert(CommonEcosystem)
+		.values({
+			id: 'MintingHubV1:TotalChallenges',
 			value: '',
 			amount: 1n,
-		},
-		update: ({ current }) => ({
+		})
+		.onConflictDoUpdate((current) => ({
 			amount: current.amount + 1n,
-		}),
-	});
+		}));
 
-	await ActiveUser.upsert({
-		id: event.transaction.from,
-		create: {
-			lastActiveTime: event.block.timestamp,
-		},
-		update: () => ({
-			lastActiveTime: event.block.timestamp,
-		}),
-	});
+	await context.db
+		.insert(MintingHubV1Status)
+		.values({
+			position: event.args.position.toLowerCase() as Address,
+			mintingUpdatesCounter: 0n,
+			challengeStartedCounter: 1n,
+			challengeAvertedBidsCounter: 0n,
+			challengeSucceededBidsCounter: 0n,
+		})
+		.onConflictDoUpdate((current) => ({
+			challengeStartedCounter: current.challengeStartedCounter + 1n,
+		}));
 });
 
 // event ChallengeAverted(address indexed position, uint256 number, uint256 size);
 ponder.on('MintingHubV1:ChallengeAverted', async ({ event, context }) => {
 	const { client } = context;
-	const { PositionV1, ChallengeV1, ChallengeBidV1, ActiveUser, Ecosystem } = context.db;
 	const { MintingHubV1 } = context.contracts;
-
-	// console.log('ChallengeAverted', event.args);
 
 	const challenges = await client.readContract({
 		abi: MintingHubV1.abi,
@@ -328,105 +333,77 @@ ponder.on('MintingHubV1:ChallengeAverted', async ({ event, context }) => {
 		args: [event.args.number],
 	});
 
-	// console.log('ChallengeAverted:challenges', challenges);
-
 	const cooldown = await client.readContract({
-		abi: PositionABI,
+		abi: PositionV1ABI,
 		address: event.args.position,
 		functionName: 'cooldown',
 	});
 
 	const liqPrice = await client.readContract({
-		abi: PositionABI,
+		abi: PositionV1ABI,
 		address: event.args.position,
 		functionName: 'price',
 	});
 
-	const challengeId = getChallengeId(event.args.position, event.args.number);
-	const challenge = await ChallengeV1.findUnique({
-		id: challengeId,
+	const challenge = await context.db.find(MintingHubV1ChallengeV1, {
+		position: event.args.position.toLowerCase() as Address,
+		number: event.args.number,
 	});
 
 	if (!challenge) throw new Error('ChallengeV1 not found');
-
-	const challengeBidId = getChallengeBidId(event.args.position, event.args.number, challenge.bids);
 
 	const _price: number = parseInt(liqPrice.toString());
 	const _size: number = parseInt(event.args.size.toString());
 	const _amount: number = (_price / 1e18) * _size;
 
 	// create ChallengeBidV1 entry
-	await ChallengeBidV1.create({
-		id: challengeBidId,
-		data: {
-			position: event.args.position,
-			number: event.args.number,
-			numberBid: challenge.bids,
-			bidder: event.transaction.from,
-			created: event.block.timestamp,
-			bidType: 'Averted',
-			bid: BigInt(_amount),
-			price: liqPrice,
-			filledSize: event.args.size,
-			acquiredCollateral: 0n,
-			challengeSize: challenge.size,
-		},
+	await context.db.insert(MintingHubV1ChallengeBidV1).values({
+		position: event.args.position.toLowerCase() as Address,
+		number: event.args.number,
+		numberBid: challenge.bids,
+		bidder: event.transaction.from,
+		created: event.block.timestamp,
+		bidType: 'Averted',
+		bid: BigInt(_amount),
+		price: liqPrice,
+		filledSize: event.args.size,
+		acquiredCollateral: 0n,
+		challengeSize: challenge.size,
 	});
 
 	// update ChallengeV1 related changes
-	await ChallengeV1.update({
-		id: challengeId,
-		data: ({ current }) => ({
+	await context.db
+		.update(MintingHubV1ChallengeV1, { position: event.args.position.toLowerCase() as Address, number: event.args.number })
+		.set((current) => ({
 			bids: current.bids + 1n,
 			filledSize: current.filledSize + event.args.size,
 			status: challenges[3] === 0n ? 'Success' : current.status,
-		}),
-	});
+		}));
 
 	// update PositionV1 related changes
-	await PositionV1.update({
-		id: event.args.position.toLowerCase(),
-		data: { cooldown },
-	});
+	await context.db.update(MintingHubV1PositionV1, { position: event.args.position.toLowerCase() as Address }).set({ cooldown });
 
 	// ------------------------------------------------------------------
 	// COMMON
-	await Ecosystem.upsert({
-		id: 'MintingHubV1:TotalAvertedBids',
-		create: {
+	await context.db
+		.insert(CommonEcosystem)
+		.values({
+			id: 'MintingHubV1:TotalAvertedBids',
 			value: '',
 			amount: 1n,
-		},
-		update: ({ current }) => ({
+		})
+		.onConflictDoUpdate((current) => ({
 			amount: current.amount + 1n,
-		}),
-	});
+		}));
 
-	await ActiveUser.upsert({
-		id: event.transaction.from,
-		create: {
-			lastActiveTime: event.block.timestamp,
-		},
-		update: () => ({
-			lastActiveTime: event.block.timestamp,
-		}),
-	});
+	await context.db.update(MintingHubV1Status, { position: event.args.position.toLowerCase() as Address }).set((current) => ({
+		challengeAvertedBidsCounter: current.challengeAvertedBidsCounter + 1n,
+	}));
 });
 
-// event ChallengeSucceeded(
-// 	address indexed position,
-// 	uint256 number,
-// 	uint256 bid,
-// 	uint256 acquiredCollateral,
-// 	uint256 challengeSize
-// );
-// emit ChallengeSucceeded(address(_challenge.position), _challengeNumber, offer, transferredCollateral, size);
 ponder.on('MintingHubV1:ChallengeSucceeded', async ({ event, context }) => {
 	const { client } = context;
-	const { PositionV1, ChallengeV1, ChallengeBidV1, ActiveUser, Ecosystem } = context.db;
 	const { MintingHubV1 } = context.contracts;
-
-	// console.log('ChallengeSucceeded', event.args);
 
 	const challenges = await client.readContract({
 		abi: MintingHubV1.abi,
@@ -435,88 +412,65 @@ ponder.on('MintingHubV1:ChallengeSucceeded', async ({ event, context }) => {
 		args: [event.args.number],
 	});
 
-	// console.log('ChallengeSucceeded:challenges', challenges);
-
 	const cooldown = await client.readContract({
-		abi: PositionABI,
+		abi: PositionV1ABI,
 		address: event.args.position,
 		functionName: 'cooldown',
 	});
 
-	const challengeId = getChallengeId(event.args.position, event.args.number);
-	const challenge = await ChallengeV1.findUnique({
-		id: challengeId,
+	const challenge = await context.db.find(MintingHubV1ChallengeV1, {
+		position: event.args.position.toLowerCase() as Address,
+		number: event.args.number,
 	});
 
 	if (!challenge) throw new Error('ChallengeV1 not found');
-
-	const challengeBidId = getChallengeBidId(event.args.position, event.args.number, challenge.bids);
 
 	const _bid: number = parseInt(event.args.bid.toString());
 	const _size: number = parseInt(event.args.challengeSize.toString());
 	const _price: number = (_bid * 10 ** 18) / _size;
 
 	// create ChallengeBidV1 entry
-	await ChallengeBidV1.create({
-		id: challengeBidId,
-		data: {
-			position: event.args.position,
-			number: event.args.number,
-			numberBid: challenge.bids,
-			bidder: event.transaction.from,
-			created: event.block.timestamp,
-			bidType: 'Succeeded',
-			bid: event.args.bid,
-			price: BigInt(_price),
-			filledSize: event.args.challengeSize,
-			acquiredCollateral: event.args.acquiredCollateral,
-			challengeSize: challenge.size,
-		},
+	await context.db.insert(MintingHubV1ChallengeBidV1).values({
+		position: event.args.position.toLowerCase() as Address,
+		number: event.args.number,
+		numberBid: challenge.bids,
+		bidder: event.transaction.from,
+		created: event.block.timestamp,
+		bidType: 'Succeeded',
+		bid: event.args.bid,
+		price: BigInt(_price),
+		filledSize: event.args.challengeSize,
+		acquiredCollateral: event.args.acquiredCollateral,
+		challengeSize: challenge.size,
 	});
 
-	await ChallengeV1.update({
-		id: challengeId,
-		data: ({ current }) => ({
+	// update ChallengeV1 related changes
+	await context.db
+		.update(MintingHubV1ChallengeV1, { position: event.args.position.toLowerCase() as Address, number: event.args.number })
+		.set((current) => ({
 			bids: current.bids + 1n,
 			acquiredCollateral: current.acquiredCollateral + event.args.acquiredCollateral,
 			filledSize: current.filledSize + event.args.challengeSize,
 			status: challenges[3] === 0n ? 'Success' : current.status,
-		}),
-	});
+		}));
 
-	await PositionV1.update({
-		id: event.args.position.toLowerCase(),
-		data: { cooldown },
-	});
+	// update PositionV1 related changes
+	await context.db.update(MintingHubV1PositionV1, { position: event.args.position.toLowerCase() as Address }).set({ cooldown });
 
 	// ------------------------------------------------------------------
 	// COMMON
-	await Ecosystem.upsert({
-		id: 'MintingHubV1:TotalSucceededBids',
-		create: {
+	await context.db
+		.insert(CommonEcosystem)
+		.values({
+			id: 'MintingHubV1:TotalSucceededBids',
 			value: '',
 			amount: 1n,
-		},
-		update: ({ current }) => ({
+		})
+		.onConflictDoUpdate((current) => ({
 			amount: current.amount + 1n,
-		}),
-	});
+		}));
 
-	await ActiveUser.upsert({
-		id: event.transaction.from,
-		create: {
-			lastActiveTime: event.block.timestamp,
-		},
-		update: () => ({
-			lastActiveTime: event.block.timestamp,
-		}),
-	});
+	await context.db.update(MintingHubV1Status, { position: event.args.position.toLowerCase() as Address }).set((current) => ({
+		challengeSucceededBidsCounter: current.challengeSucceededBidsCounter + 1n,
+	}));
 });
-
-const getChallengeId = (position: string, number: bigint) => {
-	return `${position.toLowerCase()}-challenge-${number}`;
-};
-
-const getChallengeBidId = (position: string, number: bigint, bid: bigint) => {
-	return `${position.toLowerCase()}-challenge-${number}-bid-${bid}`;
-};
