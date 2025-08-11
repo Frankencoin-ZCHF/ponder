@@ -37,10 +37,23 @@ export async function indexERC20Balance(
 
 	// update balance from
 	if (from != zeroAddress && indexFrom) {
-		const balance = await context.db.update(ERC20BalanceMapping, { chainId, token, account: from }).set((current) => ({
-			updated,
-			balance: current.balance - value, // deduct balance
-		}));
+		const balance = await context.db
+			.insert(ERC20BalanceMapping)
+			.values({
+				chainId,
+				token,
+				updated,
+				account: from,
+				mint: 0n,
+				burn: 0n,
+				// @dev: key not found error while indexing.
+				// should not have any balance, but eliminates the "0" amount tranfer errors
+				balance: 0n,
+			})
+			.onConflictDoUpdate((current) => ({
+				updated,
+				balance: current.balance - value, // deduct balance
+			}));
 		balanceFrom = balance.balance;
 	}
 
