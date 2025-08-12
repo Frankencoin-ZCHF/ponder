@@ -1,5 +1,6 @@
-import { ponder } from 'ponder:registry';
+import { ponder, Context } from 'ponder:registry';
 import { CommonEcosystem, TransferReference } from 'ponder:schema';
+import { Address, Hash } from 'viem';
 
 /*
 Events
@@ -27,6 +28,8 @@ ponder.on('TransferReference:CrossTransfer', async ({ event, context }) => {
 			amount: current.amount + 1n,
 		}));
 
+	const target = await getTargetAddress(context.client, event.transaction.hash);
+
 	await context.db.insert(TransferReference).values({
 		chainId: context.chain.id,
 		count: counter.amount,
@@ -34,7 +37,8 @@ ponder.on('TransferReference:CrossTransfer', async ({ event, context }) => {
 		txHash: event.transaction.hash,
 		sender: event.args.sender,
 		from: event.args.from,
-		to: event.args.to,
+		to: target,
+		toBytes: event.args.to,
 		targetChain: event.args.toChain,
 		amount: event.args.amount,
 		reference: event.args.ref,
@@ -63,6 +67,7 @@ ponder.on(
 			sender: event.transaction.from,
 			from: event.args.from,
 			to: event.args.to,
+			toBytes: '0x', // no bytes
 			targetChain: 0n, // mainnet tx with ref
 			amount: event.args.amount,
 			reference: event.args.ref,
@@ -84,6 +89,8 @@ ponder.on(
 				amount: current.amount + 1n,
 			}));
 
+		const target = await getTargetAddress(context.client, event.transaction.hash);
+
 		await context.db.insert(TransferReference).values({
 			chainId: context.chain.id,
 			count: counter.amount,
@@ -91,10 +98,18 @@ ponder.on(
 			txHash: event.transaction.hash,
 			sender: event.transaction.from,
 			from: event.args.from,
-			to: event.args.to,
+			to: target,
+			toBytes: event.args.to,
 			targetChain: event.args.toChain,
 			amount: event.args.value,
 			reference: '', // ref is empty string
 		});
 	}
 );
+
+async function getTargetAddress(client: Context['client'], hash: Hash): Promise<Address> {
+	const tx = await client.getTransactionReceipt({ hash });
+	const data = tx.logs.find((i) => i.topics.includes('0xd0c3c799bf9e2639de44391e7f524d229b2b55f5b1ea94b2bf7da42f7243dddd' as never));
+	const offset = 2 + 64 * 3 + 24;
+	return `0x${data?.data.slice(offset, offset + 40)}`;
+}

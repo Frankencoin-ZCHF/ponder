@@ -10,6 +10,7 @@ export const TransferReference = onchainTable(
 		sender: t.hex().notNull(),
 		from: t.hex().notNull(),
 		to: t.hex().notNull(),
+		toBytes: t.hex().notNull(),
 		targetChain: t.bigint().notNull(),
 		amount: t.bigint().notNull(),
 		reference: t.text().notNull(),
