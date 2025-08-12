@@ -9,3 +9,4 @@ export * from './schema/PriceDiscovery';
 export * from './schema/RollerV2';
 export * from './schema/Savings';
 export * from './schema/TransactionLog';
+export * from './schema/TransferReference';
