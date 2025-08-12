@@ -10,6 +10,7 @@ event Transfer(address indexed from, address indexed to, uint256 amount, string 
 event CrossTransfer(address indexed sender, address indexed from, uint64 toChain, bytes indexed to, uint256 amount, string ref);
 
 CrossChainReference
+event Transfer(address indexed from, address indexed to, uint256 amount, string ref);
 event CrossTransfer(address indexed sender, address indexed from, uint64 toChain, bytes indexed to, uint256 amount, string ref);
 
 CrossChainERC20
@@ -107,6 +108,7 @@ ponder.on(
 	}
 );
 
+// @dev: this will try to get the target address from the CCIP event topic instead of using the encoded bytes of keccak256(address)
 async function getTargetAddress(client: Context['client'], hash: Hash): Promise<Address> {
 	const tx = await client.getTransactionReceipt({ hash });
 	const data = tx.logs.find((i) => i.topics.includes('0xd0c3c799bf9e2639de44391e7f524d229b2b55f5b1ea94b2bf7da42f7243dddd' as never));
