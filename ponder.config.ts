@@ -1,4 +1,4 @@
-import { createConfig, factory } from 'ponder';
+import { createConfig, factory, mergeAbis } from 'ponder';
 import { arbitrum, avalanche, base, gnosis, mainnet, optimism, polygon, sonic } from 'viem/chains';
 import { createPublicClient, erc20Abi, http } from 'viem';
 import {
@@ -15,6 +15,8 @@ import {
 	SavingsABI,
 	SavingsV2ABI,
 	BridgeAccountingABI,
+	TransferReferenceABI,
+	CrossChainReferenceABI,
 } from '@frankencoin/zchf';
 
 export const addr = ADDRESS;
@@ -28,6 +30,7 @@ export const config = {
 		startFrankencoin: 18451518,
 		startMintingHubV1: 18451536,
 		startMintingHubV2: 21280757,
+		startTransferReference: 22678761,
 		startSavingsReferal: 22536327,
 		startCCIP: 22623046,
 		startUniswapPoolV3: 19122801,
@@ -386,13 +389,6 @@ export default createConfig({
 
 		// ### CROSS CHAIN SUPPORT ###
 
-		// LeadrateSender
-		// transferReference
-
-		// ccipAdmin
-		// ccipTokenPool
-		// ccipGovernanceSender
-
 		CCIPBridgedAccounting: {
 			abi: BridgeAccountingABI,
 			chain: mainnet.name,
@@ -400,9 +396,42 @@ export default createConfig({
 			startBlock: config[mainnet.id].startCCIP,
 		},
 
-		// ### MULTI CHAIN CONTRACTS ###
-		// ccipAdmin
-		// ccipBridgedFrankencoin
-		// ccipBridgedGovernance
+		TransferReference: {
+			abi: mergeAbis([TransferReferenceABI, CrossChainReferenceABI]),
+			chain: {
+				[mainnet.name]: {
+					address: [addr[mainnet.id].transferReference],
+					startBlock: config[mainnet.id].startTransferReference,
+				},
+				[polygon.name]: {
+					address: [addr[polygon.id].ccipBridgedFrankencoin],
+					startBlock: config[polygon.id].startBridgedFrankencoin,
+				},
+				[arbitrum.name]: {
+					address: [addr[arbitrum.id].ccipBridgedFrankencoin],
+					startBlock: config[arbitrum.id].startBridgedFrankencoin,
+				},
+				[optimism.name]: {
+					address: [addr[optimism.id].ccipBridgedFrankencoin],
+					startBlock: config[optimism.id].startBridgedFrankencoin,
+				},
+				[base.name]: {
+					address: [addr[base.id].ccipBridgedFrankencoin],
+					startBlock: config[base.id].startBridgedFrankencoin,
+				},
+				[avalanche.name]: {
+					address: [addr[avalanche.id].ccipBridgedFrankencoin],
+					startBlock: config[avalanche.id].startBridgedFrankencoin,
+				},
+				[gnosis.name]: {
+					address: [addr[gnosis.id].ccipBridgedFrankencoin],
+					startBlock: config[gnosis.id].startBridgedFrankencoin,
+				},
+				[sonic.name]: {
+					address: [addr[sonic.id].ccipBridgedFrankencoin],
+					startBlock: config[sonic.id].startBridgedFrankencoin,
+				},
+			},
+		},
 	},
 });
