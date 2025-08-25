@@ -171,7 +171,7 @@ ponder.on('Frankencoin:Loss', async ({ event, context }) => {
 			amount: current.amount + event.args.amount,
 		}));
 
-	let earnings = { amount: 0n };
+	let earningsPerFPS = { amount: 0n };
 	if (context.chain.id === mainnet.id) {
 		const fpsTotalSupply = await context.client.readContract({
 			abi: erc20Abi,
@@ -179,9 +179,10 @@ ponder.on('Frankencoin:Loss', async ({ event, context }) => {
 			functionName: 'totalSupply',
 		});
 		const perToken = -(event.args.amount * parseEther('1')) / fpsTotalSupply;
+		earningsPerFPS.amount = perToken;
 
 		// upsert EarningsPerFPS
-		earnings = await context.db
+		await context.db
 			.insert(CommonEcosystem)
 			.values({
 				id: 'Equity:EarningsPerFPS',
@@ -203,7 +204,7 @@ ponder.on('Frankencoin:Loss', async ({ event, context }) => {
 		minter: minter,
 		profits: profits.amount,
 		losses: losses.amount,
-		perFPS: earnings.amount,
+		perFPS: earningsPerFPS.amount,
 	});
 
 	// update analytics
