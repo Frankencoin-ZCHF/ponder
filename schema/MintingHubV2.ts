@@ -61,6 +61,7 @@ export const MintingHubV2PositionV2 = onchainTable(
 export const MintingHubV2OwnerTransfersV2 = onchainTable(
 	'MintingHubV2OwnerTransfersV2',
 	(t) => ({
+		version: t.integer().notNull(),
 		count: t.bigint().notNull(),
 		txHash: t.hex().notNull(),
 		created: t.bigint().notNull(),

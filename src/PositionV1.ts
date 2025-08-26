@@ -285,6 +285,7 @@ ponder.on('PositionV1:OwnershipTransferred', async ({ event, context }) => {
 		}));
 
 	await context.db.insert(MintingHubV1OwnerTransfersV1).values({
+		version: 1,
 		position: event.log.address.toLowerCase() as Address,
 		count: status.ownerTransfersCounter,
 		created: event.block.timestamp,
