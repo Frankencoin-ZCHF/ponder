@@ -1,6 +1,6 @@
 import { ADDRESS, SavingsV2ABI } from '@frankencoin/zchf';
 import { ponder } from 'ponder:registry';
-import { MintingHubV2MintingUpdateV2, MintingHubV2PositionV2, MintingHubV2Status } from 'ponder:schema';
+import { MintingHubV2MintingUpdateV2, MintingHubV2OwnerTransfersV2, MintingHubV2PositionV2, MintingHubV2Status } from 'ponder:schema';
 import { Address } from 'viem';
 import { mainnet } from 'viem/chains';
 
@@ -75,6 +75,7 @@ ponder.on('PositionV2:MintingUpdate', async ({ event, context }) => {
 		.insert(MintingHubV2Status)
 		.values({
 			position: positionAddress.toLowerCase() as Address,
+			ownerTransfersCounter: 0n,
 			mintingUpdatesCounter: 1n,
 			challengeStartedCounter: 0n,
 			challengeAvertedBidsCounter: 0n,
@@ -102,7 +103,7 @@ ponder.on('PositionV2:MintingUpdate', async ({ event, context }) => {
 		return (getFeePPM() * amount) / 1_000_000n;
 	};
 
-	if (status.mintingUpdatesCounter === 1n) {
+	if (status.mintingUpdatesCounter == 1n) {
 		await context.db.insert(MintingHubV2MintingUpdateV2).values({
 			count: 1n,
 			txHash: event.transaction.hash,
@@ -194,6 +195,30 @@ ponder.on('PositionV2:PositionDenied', async ({ event, context }) => {
 });
 
 ponder.on('PositionV2:OwnershipTransferred', async ({ event, context }) => {
+	// update owner counter
+	const status = await context.db
+		.insert(MintingHubV2Status)
+		.values({
+			position: event.log.address.toLowerCase() as Address,
+			ownerTransfersCounter: 1n,
+			mintingUpdatesCounter: 0n,
+			challengeStartedCounter: 0n,
+			challengeAvertedBidsCounter: 0n,
+			challengeSucceededBidsCounter: 0n,
+		})
+		.onConflictDoUpdate((current) => ({
+			ownerTransfersCounter: current.ownerTransfersCounter + 1n,
+		}));
+
+	await context.db.insert(MintingHubV2OwnerTransfersV2).values({
+		position: event.log.address.toLowerCase() as Address,
+		count: status.ownerTransfersCounter,
+		created: event.block.timestamp,
+		previousOwner: event.args.previousOwner.toLowerCase() as Address,
+		newOwner: event.args.newOwner.toLowerCase() as Address,
+		txHash: event.transaction.hash,
+	});
+
 	const position = await context.db.find(MintingHubV2PositionV2, {
 		position: event.log.address.toLowerCase() as Address,
 	});

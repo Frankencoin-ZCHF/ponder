@@ -267,6 +267,7 @@ ponder.on('MintingHubV2:PositionOpened', async ({ event, context }) => {
 		.insert(MintingHubV2Status)
 		.values({
 			position: event.args.position.toLowerCase() as Address,
+			ownerTransfersCounter: 0n,
 			mintingUpdatesCounter: 0n,
 			challengeStartedCounter: 0n,
 			challengeAvertedBidsCounter: 0n,
@@ -332,6 +333,7 @@ ponder.on('MintingHubV2:ChallengeStarted', async ({ event, context }) => {
 		.insert(MintingHubV2Status)
 		.values({
 			position: event.args.position.toLowerCase() as Address,
+			ownerTransfersCounter: 0n,
 			mintingUpdatesCounter: 0n,
 			challengeStartedCounter: 1n,
 			challengeAvertedBidsCounter: 0n,

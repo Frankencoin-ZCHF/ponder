@@ -1,5 +1,5 @@
 import { ponder } from 'ponder:registry';
-import { MintingHubV1MintingUpdateV1, MintingHubV1PositionV1, MintingHubV1Status } from 'ponder:schema';
+import { MintingHubV1MintingUpdateV1, MintingHubV1OwnerTransfersV1, MintingHubV1PositionV1, MintingHubV1Status } from 'ponder:schema';
 import { Address } from 'viem';
 
 /*
@@ -60,6 +60,7 @@ ponder.on('PositionV1:MintingUpdate', async ({ event, context }) => {
 		.insert(MintingHubV1Status)
 		.values({
 			position: positionAddress.toLowerCase() as Address,
+			ownerTransfersCounter: 0n,
 			mintingUpdatesCounter: 1n,
 			challengeStartedCounter: 0n,
 			challengeAvertedBidsCounter: 0n,
@@ -181,7 +182,7 @@ ponder.on('PositionV1:MintingUpdate', async ({ event, context }) => {
 		return (getFeePPM() * amount) / 1_000_000n;
 	};
 
-	if (status.mintingUpdatesCounter === 1n) {
+	if (status.mintingUpdatesCounter == 1n) {
 		await context.db.insert(MintingHubV1MintingUpdateV1).values({
 			count: 1n,
 			txHash: event.transaction.hash,
@@ -268,6 +269,30 @@ ponder.on('PositionV1:PositionDenied', async ({ event, context }) => {
 });
 
 ponder.on('PositionV1:OwnershipTransferred', async ({ event, context }) => {
+	// update owner counter
+	const status = await context.db
+		.insert(MintingHubV1Status)
+		.values({
+			position: event.log.address.toLowerCase() as Address,
+			ownerTransfersCounter: 1n,
+			mintingUpdatesCounter: 0n,
+			challengeStartedCounter: 0n,
+			challengeAvertedBidsCounter: 0n,
+			challengeSucceededBidsCounter: 0n,
+		})
+		.onConflictDoUpdate((current) => ({
+			ownerTransfersCounter: current.ownerTransfersCounter + 1n,
+		}));
+
+	await context.db.insert(MintingHubV1OwnerTransfersV1).values({
+		position: event.log.address.toLowerCase() as Address,
+		count: status.ownerTransfersCounter,
+		created: event.block.timestamp,
+		previousOwner: event.args.previousOwner.toLowerCase() as Address,
+		newOwner: event.args.newOwner.toLowerCase() as Address,
+		txHash: event.transaction.hash,
+	});
+
 	const position = await context.db.find(MintingHubV1PositionV1, {
 		position: event.log.address.toLowerCase() as Address,
 	});
