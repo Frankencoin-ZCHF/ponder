@@ -4,6 +4,7 @@ export const MintingHubV2Status = onchainTable(
 	'MintingHubV2Status',
 	(t) => ({
 		position: t.hex().notNull(),
+		ownerTransfersCounter: t.bigint().notNull(),
 		mintingUpdatesCounter: t.bigint().notNull(),
 		challengeStartedCounter: t.bigint().notNull(),
 		challengeAvertedBidsCounter: t.bigint().notNull(),
@@ -53,6 +54,24 @@ export const MintingHubV2PositionV2 = onchainTable(
 	(table) => ({
 		pk: primaryKey({
 			columns: [table.position],
+		}),
+	})
+);
+
+export const MintingHubV2OwnerTransfersV2 = onchainTable(
+	'MintingHubV2OwnerTransfersV2',
+	(t) => ({
+		version: t.integer().notNull(),
+		count: t.bigint().notNull(),
+		txHash: t.hex().notNull(),
+		created: t.bigint().notNull(),
+		position: t.hex().notNull(),
+		previousOwner: t.hex().notNull(),
+		newOwner: t.hex().notNull(),
+	}),
+	(table) => ({
+		pk: primaryKey({
+			columns: [table.position, table.count],
 		}),
 	})
 );
