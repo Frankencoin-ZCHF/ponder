@@ -22,7 +22,7 @@ export async function indexERC20MintBurn(
 		frankencoinContract = ADDRESS[chainId].ccipBridgedFrankencoin;
 	}
 
-	const equityContract: Address = ADDRESS[ChainMain.mainnet.id].frankencoin;
+	const equityContract: Address = ADDRESS[ChainMain.mainnet.id].equity;
 
 	let kindContract: string = 'Token';
 	const compare = (a: string, b: string) => a.toLowerCase() == b.toLowerCase();
