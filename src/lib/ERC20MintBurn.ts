@@ -2,6 +2,7 @@ import { Event, type Context } from 'ponder:registry';
 import { ERC20Burn, ERC20Status, ERC20Mint, ERC20BalanceMapping } from 'ponder:schema';
 import { Address, zeroAddress } from 'viem';
 import { updateTransactionLog } from './TransactionLog';
+import { ADDRESS, ChainMain } from '@frankencoin/zchf';
 
 export async function indexERC20MintBurn(
 	event: Event<'ERC20:Transfer' | 'ERC20PositionV1:Transfer' | 'ERC20PositionV2:Transfer'>,
@@ -13,6 +14,20 @@ export async function indexERC20MintBurn(
 	const value = event.args.value;
 	const updated = event.block.timestamp;
 	const chainId = context.chain.id;
+
+	let frankencoinContract: Address = zeroAddress;
+	if (chainId == ChainMain.mainnet.id) {
+		frankencoinContract = ADDRESS[chainId].frankencoin;
+	} else {
+		frankencoinContract = ADDRESS[chainId].ccipBridgedFrankencoin;
+	}
+
+	const equityContract: Address = ADDRESS[ChainMain.mainnet.id].frankencoin;
+
+	let kindContract: string = 'Token';
+	const compare = (a: string, b: string) => a.toLowerCase() == b.toLowerCase();
+	if (compare(token, frankencoinContract)) kindContract = 'Frankencoin';
+	else if (compare(token, equityContract)) kindContract = 'Equity';
 
 	// ### minting tokens ###
 	if (from == zeroAddress) {
@@ -84,7 +99,7 @@ export async function indexERC20MintBurn(
 			db: context.db,
 			chainId,
 			timestamp: event.block.timestamp,
-			kind: 'Frankencoin:Mint',
+			kind: `${kindContract}:Mint`,
 			amount: event.args.value,
 			txHash: event.transaction.hash,
 		});
@@ -160,7 +175,7 @@ export async function indexERC20MintBurn(
 			db: context.db,
 			chainId,
 			timestamp: event.block.timestamp,
-			kind: 'Frankencoin:Burn',
+			kind: `${kindContract}:Burn`,
 			amount: event.args.value,
 			txHash: event.transaction.hash,
 		});
