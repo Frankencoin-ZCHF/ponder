@@ -105,3 +105,35 @@ export const SavingsActivity = onchainTable(
 		pk: primaryKey({ columns: [table.chainId, table.module, table.account, table.count] }),
 	})
 );
+
+export const SavingsReferrerMapping = onchainTable(
+	'SavingsRefererMapping',
+	(t) => ({
+		chainId: t.integer().notNull(),
+		module: t.text().notNull(),
+		account: t.text().notNull(),
+		created: t.bigint().notNull(), // first timestamp
+		updated: t.bigint().notNull(), // latest timestamp
+		referrer: t.text().notNull(),
+		referrerFee: t.integer().notNull(),
+	}),
+	(table) => ({
+		pk: primaryKey({ columns: [table.chainId, table.module, table.account] }),
+	})
+);
+
+export const SavingsReferrerEarnings = onchainTable(
+	'SavingsRefererEarnings',
+	(t) => ({
+		chainId: t.integer().notNull(),
+		module: t.text().notNull(),
+		account: t.text().notNull(),
+		created: t.bigint().notNull(), // first timestamp
+		updated: t.bigint().notNull(), // latest timestamp
+		referrer: t.text().notNull(),
+		earnings: t.bigint().notNull(),
+	}),
+	(table) => ({
+		pk: primaryKey({ columns: [table.chainId, table.module, table.account, table.referrer] }),
+	})
+);
