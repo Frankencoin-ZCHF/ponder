@@ -132,12 +132,12 @@ ponder.on('SavingsReferal:Saved', async ({ event, context }) => {
 			account,
 			created: updated,
 			updated,
-			referrer,
+			referrer: referrer.toLowerCase() as Address,
 			referrerFee,
 		})
 		.onConflictDoUpdate((current) => ({
 			updated,
-			referrer,
+			referrer: referrer.toLowerCase() as Address,
 			referrerFee,
 		}));
 
@@ -232,12 +232,12 @@ ponder.on('SavingsReferal:InterestCollected', async ({ event, context }) => {
 			account,
 			created: updated,
 			updated,
-			referrer,
+			referrer: referrer.toLowerCase() as Address,
 			referrerFee,
 		})
 		.onConflictDoUpdate((current) => ({
 			updated,
-			referrer,
+			referrer: referrer.toLowerCase() as Address,
 			referrerFee,
 		}));
 
@@ -250,7 +250,7 @@ ponder.on('SavingsReferal:InterestCollected', async ({ event, context }) => {
 			account,
 			created: updated,
 			updated,
-			referrer: referrer,
+			referrer: referrer.toLowerCase() as Address,
 			earnings: earnings,
 		})
 		.onConflictDoUpdate((current) => ({
@@ -349,12 +349,12 @@ ponder.on('SavingsReferal:Withdrawn', async ({ event, context }) => {
 			account,
 			created: updated,
 			updated,
-			referrer,
+			referrer: referrer.toLowerCase() as Address,
 			referrerFee,
 		})
 		.onConflictDoUpdate((current) => ({
 			updated,
-			referrer,
+			referrer: referrer.toLowerCase() as Address,
 			referrerFee,
 		}));
 
