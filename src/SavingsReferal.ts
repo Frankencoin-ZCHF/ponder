@@ -1,7 +1,14 @@
-import { LeadrateABI } from '@frankencoin/zchf';
+import { LeadrateABI, SavingsABI } from '@frankencoin/zchf';
 import { ponder } from 'ponder:registry';
-import { CommonEcosystem, SavingsActivity, SavingsMapping, SavingsStatus } from 'ponder:schema';
-import { Address } from 'viem';
+import {
+	CommonEcosystem,
+	SavingsActivity,
+	SavingsMapping,
+	SavingsReferrerEarnings,
+	SavingsReferrerMapping,
+	SavingsStatus,
+} from 'ponder:schema';
+import { Address, zeroAddress } from 'viem';
 import { updateTransactionLog } from './lib/TransactionLog';
 
 /*
@@ -27,17 +34,24 @@ ponder.on('SavingsReferal:Saved', async ({ event, context }) => {
 		functionName: 'currentRatePPM',
 	});
 
+	const [, , referrer, referrerFee] = await client.readContract({
+		abi: SavingsABI,
+		address: module,
+		functionName: 'savings',
+		args: [account],
+	});
+
 	// update total saved
 	await context.db
-	.insert(CommonEcosystem)
-	.values({
-		id: 'Savings:TotalSaved',
-		value: '',
-		amount: amount,
-	})
-	.onConflictDoUpdate((current) => ({
-		amount: current.amount + amount,
-	}));
+		.insert(CommonEcosystem)
+		.values({
+			id: 'Savings:TotalSaved',
+			value: '',
+			amount: amount,
+		})
+		.onConflictDoUpdate((current) => ({
+			amount: current.amount + amount,
+		}));
 
 	// update global status
 	const status = await context.db
@@ -109,6 +123,24 @@ ponder.on('SavingsReferal:Saved', async ({ event, context }) => {
 		balance: mapping.balance,
 	});
 
+	// referrer mapping indexing
+	await context.db
+		.insert(SavingsReferrerMapping)
+		.values({
+			chainId,
+			module,
+			account,
+			created: updated,
+			updated,
+			referrer: referrer.toLowerCase() as Address,
+			referrerFee,
+		})
+		.onConflictDoUpdate((current) => ({
+			updated,
+			referrer: referrer.toLowerCase() as Address,
+			referrerFee,
+		}));
+
 	await updateTransactionLog({
 		client: context.client,
 		db: context.db,
@@ -122,7 +154,7 @@ ponder.on('SavingsReferal:Saved', async ({ event, context }) => {
 
 ponder.on('SavingsReferal:InterestCollected', async ({ event, context }) => {
 	const { client } = context;
-	const { interest } = event.args;
+	const { interest, referrerFee: earnings } = event.args;
 
 	const updated = event.block.timestamp;
 	const chainId = context.chain.id;
@@ -135,17 +167,24 @@ ponder.on('SavingsReferal:InterestCollected', async ({ event, context }) => {
 		functionName: 'currentRatePPM',
 	});
 
+	const [, , referrer, referrerFee] = await client.readContract({
+		abi: SavingsABI,
+		address: module,
+		functionName: 'savings',
+		args: [account],
+	});
+
 	// update total interest collected
 	await context.db
-	.insert(CommonEcosystem)
-	.values({
-		id: 'Savings:TotalInterestCollected',
-		value: '',
-		amount: interest,
-	})
-	.onConflictDoUpdate((current) => ({
-		amount: current.amount + interest,
-	}));
+		.insert(CommonEcosystem)
+		.values({
+			id: 'Savings:TotalInterestCollected',
+			value: '',
+			amount: interest,
+		})
+		.onConflictDoUpdate((current) => ({
+			amount: current.amount + interest,
+		}));
 
 	// update global status
 	const status = await context.db.update(SavingsStatus, { chainId, module }).set((current) => ({
@@ -184,6 +223,43 @@ ponder.on('SavingsReferal:InterestCollected', async ({ event, context }) => {
 		balance: mapping.balance,
 	});
 
+	// referrer mapping indexing
+	await context.db
+		.insert(SavingsReferrerMapping)
+		.values({
+			chainId,
+			module,
+			account,
+			created: updated,
+			updated,
+			referrer: referrer.toLowerCase() as Address,
+			referrerFee,
+		})
+		.onConflictDoUpdate((current) => ({
+			updated,
+			referrer: referrer.toLowerCase() as Address,
+			referrerFee,
+		}));
+
+	// referrer earnings indexing
+	if (referrer.toLowerCase() != zeroAddress && earnings > 0n) {
+		await context.db
+			.insert(SavingsReferrerEarnings)
+			.values({
+				chainId,
+				module,
+				account,
+				created: updated,
+				updated,
+				referrer: referrer.toLowerCase() as Address,
+				earnings: earnings,
+			})
+			.onConflictDoUpdate((current) => ({
+				updated,
+				earnings: current.earnings + earnings,
+			}));
+	}
+
 	await updateTransactionLog({
 		client: context.client,
 		db: context.db,
@@ -210,17 +286,24 @@ ponder.on('SavingsReferal:Withdrawn', async ({ event, context }) => {
 		functionName: 'currentRatePPM',
 	});
 
+	const [, , referrer, referrerFee] = await client.readContract({
+		abi: SavingsABI,
+		address: module,
+		functionName: 'savings',
+		args: [account],
+	});
+
 	// update total withdrawn
 	await context.db
-	.insert(CommonEcosystem)
-	.values({
-		id: 'Savings:TotalWithdrawn',
-		value: '',
-		amount: amount,
-	})
-	.onConflictDoUpdate((current) => ({
-		amount: current.amount + amount,
-	}));
+		.insert(CommonEcosystem)
+		.values({
+			id: 'Savings:TotalWithdrawn',
+			value: '',
+			amount: amount,
+		})
+		.onConflictDoUpdate((current) => ({
+			amount: current.amount + amount,
+		}));
 
 	// update global status
 	const status = await context.db.update(SavingsStatus, { chainId, module }).set((current) => ({
@@ -258,6 +341,24 @@ ponder.on('SavingsReferal:Withdrawn', async ({ event, context }) => {
 		interest: mapping.interest,
 		balance: mapping.balance,
 	});
+
+	// referrer mapping indexing
+	await context.db
+		.insert(SavingsReferrerMapping)
+		.values({
+			chainId,
+			module,
+			account,
+			created: updated,
+			updated,
+			referrer: referrer.toLowerCase() as Address,
+			referrerFee,
+		})
+		.onConflictDoUpdate((current) => ({
+			updated,
+			referrer: referrer.toLowerCase() as Address,
+			referrerFee,
+		}));
 
 	await updateTransactionLog({
 		client: context.client,
