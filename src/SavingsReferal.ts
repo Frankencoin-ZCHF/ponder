@@ -8,7 +8,7 @@ import {
 	SavingsReferrerMapping,
 	SavingsStatus,
 } from 'ponder:schema';
-import { Address } from 'viem';
+import { Address, zeroAddress } from 'viem';
 import { updateTransactionLog } from './lib/TransactionLog';
 
 /*
@@ -242,21 +242,23 @@ ponder.on('SavingsReferal:InterestCollected', async ({ event, context }) => {
 		}));
 
 	// referrer earnings indexing
-	await context.db
-		.insert(SavingsReferrerEarnings)
-		.values({
-			chainId,
-			module,
-			account,
-			created: updated,
-			updated,
-			referrer: referrer.toLowerCase() as Address,
-			earnings: earnings,
-		})
-		.onConflictDoUpdate((current) => ({
-			updated,
-			earnings: current.earnings + earnings,
-		}));
+	if (referrer.toLowerCase() != zeroAddress && earnings > 0n) {
+		await context.db
+			.insert(SavingsReferrerEarnings)
+			.values({
+				chainId,
+				module,
+				account,
+				created: updated,
+				updated,
+				referrer: referrer.toLowerCase() as Address,
+				earnings: earnings,
+			})
+			.onConflictDoUpdate((current) => ({
+				updated,
+				earnings: current.earnings + earnings,
+			}));
+	}
 
 	await updateTransactionLog({
 		client: context.client,
