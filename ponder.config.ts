@@ -244,7 +244,7 @@ export default createConfig({
 			startBlock: config[mainnet.id].startMintingHubV2,
 		},
 		Leadrate: {
-			// incl. SavingsV2, SavingsReferal, BridgedSavingsReferal
+			// incl. SavingsV2, SavingsReferral, BridgedSavingsReferal
 			abi: LeadrateV2ABI,
 			chain: {
 				[mainnet.name]: {
@@ -281,8 +281,8 @@ export default createConfig({
 				},
 			},
 		},
-		SavingsReferal: {
-			// incl. SavingsReferal, BridgedSavingsReferal
+		SavingsReferral: {
+			// incl. SavingsReferral, BridgedSavingsReferral
 			abi: SavingsABI,
 			chain: {
 				[mainnet.name]: {
