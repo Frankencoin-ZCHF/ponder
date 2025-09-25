@@ -107,13 +107,14 @@ export const SavingsActivity = onchainTable(
 );
 
 export const SavingsReferrerMapping = onchainTable(
-	'SavingsRefererMapping',
+	'SavingsReferrerMapping',
 	(t) => ({
 		chainId: t.integer().notNull(),
 		module: t.text().notNull(),
 		account: t.text().notNull(),
 		created: t.bigint().notNull(), // first timestamp
 		updated: t.bigint().notNull(), // latest timestamp
+		balance: t.bigint().notNull(),
 		referrer: t.text().notNull(),
 		referrerFee: t.integer().notNull(),
 	}),
@@ -123,7 +124,7 @@ export const SavingsReferrerMapping = onchainTable(
 );
 
 export const SavingsReferrerEarnings = onchainTable(
-	'SavingsRefererEarnings',
+	'SavingsReferrerEarnings',
 	(t) => ({
 		chainId: t.integer().notNull(),
 		module: t.text().notNull(),

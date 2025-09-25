@@ -14,12 +14,12 @@ import { updateTransactionLog } from './lib/TransactionLog';
 /*
 Events
 
-SavingsReferal:Saved
-SavingsReferal:InterestCollected
-SavingsReferal:Withdrawn
+SavingsReferral:Saved
+SavingsReferral:InterestCollected
+SavingsReferral:Withdrawn
 */
 
-ponder.on('SavingsReferal:Saved', async ({ event, context }) => {
+ponder.on('SavingsReferral:Saved', async ({ event, context }) => {
 	const { client } = context;
 	const { amount } = event.args;
 
@@ -132,6 +132,7 @@ ponder.on('SavingsReferal:Saved', async ({ event, context }) => {
 			account,
 			created: updated,
 			updated,
+			balance: mapping.balance,
 			referrer: referrer.toLowerCase() as Address,
 			referrerFee,
 		})
@@ -152,7 +153,7 @@ ponder.on('SavingsReferal:Saved', async ({ event, context }) => {
 	});
 });
 
-ponder.on('SavingsReferal:InterestCollected', async ({ event, context }) => {
+ponder.on('SavingsReferral:InterestCollected', async ({ event, context }) => {
 	const { client } = context;
 	const { interest, referrerFee: earnings } = event.args;
 
@@ -232,6 +233,7 @@ ponder.on('SavingsReferal:InterestCollected', async ({ event, context }) => {
 			account,
 			created: updated,
 			updated,
+			balance: mapping.balance,
 			referrer: referrer.toLowerCase() as Address,
 			referrerFee,
 		})
@@ -271,7 +273,7 @@ ponder.on('SavingsReferal:InterestCollected', async ({ event, context }) => {
 	});
 });
 
-ponder.on('SavingsReferal:Withdrawn', async ({ event, context }) => {
+ponder.on('SavingsReferral:Withdrawn', async ({ event, context }) => {
 	const { client } = context;
 	const { amount } = event.args;
 
@@ -351,6 +353,7 @@ ponder.on('SavingsReferal:Withdrawn', async ({ event, context }) => {
 			account,
 			created: updated,
 			updated,
+			balance: mapping.balance,
 			referrer: referrer.toLowerCase() as Address,
 			referrerFee,
 		})
