@@ -1,5 +1,5 @@
 import { Event, type Context } from 'ponder:registry';
-import { ERC20Burn, ERC20Status, ERC20Mint, ERC20BalanceMapping } from 'ponder:schema';
+import { ERC20Burn, ERC20Status, ERC20Mint, ERC20BalanceMapping, ERC20TotalSupply } from 'ponder:schema';
 import { Address, zeroAddress } from 'viem';
 import { updateTransactionLog } from './TransactionLog';
 import { ADDRESS, ChainMain } from '@frankencoin/zchf';
@@ -61,9 +61,22 @@ export async function indexERC20MintBurn(
 		});
 
 		// update status
-		await context.db.update(ERC20Status, { chainId, token }).set((current) => ({
+		const responseStatus = await context.db.update(ERC20Status, { chainId, token }).set((current) => ({
 			supply: current.supply + value,
 		}));
+
+		// flat total supply
+		await context.db
+			.insert(ERC20TotalSupply)
+			.values({
+				chainId,
+				token,
+				created: updated,
+				supply: responseStatus.supply,
+			})
+			.onConflictDoUpdate((current) => ({
+				supply: responseStatus.supply,
+			}));
 
 		// global updating
 		// await context.db
@@ -137,9 +150,22 @@ export async function indexERC20MintBurn(
 		});
 
 		// update status
-		await context.db.update(ERC20Status, { chainId, token }).set((current) => ({
+		const responseStatus = await context.db.update(ERC20Status, { chainId, token }).set((current) => ({
 			supply: current.supply - value,
 		}));
+
+		// flat total supply
+		await context.db
+			.insert(ERC20TotalSupply)
+			.values({
+				chainId,
+				token,
+				created: updated,
+				supply: responseStatus.supply,
+			})
+			.onConflictDoUpdate((current) => ({
+				supply: responseStatus.supply,
+			}));
 
 		// // global updating
 		// await context.db
