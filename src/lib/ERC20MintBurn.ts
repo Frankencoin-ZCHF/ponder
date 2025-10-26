@@ -15,6 +15,8 @@ export async function indexERC20MintBurn(
 	const updated = event.block.timestamp;
 	const chainId = context.chain.id;
 
+	const date = new Date(Number(updated)).setUTCHours(0, 0, 0, 0);
+
 	let frankencoinContract: Address = zeroAddress;
 	if (chainId == ChainMain.mainnet.id) {
 		frankencoinContract = ADDRESS[chainId].frankencoin;
@@ -71,7 +73,7 @@ export async function indexERC20MintBurn(
 			.values({
 				chainId,
 				token,
-				created: updated,
+				created: BigInt(date),
 				supply: responseStatus.supply,
 			})
 			.onConflictDoUpdate((current) => ({
@@ -160,7 +162,7 @@ export async function indexERC20MintBurn(
 			.values({
 				chainId,
 				token,
-				created: updated,
+				created: BigInt(date),
 				supply: responseStatus.supply,
 			})
 			.onConflictDoUpdate((current) => ({
