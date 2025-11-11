@@ -54,6 +54,21 @@ export const ERC20Burn = onchainTable(
 	})
 );
 
+// total supply indexing (time based)
+
+export const ERC20TotalSupply = onchainTable(
+	'ERC20TotalSupply',
+	(t) => ({
+		chainId: t.integer().notNull(),
+		token: t.hex().notNull(),
+		created: t.bigint().notNull(),
+		supply: t.bigint().notNull(),
+	}),
+	(table) => ({
+		pk: primaryKey({ columns: [table.chainId, table.token, table.created] }),
+	})
+);
+
 // balance indexing
 
 export const ERC20Balance = onchainTable(

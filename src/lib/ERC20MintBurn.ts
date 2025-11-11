@@ -1,5 +1,5 @@
 import { Event, type Context } from 'ponder:registry';
-import { ERC20Burn, ERC20Status, ERC20Mint, ERC20BalanceMapping } from 'ponder:schema';
+import { ERC20Burn, ERC20Status, ERC20Mint, ERC20BalanceMapping, ERC20TotalSupply } from 'ponder:schema';
 import { Address, zeroAddress } from 'viem';
 import { updateTransactionLog } from './TransactionLog';
 import { ADDRESS, ChainMain } from '@frankencoin/zchf';
@@ -14,6 +14,9 @@ export async function indexERC20MintBurn(
 	const value = event.args.value;
 	const updated = event.block.timestamp;
 	const chainId = context.chain.id;
+
+	// format: in seconds, same as blockchain timestamp
+	const date = new Date(Number(updated * 1000n)).setUTCHours(0, 0, 0, 0) / 1000;
 
 	let frankencoinContract: Address = zeroAddress;
 	if (chainId == ChainMain.mainnet.id) {
@@ -61,9 +64,22 @@ export async function indexERC20MintBurn(
 		});
 
 		// update status
-		await context.db.update(ERC20Status, { chainId, token }).set((current) => ({
+		const responseStatus = await context.db.update(ERC20Status, { chainId, token }).set((current) => ({
 			supply: current.supply + value,
 		}));
+
+		// flat total supply
+		await context.db
+			.insert(ERC20TotalSupply)
+			.values({
+				chainId,
+				token,
+				created: BigInt(date),
+				supply: responseStatus.supply,
+			})
+			.onConflictDoUpdate((current) => ({
+				supply: responseStatus.supply,
+			}));
 
 		// global updating
 		// await context.db
@@ -137,9 +153,22 @@ export async function indexERC20MintBurn(
 		});
 
 		// update status
-		await context.db.update(ERC20Status, { chainId, token }).set((current) => ({
+		const responseStatus = await context.db.update(ERC20Status, { chainId, token }).set((current) => ({
 			supply: current.supply - value,
 		}));
+
+		// flat total supply
+		await context.db
+			.insert(ERC20TotalSupply)
+			.values({
+				chainId,
+				token,
+				created: BigInt(date),
+				supply: responseStatus.supply,
+			})
+			.onConflictDoUpdate((current) => ({
+				supply: responseStatus.supply,
+			}));
 
 		// // global updating
 		// await context.db
