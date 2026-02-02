@@ -302,6 +302,7 @@ ponder.on('MintingHubV2:ChallengeStarted', async ({ event, context }) => {
 	await context.db.insert(MintingHubV2ChallengeV2).values({
 		position: event.args.position.toLowerCase() as Address,
 		number: event.args.number,
+		txHash: event.transaction.hash,
 
 		challenger: event.args.challenger,
 		start: BigInt(challenges[1]),
@@ -384,6 +385,7 @@ ponder.on('MintingHubV2:ChallengeAverted', async ({ event, context }) => {
 		position: event.args.position.toLowerCase() as Address,
 		number: event.args.number,
 		numberBid: challenge.bids,
+		txHash: event.transaction.hash,
 		bidder: event.transaction.from,
 		created: event.block.timestamp,
 		bidType: 'Averted',
@@ -459,6 +461,7 @@ ponder.on('MintingHubV2:ChallengeSucceeded', async ({ event, context }) => {
 		position: event.args.position.toLowerCase() as Address,
 		number: event.args.number,
 		numberBid: challenge.bids,
+		txHash: event.transaction.hash,
 		bidder: event.transaction.from,
 		created: event.block.timestamp,
 		bidType: 'Succeeded',

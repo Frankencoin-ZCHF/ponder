@@ -113,6 +113,7 @@ export const MintingHubV1ChallengeV1 = onchainTable(
 	(t) => ({
 		position: t.hex().notNull(), // position being challenged
 		number: t.bigint().notNull(), // number of the challenge in minting hub
+		txHash: t.hex().notNull(),
 		challenger: t.hex().notNull(),
 		start: t.bigint().notNull(), // timestamp for start of challenge
 		created: t.bigint().notNull(), // block timestamp when challenge was created
@@ -137,6 +138,7 @@ export const MintingHubV1ChallengeBidV1 = onchainTable(
 		position: t.hex().notNull(),
 		number: t.bigint().notNull(),
 		numberBid: t.bigint().notNull(),
+		txHash: t.hex().notNull(),
 		bidder: t.hex().notNull(),
 		created: t.bigint().notNull(), // block timestamp when bid was created
 		bidType: t.text().notNull(), // "Averted" | "Succeeded"
