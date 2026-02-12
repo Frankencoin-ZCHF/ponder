@@ -50,6 +50,12 @@ ponder.on('PositionV2:MintingUpdate', async ({ event, context }) => {
 		functionName: 'cooldown',
 	});
 
+	const isClosed = await client.readContract({
+		abi: PositionV2.abi,
+		address: positionAddress,
+		functionName: 'isClosed',
+	});
+
 	const baseRatePPM = await client.readContract({
 		abi: SavingsV2ABI,
 		address: ADDRESS[mainnet.id].savingsV2,
@@ -67,7 +73,7 @@ ponder.on('PositionV2:MintingUpdate', async ({ event, context }) => {
 			availableForMinting,
 			availableForClones,
 			cooldown: BigInt(cooldown),
-			closed: collateral == 0n,
+			closed: isClosed,
 		});
 
 	// update minting counter
