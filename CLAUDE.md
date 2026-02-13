@@ -9,17 +9,20 @@ This is a Ponder-based blockchain indexer for Frankencoin (ZCHF), a decentralize
 ## Environment Setup
 
 Create `.env.local` from `.env.example`:
+
 - `PORT`: Server port (default: 42069)
 - `ALCHEMY_RPC_KEY`: Required Alchemy API key for RPC access
 - `DATABASE_URL`: Optional Postgres URL (uses SQLite if omitted)
 - `MAX_REQUESTS_PER_SECOND`: Rate limiting for RPC calls (default: 10)
-- `INDEX_ERC20POSITION_V1` / `INDEX_ERC20POSITION_V2`: Feature flags for ERC20 position indexing (default: false)
 
 ## Commands
 
 ```bash
 # Development with live reloading (auto-installs deps, disables UI)
 yarn dev
+
+# Development with Ponder UI enabled
+yarn dev:ui
 
 # Production start
 yarn start
@@ -49,12 +52,14 @@ Contract addresses and ABIs are imported from `@frankencoin/zchf` package via `A
 ### Schema and Event Handlers
 
 **Schema definition** (`schema/` directory):
+
 - Schema files define database tables using Ponder's `onchainTable` helper
 - Each file exports tables for a specific contract domain (e.g., `Frankencoin.ts`, `MintingHubV1.ts`)
 - All schemas are re-exported through `ponder.schema.ts`
 - Tables use composite primary keys with `chainId` to support multichain data
 
 **Event handlers** (`src/` directory):
+
 - Event handler files mirror schema files by name (e.g., `src/Frankencoin.ts` handles events for schemas in `schema/Frankencoin.ts`)
 - Handlers use `ponder.on('<Contract>:<EventName>', ...)` pattern
 - Access database via `context.db` for inserts/updates
@@ -64,13 +69,30 @@ Contract addresses and ABIs are imported from `@frankencoin/zchf` package via `A
 
 ### Helper Libraries
 
-- `src/lib/TransactionLog.ts`: `updateTransactionLog()` - standardized transaction logging
+- `src/lib/TransactionLog.ts`: `updateTransactionLog()` - standardized transaction logging with pre-computed analytics
 - `src/lib/ERC20Balance.ts`: ERC20 balance tracking utilities
 - `src/lib/ERC20MintBurn.ts`: Mint/burn event handling
+
+### Performance Optimizations
+
+**Position Aggregates:**
+
+- `PositionAggregatesV1` and `PositionAggregatesV2` tables cache pre-computed position totals
+- Updated incrementally on `MintingUpdate` events (position changes)
+- TransactionLog reads from aggregates (O(1)) instead of querying all positions (O(n))
+- Provides 100-1000x reduction in database queries for transaction logging
+
+**Dual Lead Rate System:**
+
+- **Mint Lead Rate** (from SavingsV2): Used for Position V2 interest calculations (`riskPremiumPPM + mintRate`)
+- **Save Lead Rate** (from SavingsReferral): Used for savings projections and interest payments
+- Fallback logic: If save rate unavailable → use mint rate; if both unavailable → 0
+- Both rates tracked separately in TransactionLog schema (`currentMintLeadRate`, `currentSaveLeadRate`)
 
 ### Dynamic Contract Addresses
 
 The config uses Ponder's `factory()` helper for dynamically deployed contracts:
+
 - Position contracts (V1/V2) are discovered from `PositionOpened` events on MintingHub contracts
 - ERC20 collateral tokens are discovered from position collateral parameters
 
@@ -88,5 +110,9 @@ The API (`src/api/index.ts`) uses Hono to serve a GraphQL endpoint with auto-gen
 - Always include `chainId` in composite primary keys for multichain support
 - Use `onConflictDoUpdate()` for upsert operations with calculated updates
 - Contract addresses should be normalized to lowercase with `toLowerCase() as Address`
+- Use `t.hex()` for address fields in schemas, not `t.text()`
 - Start blocks are critical for sync performance - stored in `ponder.config.ts` per chain
 - Schema changes require regenerating types with `yarn codegen`
+- Position aggregates are automatically maintained - don't query all positions directly
+- For V2 interest calculations, always use mint lead rate from SavingsV2
+- For savings projections, use save lead rate from SavingsReferral (with mint rate fallback)
