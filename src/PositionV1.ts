@@ -211,7 +211,16 @@ ponder.on('PositionV1:MintingUpdate', async ({ event, context }) => {
 			position: missingPositionData.position.toLowerCase() as Address,
 			count: status.mintingUpdatesCounter - 1n,
 		});
-		if (prev == null) throw new Error(`previous minting update not found.`);
+		if (prev == null) {
+			console.error('Previous minting update not found:', {
+				position: missingPositionData.position,
+				expectedCount: status.mintingUpdatesCounter - 1n,
+				currentCount: status.mintingUpdatesCounter,
+				txHash: event.transaction.hash,
+				blockNumber: event.block.number,
+			});
+			throw new Error(`previous minting update not found.`);
+		}
 
 		const sizeAdjusted = collateral - prev.size;
 		const priceAdjusted = price - prev.price;

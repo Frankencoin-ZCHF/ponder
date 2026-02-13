@@ -46,8 +46,6 @@ export async function indexERC20Balance(
 				account: from,
 				mint: 0n,
 				burn: 0n,
-				// @dev: key not found error while indexing.
-				// should not have any balance, but eliminates the "0" amount tranfer errors
 				balance: 0n,
 			})
 			.onConflictDoUpdate((current) => ({

@@ -88,7 +88,13 @@ export async function updateTransactionLog({ client, db, chainId, timestamp, kin
 			currentLeadRatePPM = leadRatePPM;
 			projectedInterests = (totalSavings * BigInt(leadRatePPM)) / 1_000_000n;
 		}
-	} catch (error) {}
+	} catch (error) {
+		console.error('Failed to read currentRatePPM from savings contract:', {
+			chainId,
+			error: error instanceof Error ? error.message : String(error),
+		});
+		// Continue with default values (currentLeadRate, currentLeadRatePPM, projectedInterests remain 0n)
+	}
 
 	// V1
 	const openPositionV1 = await db.sql

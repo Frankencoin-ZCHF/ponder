@@ -108,10 +108,32 @@ ponder.on(
 	}
 );
 
+// CCIP MessageSent event topic
+const CCIP_SENT_TOPIC = '0xd0c3c799bf9e2639de44391e7f524d229b2b55f5b1ea94b2bf7da42f7243dddd';
+
 // @dev: this will try to get the target address from the CCIP event topic instead of using the encoded bytes of keccak256(address)
 async function getTargetAddress(client: Context['client'], hash: Hash): Promise<Address> {
 	const tx = await client.getTransactionReceipt({ hash });
-	const data = tx.logs.find((i) => i.topics.includes('0xd0c3c799bf9e2639de44391e7f524d229b2b55f5b1ea94b2bf7da42f7243dddd' as never));
+	const data = tx.logs.find((i) => i.topics.includes(CCIP_SENT_TOPIC as never));
+
+	if (!data || !data.data) {
+		throw new Error(`CCIP MessageSent event not found in transaction ${hash}`);
+	}
+
+	// Offset calculation: 2 (0x prefix) + 64*3 (3 slots of 32 bytes) + 24 (padding)
 	const offset = 2 + 64 * 3 + 24;
-	return `0x${data?.data.slice(offset, offset + 40)}`;
+	const addressLength = 40;
+
+	if (data.data.length < offset + addressLength) {
+		throw new Error(`Insufficient data in CCIP event for transaction ${hash}: expected at least ${offset + addressLength} chars, got ${data.data.length}`);
+	}
+
+	const extracted = data.data.slice(offset, offset + addressLength);
+
+	// Validate extracted address format
+	if (!/^[0-9a-fA-F]{40}$/.test(extracted)) {
+		throw new Error(`Invalid address extracted from CCIP data in transaction ${hash}: ${extracted}`);
+	}
+
+	return `0x${extracted.toLowerCase()}` as Address;
 }

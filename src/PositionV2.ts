@@ -24,7 +24,17 @@ ponder.on('PositionV2:MintingUpdate', async ({ event, context }) => {
 		position: positionAddress.toLowerCase() as Address,
 	});
 
-	if (!position) throw new Error('PositionV2 unknown in MintingUpdate');
+	if (!position) {
+		console.error('PositionV2 not found in MintingUpdate event:', {
+			positionAddress,
+			collateral,
+			price,
+			minted,
+			txHash: event.transaction.hash,
+			blockNumber: event.block.number,
+		});
+		throw new Error('PositionV2 unknown in MintingUpdate');
+	}
 
 	// @dev: https://github.com/Frankencoin-ZCHF/ponder/issues/28
 	// position updates

@@ -375,7 +375,16 @@ ponder.on('MintingHubV2:ChallengeAverted', async ({ event, context }) => {
 		number: event.args.number,
 	});
 
-	if (!challenge) throw new Error('ChallengeV2 not found');
+	if (!challenge) {
+		console.error('ChallengeV2 not found in ChallengeAverted event:', {
+			position: event.args.position,
+			number: event.args.number,
+			size: event.args.size,
+			txHash: event.transaction.hash,
+			blockNumber: event.block.number,
+		});
+		throw new Error('ChallengeV2 not found');
+	}
 
 	// Keep as bigint throughout calculations to preserve precision
 	const _amount = (liqPrice * event.args.size) / BigInt(10 ** 18);
@@ -450,7 +459,18 @@ ponder.on('MintingHubV2:ChallengeSucceeded', async ({ event, context }) => {
 		number: event.args.number,
 	});
 
-	if (!challenge) throw new Error('ChallengeV2 not found');
+	if (!challenge) {
+		console.error('ChallengeV2 not found in ChallengeSucceeded event:', {
+			position: event.args.position,
+			number: event.args.number,
+			bid: event.args.bid,
+			challengeSize: event.args.challengeSize,
+			acquiredCollateral: event.args.acquiredCollateral,
+			txHash: event.transaction.hash,
+			blockNumber: event.block.number,
+		});
+		throw new Error('ChallengeV2 not found');
+	}
 
 	// Keep as bigint throughout calculations to preserve precision
 	const _price = (event.args.bid * BigInt(10 ** 18)) / event.args.challengeSize;
