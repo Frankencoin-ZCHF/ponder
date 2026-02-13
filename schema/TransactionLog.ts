@@ -24,7 +24,8 @@ export const AnalyticTransactionLog = onchainTable(
 		totalMintedV1: t.bigint().notNull(),
 		totalMintedV2: t.bigint().notNull(),
 
-		currentLeadRate: t.bigint().notNull(),
+		currentMintLeadRate: t.bigint().notNull(),
+		currentSaveLeadRate: t.bigint().notNull(),
 		projectedInterests: t.bigint().notNull(),
 
 		annualV1Interests: t.bigint().notNull(),
@@ -67,7 +68,8 @@ export const AnalyticDailyLog = onchainTable(
 		totalMintedV1: t.bigint().notNull(),
 		totalMintedV2: t.bigint().notNull(),
 
-		currentLeadRate: t.bigint().notNull(),
+		currentMintLeadRate: t.bigint().notNull(),
+		currentSaveLeadRate: t.bigint().notNull(),
 		projectedInterests: t.bigint().notNull(),
 
 		annualV1Interests: t.bigint().notNull(),

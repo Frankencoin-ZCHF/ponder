@@ -1,8 +1,15 @@
 import { ADDRESS, SavingsV2ABI } from '@frankencoin/zchf';
 import { ponder } from 'ponder:registry';
-import { MintingHubV2MintingUpdateV2, MintingHubV2OwnerTransfersV2, MintingHubV2PositionV2, MintingHubV2Status } from 'ponder:schema';
+import {
+	MintingHubV2MintingUpdateV2,
+	MintingHubV2OwnerTransfersV2,
+	MintingHubV2PositionV2,
+	MintingHubV2Status,
+	PositionAggregatesV2,
+} from 'ponder:schema';
 import { Address } from 'viem';
 import { mainnet } from 'viem/chains';
+import { and, eq, gt } from 'ponder';
 
 /*
 Events
@@ -85,6 +92,37 @@ ponder.on('PositionV2:MintingUpdate', async ({ event, context }) => {
 			cooldown: BigInt(cooldown),
 			closed: isClosed,
 		});
+
+	// Recalculate V2 aggregates for this chain
+	const openPositions = await context.db.sql
+		.select()
+		.from(MintingHubV2PositionV2)
+		.where(
+			and(eq(MintingHubV2PositionV2.closed, false), eq(MintingHubV2PositionV2.denied, false), gt(MintingHubV2PositionV2.minted, 0n))
+		);
+
+	let totalMinted = 0n;
+	let annualInterests = 0n;
+
+	for (let p of openPositions) {
+		totalMinted += p.minted;
+		annualInterests += (p.minted * BigInt(p.riskPremiumPPM + Number(baseRatePPM))) / 1_000_000n;
+	}
+
+	// Update aggregate table
+	await context.db
+		.insert(PositionAggregatesV2)
+		.values({
+			chainId: context.chain.id,
+			totalMinted,
+			annualInterests,
+			updated: event.block.timestamp,
+		})
+		.onConflictDoUpdate(() => ({
+			totalMinted,
+			annualInterests,
+			updated: event.block.timestamp,
+		}));
 
 	// update minting counter
 	const status = await context.db

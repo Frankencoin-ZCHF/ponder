@@ -365,28 +365,6 @@ export default createConfig({
 			},
 		},
 
-		ERC20PositionV1: {
-			abi: erc20Abi,
-			chain: mainnet.name,
-			address: factory({
-				address: addr[mainnet.id].mintingHubV1,
-				event: openPositionEventV1,
-				parameter: 'collateral',
-			}),
-			startBlock: process.env.INDEX_ERC20POSITION_V1 == 'true' ? config[mainnet.id].startMintingHubV1 : Number.MAX_SAFE_INTEGER,
-		},
-
-		ERC20PositionV2: {
-			abi: erc20Abi,
-			chain: mainnet.name,
-			address: factory({
-				address: addr[mainnet.id].mintingHubV2,
-				event: openPositionEventV2,
-				parameter: 'collateral',
-			}),
-			startBlock: process.env.INDEX_ERC20POSITION_V1 == 'true' ? config[mainnet.id].startMintingHubV2 : Number.MAX_SAFE_INTEGER,
-		},
-
 		// ### CROSS CHAIN SUPPORT ###
 
 		CCIPBridgedAccounting: {

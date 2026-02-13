@@ -5,6 +5,7 @@
 	"license": "MIT",
 	"scripts": {
 		"dev": "yarn install && ponder dev --disable-ui",
+		"dev:ui": "yarn install && ponder dev",
 		"start": "ponder start",
 		"codegen": "ponder codegen",
 		"lint": "eslint .",

@@ -1,7 +1,7 @@
 import { and, or, eq, gt, gte, inArray } from 'ponder';
 import { type Context } from 'ponder:registry';
-import { AnalyticTransactionLog, AnalyticDailyLog, CommonEcosystem, MintingHubV1PositionV1, MintingHubV2PositionV2 } from 'ponder:schema';
-import { EquityABI, FrankencoinABI, SavingsABI } from '@frankencoin/zchf';
+import { AnalyticTransactionLog, AnalyticDailyLog, CommonEcosystem, PositionAggregatesV1, PositionAggregatesV2 } from 'ponder:schema';
+import { EquityABI, FrankencoinABI, SavingsABI, SavingsV2ABI } from '@frankencoin/zchf';
 import { Address, parseEther, parseUnits } from 'viem';
 import { addr, config } from '../../ponder.config';
 import { mainnet } from 'viem/chains';
@@ -82,57 +82,50 @@ export async function updateTransactionLog({ client, db, chainId, timestamp, kin
 		functionName: 'price',
 	});
 
-	let currentLeadRatePPM: number = 0;
-	let currentLeadRate: bigint = 0n;
+	// Fetch both mint lead rate (for V2 positions) and save lead rate (for savings)
+	let currentMintLeadRate: bigint = 0n;
+	let currentSaveLeadRate: bigint = 0n;
 	let projectedInterests: bigint = 0n;
 
+	// Fetch mint lead rate from SavingsV2
 	try {
-		if (totalSavings > 0n) {
-			const leadRatePPM = await client.readContract({
-				abi: SavingsABI,
-				address: mainnetAddress.savingsReferral,
-				functionName: 'currentRatePPM',
-			});
-
-			currentLeadRate = parseUnits(leadRatePPM.toString(), 12);
-			currentLeadRatePPM = leadRatePPM;
-			projectedInterests = (totalSavings * BigInt(leadRatePPM)) / 1_000_000n;
-		}
-	} catch (error) {
-		console.error('Failed to read currentRatePPM from savings contract:', {
-			chainId,
-			error: error instanceof Error ? error.message : String(error),
+		const mintRatePPM = await client.readContract({
+			abi: SavingsV2ABI,
+			address: mainnetAddress.savingsV2,
+			functionName: 'currentRatePPM',
 		});
-		// Continue with default values (currentLeadRate, currentLeadRatePPM, projectedInterests remain 0n)
+		currentMintLeadRate = BigInt(mintRatePPM);
+	} catch (error) {
+		// currentMintLeadRate remains 0n
 	}
 
-	// V1
-	const openPositionV1 = await db.sql
-		.select()
-		.from(MintingHubV1PositionV1)
-		.where(
-			and(eq(MintingHubV1PositionV1.closed, false), eq(MintingHubV1PositionV1.denied, false), gt(MintingHubV1PositionV1.minted, 0n))
-		);
-	let annualV1Interests: bigint = 0n;
-	let totalMintedV1: bigint = 0n;
-	for (let p of openPositionV1) {
-		annualV1Interests += (p.minted * BigInt(p.annualInterestPPM)) / 1_000_000n;
-		totalMintedV1 += p.minted;
+	// Fetch save lead rate from SavingsReferral
+	try {
+		const saveRatePPM = await client.readContract({
+			abi: SavingsABI,
+			address: mainnetAddress.savingsReferral,
+			functionName: 'currentRatePPM',
+		});
+		currentSaveLeadRate = BigInt(saveRatePPM);
+	} catch (error) {
+		// Fallback: if save rate unavailable, use mint rate
+		currentSaveLeadRate = currentMintLeadRate;
 	}
 
-	// V2
-	const openPositionV2 = await db.sql
-		.select()
-		.from(MintingHubV2PositionV2)
-		.where(
-			and(eq(MintingHubV2PositionV2.closed, false), eq(MintingHubV2PositionV2.denied, false), gt(MintingHubV2PositionV2.minted, 0n))
-		);
-	let annualV2Interests: bigint = 0n;
-	let totalMintedV2: bigint = 0n;
-	for (let p of openPositionV2) {
-		annualV2Interests += (p.minted * BigInt(p.riskPremiumPPM + currentLeadRatePPM)) / 1_000_000n;
-		totalMintedV2 += p.minted;
+	// Calculate projected interests using save rate
+	if (totalSavings > 0n && currentSaveLeadRate > 0) {
+		projectedInterests = (totalSavings * currentSaveLeadRate) / 1_000_000n;
 	}
+
+	// Read V1 aggregates (O(1) instead of O(n))
+	const v1Agg = await db.find(PositionAggregatesV1, { chainId });
+	const totalMintedV1 = v1Agg?.totalMinted ?? 0n;
+	const annualV1Interests = v1Agg?.annualInterests ?? 0n;
+
+	// Read V2 aggregates (O(1) instead of O(n))
+	const v2Agg = await db.find(PositionAggregatesV2, { chainId });
+	const totalMintedV2 = v2Agg?.totalMinted ?? 0n;
+	const annualV2Interests = v2Agg?.annualInterests ?? 0n;
 
 	// avg borrow interest
 	const annualV1BorrowRate = totalMintedV1 > 0n ? (annualV1Interests * parseEther('1')) / totalMintedV1 : 0n;
@@ -194,7 +187,8 @@ export async function updateTransactionLog({ client, db, chainId, timestamp, kin
 		totalMintedV1,
 		totalMintedV2,
 
-		currentLeadRate,
+		currentMintLeadRate,
+		currentSaveLeadRate,
 		projectedInterests,
 		annualV1Interests,
 		annualV2Interests,
@@ -231,7 +225,8 @@ export async function updateTransactionLog({ client, db, chainId, timestamp, kin
 		totalMintedV1,
 		totalMintedV2,
 
-		currentLeadRate,
+		currentMintLeadRate,
+		currentSaveLeadRate,
 		projectedInterests,
 		annualV1Interests,
 		annualV2Interests,
