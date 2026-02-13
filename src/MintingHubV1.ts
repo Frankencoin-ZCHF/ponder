@@ -8,6 +8,7 @@ import {
 	MintingHubV1Status,
 } from 'ponder:schema';
 import { Address } from 'viem';
+import { normalizeAddress } from './lib/utils';
 
 /*
 Events
@@ -170,7 +171,7 @@ ponder.on('MintingHubV1:PositionOpened', async ({ event, context }) => {
 			functionName: 'limitForClones',
 		});
 
-		await context.db.update(MintingHubV1PositionV1, { position: original.toLowerCase() as Address }).set({
+		await context.db.update(MintingHubV1PositionV1, { position: normalizeAddress(original) }).set({
 			limitForClones: originalLimitForClones,
 			availableForClones: originalAvailableForClones,
 		});
@@ -181,7 +182,7 @@ ponder.on('MintingHubV1:PositionOpened', async ({ event, context }) => {
 	// ------------------------------------------------------------------
 	// Create position entry for DB
 	await context.db.insert(MintingHubV1PositionV1).values({
-		position: position.toLowerCase() as Address,
+		position: normalizeAddress(position),
 		owner,
 		zchf,
 		collateral,
@@ -235,7 +236,7 @@ ponder.on('MintingHubV1:PositionOpened', async ({ event, context }) => {
 	await context.db
 		.insert(MintingHubV1Status)
 		.values({
-			position: event.args.position.toLowerCase() as Address,
+			position: normalizeAddress(event.args.position),
 			ownerTransfersCounter: 0n,
 			mintingUpdatesCounter: 0n,
 			challengeStartedCounter: 0n,
@@ -279,7 +280,7 @@ ponder.on('MintingHubV1:ChallengeStarted', async ({ event, context }) => {
 	});
 
 	await context.db.insert(MintingHubV1ChallengeV1).values({
-		position: event.args.position.toLowerCase() as Address,
+		position: normalizeAddress(event.args.position),
 		number: event.args.number,
 		txHash: event.transaction.hash,
 
@@ -312,7 +313,7 @@ ponder.on('MintingHubV1:ChallengeStarted', async ({ event, context }) => {
 	await context.db
 		.insert(MintingHubV1Status)
 		.values({
-			position: event.args.position.toLowerCase() as Address,
+			position: normalizeAddress(event.args.position),
 			ownerTransfersCounter: 0n,
 			mintingUpdatesCounter: 0n,
 			challengeStartedCounter: 1n,
@@ -349,26 +350,25 @@ ponder.on('MintingHubV1:ChallengeAverted', async ({ event, context }) => {
 	});
 
 	const challenge = await context.db.find(MintingHubV1ChallengeV1, {
-		position: event.args.position.toLowerCase() as Address,
+		position: normalizeAddress(event.args.position),
 		number: event.args.number,
 	});
 
 	if (!challenge) throw new Error('ChallengeV1 not found');
 
-	const _price: number = parseInt(liqPrice.toString());
-	const _size: number = parseInt(event.args.size.toString());
-	const _amount: number = (_price / 1e18) * _size;
+	// Keep as bigint throughout calculations to preserve precision
+	const _amount = (liqPrice * event.args.size) / BigInt(10 ** 18);
 
 	// create ChallengeBidV1 entry
 	await context.db.insert(MintingHubV1ChallengeBidV1).values({
-		position: event.args.position.toLowerCase() as Address,
+		position: normalizeAddress(event.args.position),
 		number: event.args.number,
 		numberBid: challenge.bids,
 		txHash: event.transaction.hash,
 		bidder: event.transaction.from,
 		created: event.block.timestamp,
 		bidType: 'Averted',
-		bid: BigInt(_amount),
+		bid: _amount,
 		price: liqPrice,
 		filledSize: event.args.size,
 		acquiredCollateral: 0n,
@@ -377,7 +377,7 @@ ponder.on('MintingHubV1:ChallengeAverted', async ({ event, context }) => {
 
 	// update ChallengeV1 related changes
 	await context.db
-		.update(MintingHubV1ChallengeV1, { position: event.args.position.toLowerCase() as Address, number: event.args.number })
+		.update(MintingHubV1ChallengeV1, { position: normalizeAddress(event.args.position), number: event.args.number })
 		.set((current) => ({
 			bids: current.bids + 1n,
 			filledSize: current.filledSize + event.args.size,
@@ -385,7 +385,7 @@ ponder.on('MintingHubV1:ChallengeAverted', async ({ event, context }) => {
 		}));
 
 	// update PositionV1 related changes
-	await context.db.update(MintingHubV1PositionV1, { position: event.args.position.toLowerCase() as Address }).set({ cooldown });
+	await context.db.update(MintingHubV1PositionV1, { position: normalizeAddress(event.args.position) }).set({ cooldown });
 
 	// ------------------------------------------------------------------
 	// COMMON
@@ -400,7 +400,7 @@ ponder.on('MintingHubV1:ChallengeAverted', async ({ event, context }) => {
 			amount: current.amount + 1n,
 		}));
 
-	await context.db.update(MintingHubV1Status, { position: event.args.position.toLowerCase() as Address }).set((current) => ({
+	await context.db.update(MintingHubV1Status, { position: normalizeAddress(event.args.position) }).set((current) => ({
 		challengeAvertedBidsCounter: current.challengeAvertedBidsCounter + 1n,
 	}));
 });
@@ -423,19 +423,18 @@ ponder.on('MintingHubV1:ChallengeSucceeded', async ({ event, context }) => {
 	});
 
 	const challenge = await context.db.find(MintingHubV1ChallengeV1, {
-		position: event.args.position.toLowerCase() as Address,
+		position: normalizeAddress(event.args.position),
 		number: event.args.number,
 	});
 
 	if (!challenge) throw new Error('ChallengeV1 not found');
 
-	const _bid: number = parseInt(event.args.bid.toString());
-	const _size: number = parseInt(event.args.challengeSize.toString());
-	const _price: number = (_bid * 10 ** 18) / _size;
+	// Keep as bigint throughout calculations to preserve precision
+	const _price = (event.args.bid * BigInt(10 ** 18)) / event.args.challengeSize;
 
 	// create ChallengeBidV1 entry
 	await context.db.insert(MintingHubV1ChallengeBidV1).values({
-		position: event.args.position.toLowerCase() as Address,
+		position: normalizeAddress(event.args.position),
 		number: event.args.number,
 		numberBid: challenge.bids,
 		txHash: event.transaction.hash,
@@ -443,7 +442,7 @@ ponder.on('MintingHubV1:ChallengeSucceeded', async ({ event, context }) => {
 		created: event.block.timestamp,
 		bidType: 'Succeeded',
 		bid: event.args.bid,
-		price: BigInt(_price),
+		price: _price,
 		filledSize: event.args.challengeSize,
 		acquiredCollateral: event.args.acquiredCollateral,
 		challengeSize: challenge.size,
@@ -451,7 +450,7 @@ ponder.on('MintingHubV1:ChallengeSucceeded', async ({ event, context }) => {
 
 	// update ChallengeV1 related changes
 	await context.db
-		.update(MintingHubV1ChallengeV1, { position: event.args.position.toLowerCase() as Address, number: event.args.number })
+		.update(MintingHubV1ChallengeV1, { position: normalizeAddress(event.args.position), number: event.args.number })
 		.set((current) => ({
 			bids: current.bids + 1n,
 			acquiredCollateral: current.acquiredCollateral + event.args.acquiredCollateral,
@@ -460,7 +459,7 @@ ponder.on('MintingHubV1:ChallengeSucceeded', async ({ event, context }) => {
 		}));
 
 	// update PositionV1 related changes
-	await context.db.update(MintingHubV1PositionV1, { position: event.args.position.toLowerCase() as Address }).set({ cooldown });
+	await context.db.update(MintingHubV1PositionV1, { position: normalizeAddress(event.args.position) }).set({ cooldown });
 
 	// ------------------------------------------------------------------
 	// COMMON
@@ -475,7 +474,7 @@ ponder.on('MintingHubV1:ChallengeSucceeded', async ({ event, context }) => {
 			amount: current.amount + 1n,
 		}));
 
-	await context.db.update(MintingHubV1Status, { position: event.args.position.toLowerCase() as Address }).set((current) => ({
+	await context.db.update(MintingHubV1Status, { position: normalizeAddress(event.args.position) }).set((current) => ({
 		challengeSucceededBidsCounter: current.challengeSucceededBidsCounter + 1n,
 	}));
 });

@@ -1,9 +1,10 @@
 import { ADDRESS } from '@frankencoin/zchf';
 import { ponder } from 'ponder:registry';
 import { CommonEcosystem, FrankencoinMinter, FrankencoinProfitLoss } from 'ponder:schema';
-import { Address, erc20Abi, parseEther } from 'viem';
+import { erc20Abi, parseEther } from 'viem';
 import { mainnet } from 'viem/chains';
 import { updateTransactionLog } from './lib/TransactionLog';
+import { normalizeAddress } from './lib/utils';
 
 /*
 Events
@@ -21,7 +22,7 @@ To perform a contract read on a different chain, you need to create a separate p
 */
 
 ponder.on('Frankencoin:Profit', async ({ event, context }) => {
-	const minter = event.args.reportingMinter.toLowerCase() as Address;
+	const minter = normalizeAddress(event.args.reportingMinter);
 
 	// upsert ProfitLossCounter
 	const counter = await context.db
@@ -121,7 +122,7 @@ ponder.on('Frankencoin:Profit', async ({ event, context }) => {
 });
 
 ponder.on('Frankencoin:Loss', async ({ event, context }) => {
-	const minter = event.args.reportingMinter.toLowerCase() as Address;
+	const minter = normalizeAddress(event.args.reportingMinter);
 
 	// upsert ProfitLossCounter
 	const counter = await context.db
@@ -220,7 +221,7 @@ ponder.on('Frankencoin:Loss', async ({ event, context }) => {
 });
 
 ponder.on('Frankencoin:MinterApplied', async ({ event, context }) => {
-	const minter = event.args.minter.toLowerCase() as Address;
+	const minter = normalizeAddress(event.args.minter);
 
 	// upsert status
 	await context.db
@@ -262,7 +263,7 @@ ponder.on('Frankencoin:MinterApplied', async ({ event, context }) => {
 });
 
 ponder.on('Frankencoin:MinterDenied', async ({ event, context }) => {
-	const minter = event.args.minter.toLowerCase() as Address;
+	const minter = normalizeAddress(event.args.minter);
 
 	// upsert status
 	await context.db
