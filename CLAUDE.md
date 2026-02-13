@@ -14,6 +14,7 @@ Create `.env.local` from `.env.example`:
 - `ALCHEMY_RPC_KEY`: Required Alchemy API key for RPC access
 - `DATABASE_URL`: Optional Postgres URL (uses SQLite if omitted)
 - `MAX_REQUESTS_PER_SECOND`: Rate limiting for RPC calls (default: 10)
+- `POLLING_INTERVAL_MS`: Block polling interval in milliseconds (default: 30000 = 30s)
 
 ## Commands
 
