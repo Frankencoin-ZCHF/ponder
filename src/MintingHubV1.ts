@@ -192,6 +192,7 @@ ponder.on('MintingHubV1:PositionOpened', async ({ event, context }) => {
 		isOriginal,
 		isClone,
 		denied,
+		denyDate: 0n,
 		closed,
 		original,
 

@@ -29,7 +29,7 @@ export const MintingHubV2PositionV2 = onchainTable(
 		isOriginal: t.boolean().notNull(),
 		isClone: t.boolean().notNull(),
 		denied: t.boolean().notNull(),
-		denyDate: t.bigint(),
+		denyDate: t.bigint().notNull(),
 		closed: t.boolean().notNull(),
 		original: t.hex().notNull(),
 		parent: t.hex().notNull(),
