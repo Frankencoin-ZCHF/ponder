@@ -310,6 +310,7 @@ ponder.on('PositionV1:PositionDenied', async ({ event, context }) => {
 			.set({
 				cooldown,
 				denied: true,
+				denyDate: event.block.timestamp,
 			});
 	}
 });
