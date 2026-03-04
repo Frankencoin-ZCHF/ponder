@@ -3,12 +3,9 @@ import { ERC20Burn, ERC20Status, ERC20Mint, ERC20BalanceMapping, ERC20TotalSuppl
 import { Address, zeroAddress } from 'viem';
 import { updateTransactionLog } from './TransactionLog';
 import { ADDRESS, ChainMain } from '@frankencoin/zchf';
-import { normalizeAddress } from './utils';
+import { normalizeAddress, timestampStartOfDay } from '../utils/format';
 
-export async function indexERC20MintBurn(
-	event: Event<'ERC20:Transfer' | 'ERC20PositionV1:Transfer' | 'ERC20PositionV2:Transfer'>,
-	context: Context<'ERC20:Transfer' | 'ERC20PositionV1:Transfer' | 'ERC20PositionV2:Transfer'>
-) {
+export async function indexERC20MintBurn(event: Event<'ERC20:Transfer'>, context: Context<'ERC20:Transfer'>) {
 	const token = normalizeAddress(event.log.address);
 	const from = normalizeAddress(event.args.from);
 	const to = normalizeAddress(event.args.to);
@@ -17,7 +14,7 @@ export async function indexERC20MintBurn(
 	const chainId = context.chain.id;
 
 	// format: in seconds, same as blockchain timestamp
-	const date = new Date(Number(updated * 1000n)).setUTCHours(0, 0, 0, 0) / 1000;
+	const date = timestampStartOfDay(String(updated * 1000n));
 
 	let frankencoinContract: Address = zeroAddress;
 	if (chainId == ChainMain.mainnet.id) {
@@ -81,18 +78,6 @@ export async function indexERC20MintBurn(
 			.onConflictDoUpdate((current) => ({
 				supply: responseStatus.supply,
 			}));
-
-		// global updating
-		// await context.db
-		// 	.insert(CommonEcosystem)
-		// 	.values({
-		// 		id: 'Frankencoin:Mint',
-		// 		value: '',
-		// 		amount: value,
-		// 	})
-		// 	.onConflictDoUpdate((current) => ({
-		// 		amount: current.amount ? current.amount + value : value,
-		// 	}));
 
 		// balance updating
 		await context.db
@@ -170,18 +155,6 @@ export async function indexERC20MintBurn(
 			.onConflictDoUpdate((current) => ({
 				supply: responseStatus.supply,
 			}));
-
-		// // global updating
-		// await context.db
-		// 	.insert(CommonEcosystem)
-		// 	.values({
-		// 		id: 'Frankencoin:Burn',
-		// 		value: '',
-		// 		amount: value,
-		// 	})
-		// 	.onConflictDoUpdate((current) => ({
-		// 		amount: current.amount ? current.amount + value : value,
-		// 	}));
 
 		// mint burn mapper updating
 		await context.db

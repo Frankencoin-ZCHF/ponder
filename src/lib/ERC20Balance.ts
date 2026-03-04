@@ -3,8 +3,8 @@ import { ERC20Balance, ERC20BalanceMapping, ERC20Status } from 'ponder:schema';
 import { Address, zeroAddress } from 'viem';
 
 export async function indexERC20Balance(
-	event: Event<'ERC20:Transfer' | 'ERC20PositionV1:Transfer' | 'ERC20PositionV2:Transfer'>,
-	context: Context<'ERC20:Transfer' | 'ERC20PositionV1:Transfer' | 'ERC20PositionV2:Transfer'>,
+	event: Event<'ERC20:Transfer'>,
+	context: Context<'ERC20:Transfer'>,
 	{ indexFrom = true, indexTo = true, indexEntry = true }: { indexFrom?: boolean; indexTo?: boolean; indexEntry?: boolean }
 ) {
 	const token = event.log.address.toLowerCase() as Address;

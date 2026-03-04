@@ -8,7 +8,7 @@ import {
 	MintingHubV1Status,
 } from 'ponder:schema';
 import { Address } from 'viem';
-import { normalizeAddress } from './lib/utils';
+import { normalizeAddress } from './utils/format';
 
 /*
 Events

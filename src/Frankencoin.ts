@@ -4,7 +4,7 @@ import { CommonEcosystem, FrankencoinMinter, FrankencoinProfitLoss } from 'ponde
 import { erc20Abi, parseEther } from 'viem';
 import { mainnet } from 'viem/chains';
 import { updateTransactionLog } from './lib/TransactionLog';
-import { normalizeAddress } from './lib/utils';
+import { normalizeAddress } from './utils/format';
 
 /*
 Events
