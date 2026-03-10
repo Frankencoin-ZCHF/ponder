@@ -27,6 +27,7 @@ export const config = {
 		rpc: `https://eth-mainnet.g.alchemy.com/v2/${process.env.ALCHEMY_RPC_KEY}`,
 		maxRequestsPerSecond: parseInt(process.env.MAX_REQUESTS_PER_SECOND || '10'),
 		pollingInterval: parseInt(process.env.POLLING_INTERVAL_MS || '30000'),
+		ethGetLogsBlockRange: 500, // ~12s blocks
 		startFrankencoin: 18451518,
 		startMintingHubV1: 18451536,
 		startMintingHubV2: 21280757,
@@ -41,42 +42,49 @@ export const config = {
 		rpc: `https://polygon-mainnet.g.alchemy.com/v2/${process.env.ALCHEMY_RPC_KEY}`,
 		maxRequestsPerSecond: parseInt(process.env.MAX_REQUESTS_PER_SECOND || '10'),
 		pollingInterval: parseInt(process.env.POLLING_INTERVAL_MS || '30000'),
+		ethGetLogsBlockRange: 2000, // ~2s blocks
 		startBridgedFrankencoin: 72384538,
 	},
 	[arbitrum.id]: {
 		rpc: `https://arb-mainnet.g.alchemy.com/v2/${process.env.ALCHEMY_RPC_KEY}`,
 		maxRequestsPerSecond: parseInt(process.env.MAX_REQUESTS_PER_SECOND || '10'),
 		pollingInterval: parseInt(process.env.POLLING_INTERVAL_MS || '30000'),
+		ethGetLogsBlockRange: 10000, // ~250ms blocks — batch more to reduce request count
 		startBridgedFrankencoin: 343470012,
 	},
 	[optimism.id]: {
 		rpc: `https://opt-mainnet.g.alchemy.com/v2/${process.env.ALCHEMY_RPC_KEY}`,
 		maxRequestsPerSecond: parseInt(process.env.MAX_REQUESTS_PER_SECOND || '10'),
 		pollingInterval: parseInt(process.env.POLLING_INTERVAL_MS || '30000'),
+		ethGetLogsBlockRange: 2000, // ~2s blocks
 		startBridgedFrankencoin: 136678320,
 	},
 	[base.id]: {
 		rpc: `https://base-mainnet.g.alchemy.com/v2/${process.env.ALCHEMY_RPC_KEY}`,
 		maxRequestsPerSecond: parseInt(process.env.MAX_REQUESTS_PER_SECOND || '10'),
 		pollingInterval: parseInt(process.env.POLLING_INTERVAL_MS || '30000'),
+		ethGetLogsBlockRange: 2000, // ~2s blocks
 		startBridgedFrankencoin: 31080190,
 	},
 	[avalanche.id]: {
 		rpc: `https://avax-mainnet.g.alchemy.com/v2/${process.env.ALCHEMY_RPC_KEY}`,
 		maxRequestsPerSecond: parseInt(process.env.MAX_REQUESTS_PER_SECOND || '10'),
 		pollingInterval: parseInt(process.env.POLLING_INTERVAL_MS || '30000'),
+		ethGetLogsBlockRange: 2000, // ~2s blocks
 		startBridgedFrankencoin: 63235410,
 	},
 	[gnosis.id]: {
 		rpc: `https://gnosis-mainnet.g.alchemy.com/v2/${process.env.ALCHEMY_RPC_KEY}`,
 		maxRequestsPerSecond: parseInt(process.env.MAX_REQUESTS_PER_SECOND || '10'),
 		pollingInterval: parseInt(process.env.POLLING_INTERVAL_MS || '30000'),
+		ethGetLogsBlockRange: 500, // ~5s blocks
 		startBridgedFrankencoin: 40394536,
 	},
 	[sonic.id]: {
 		rpc: `https://sonic-mainnet.g.alchemy.com/v2/${process.env.ALCHEMY_RPC_KEY}`,
 		maxRequestsPerSecond: parseInt(process.env.MAX_REQUESTS_PER_SECOND || '10'),
 		pollingInterval: parseInt(process.env.POLLING_INTERVAL_MS || '30000'),
+		ethGetLogsBlockRange: 5000, // ~500ms blocks
 		startBridgedFrankencoin: 31589491,
 	},
 };
@@ -99,6 +107,7 @@ export default createConfig({
 			id: mainnet.id,
 			maxRequestsPerSecond: config[mainnet.id].maxRequestsPerSecond,
 			pollingInterval: config[mainnet.id].pollingInterval,
+			ethGetLogsBlockRange: config[mainnet.id].ethGetLogsBlockRange,
 			rpc: http(config[mainnet.id].rpc),
 		},
 
@@ -107,42 +116,49 @@ export default createConfig({
 			id: polygon.id,
 			maxRequestsPerSecond: config[polygon.id].maxRequestsPerSecond,
 			pollingInterval: config[polygon.id].pollingInterval,
+			ethGetLogsBlockRange: config[polygon.id].ethGetLogsBlockRange,
 			rpc: http(config[polygon.id].rpc),
 		},
 		[arbitrum.name]: {
 			id: arbitrum.id,
 			maxRequestsPerSecond: config[arbitrum.id].maxRequestsPerSecond,
 			pollingInterval: config[arbitrum.id].pollingInterval,
+			ethGetLogsBlockRange: config[arbitrum.id].ethGetLogsBlockRange,
 			rpc: http(config[arbitrum.id].rpc),
 		},
 		[optimism.name]: {
 			id: optimism.id,
 			maxRequestsPerSecond: config[optimism.id].maxRequestsPerSecond,
 			pollingInterval: config[optimism.id].pollingInterval,
+			ethGetLogsBlockRange: config[optimism.id].ethGetLogsBlockRange,
 			rpc: http(config[optimism.id].rpc),
 		},
 		[base.name]: {
 			id: base.id,
 			maxRequestsPerSecond: config[base.id].maxRequestsPerSecond,
 			pollingInterval: config[base.id].pollingInterval,
+			ethGetLogsBlockRange: config[base.id].ethGetLogsBlockRange,
 			rpc: http(config[base.id].rpc),
 		},
 		[avalanche.name]: {
 			id: avalanche.id,
 			maxRequestsPerSecond: config[avalanche.id].maxRequestsPerSecond,
 			pollingInterval: config[avalanche.id].pollingInterval,
+			ethGetLogsBlockRange: config[avalanche.id].ethGetLogsBlockRange,
 			rpc: http(config[avalanche.id].rpc),
 		},
 		[gnosis.name]: {
 			id: gnosis.id,
 			maxRequestsPerSecond: config[gnosis.id].maxRequestsPerSecond,
 			pollingInterval: config[gnosis.id].pollingInterval,
+			ethGetLogsBlockRange: config[gnosis.id].ethGetLogsBlockRange,
 			rpc: http(config[gnosis.id].rpc),
 		},
 		[sonic.name]: {
 			id: sonic.id,
 			maxRequestsPerSecond: config[sonic.id].maxRequestsPerSecond,
 			pollingInterval: config[sonic.id].pollingInterval,
+			ethGetLogsBlockRange: config[sonic.id].ethGetLogsBlockRange,
 			rpc: http(config[sonic.id].rpc),
 		},
 	},
