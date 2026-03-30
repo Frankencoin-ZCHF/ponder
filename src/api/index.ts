@@ -2,7 +2,7 @@ import { db } from 'ponder:api';
 import schema from 'ponder:schema';
 import { FpsHolder, VotingDelegation } from 'ponder:schema';
 import { Hono } from 'hono';
-import { graphql, eq, gt } from 'ponder';
+import { graphql, eq } from 'ponder';
 import { Address } from 'viem';
 
 const app = new Hono();
@@ -91,8 +91,17 @@ app.get('/api/listvoters', async (c) => {
 	const limit = parseInt(c.req.query('limit') || '100');
 	const chainId = 1; // mainnet only for now
 
-	// Load all FPS holders with balance > 0
-	const holders = await db.select().from(FpsHolder).where(gt(FpsHolder.balance, 0n));
+	// Load all FPS holders (including zero balance for delegation support lookups)
+	const allHolders = await db.select().from(FpsHolder);
+
+	// Build votes lookup from all holders
+	const votesMap = new Map<string, bigint>();
+	for (const h of allHolders) {
+		votesMap.set((h.address as string).toLowerCase(), h.votes);
+	}
+
+	// Filter active holders (balance > 0)
+	const activeHolders = allHolders.filter((h) => h.balance > 0n);
 
 	// Load all delegations for mainnet
 	const delegations = await db.select().from(VotingDelegation).where(eq(VotingDelegation.chainId, chainId));
@@ -107,16 +116,9 @@ app.get('/api/listvoters', async (c) => {
 		reverseMap.get(to)!.push(owner);
 	}
 
-	// Build votes lookup from all holders (including zero balance for delegation support)
-	const allHolders = await db.select().from(FpsHolder);
-	const votesMap = new Map<string, bigint>();
-	for (const h of allHolders) {
-		votesMap.set((h.address as string).toLowerCase(), h.votes);
-	}
-
-	// Compute total votes for each holder
-	const voters: { address: string; rawVotes: string; totalVotes: string }[] = [];
-	for (const holder of holders) {
+	// Compute total votes for each active holder, keeping bigint for sorting
+	const voters: { address: string; rawVotes: bigint; totalVotes: bigint }[] = [];
+	for (const holder of activeHolders) {
 		const addr = (holder.address as string).toLowerCase();
 		const rawVotes = holder.votes;
 
@@ -129,23 +131,24 @@ app.get('/api/listvoters', async (c) => {
 			totalVotes += votesMap.get(supporter) ?? 0n;
 		}
 
-		voters.push({
-			address: addr,
-			rawVotes: rawVotes.toString(),
-			totalVotes: totalVotes.toString(),
-		});
+		voters.push({ address: addr, rawVotes, totalVotes });
 	}
 
-	// Sort by total votes descending
+	// Sort by total votes descending (using native bigint comparison)
 	voters.sort((a, b) => {
-		const diff = BigInt(b.totalVotes) - BigInt(a.totalVotes);
-		if (diff > 0n) return 1;
-		if (diff < 0n) return -1;
+		if (b.totalVotes > a.totalVotes) return 1;
+		if (b.totalVotes < a.totalVotes) return -1;
 		return 0;
 	});
 
-	// Apply limit
-	return c.json({ voters: voters.slice(0, limit) });
+	// Apply limit and convert bigints to strings for JSON
+	return c.json({
+		voters: voters.slice(0, limit).map((v) => ({
+			address: v.address,
+			rawVotes: v.rawVotes.toString(),
+			totalVotes: v.totalVotes.toString(),
+		})),
+	});
 });
 
 export default app;
