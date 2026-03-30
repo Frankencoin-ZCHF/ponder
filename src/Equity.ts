@@ -1,5 +1,5 @@
 import { ponder } from 'ponder:registry';
-import { CommonEcosystem, EquityDelegation, EquityTrade, EquityTradeChart } from 'ponder:schema';
+import { CommonEcosystem, EquityDelegation, EquityTrade, EquityTradeChart, VotingDelegation } from 'ponder:schema';
 import { Address } from 'viem';
 import { updateTransactionLog } from './lib/TransactionLog';
 
@@ -166,6 +166,17 @@ ponder.on('Equity:Delegation', async ({ event, context }) => {
 			delegatedTo: event.args.to,
 		})
 		.onConflictDoUpdate((current) => ({
+			delegatedTo: event.args.to,
+		}));
+
+	await context.db
+		.insert(VotingDelegation)
+		.values({
+			chainId: context.chain.id,
+			owner: event.args.from,
+			delegatedTo: event.args.to,
+		})
+		.onConflictDoUpdate(() => ({
 			delegatedTo: event.args.to,
 		}));
 });
