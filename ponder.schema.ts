@@ -10,3 +10,4 @@ export * from './schema/RollerV2';
 export * from './schema/Savings';
 export * from './schema/TransactionLog';
 export * from './schema/TransferReference';
+export * from './schema/VotingPower';

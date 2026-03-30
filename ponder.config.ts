@@ -146,6 +146,13 @@ export default createConfig({
 			rpc: http(config[sonic.id].rpc),
 		},
 	},
+	blocks: {
+		VoteUpdate: {
+			chain: mainnet.name,
+			startBlock: config[mainnet.id].startFrankencoin,
+			interval: 7200, // ~once per day on mainnet (12s/block)
+		},
+	},
 	contracts: {
 		// ### NATIVE CONTRACT ###
 		Frankencoin: {
