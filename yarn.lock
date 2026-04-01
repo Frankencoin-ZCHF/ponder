@@ -289,10 +289,10 @@
   resolved "https://registry.yarnpkg.com/@fastify/busboy/-/busboy-3.2.0.tgz#13ed8212f3b9ba697611529d15347f8528058cea"
   integrity sha512-m9FVDXU3GT2ITSe0UaMA5rU3QkfC/UXtCU8y0gSN/GugTqtVldOBWIB5V6V3sbmenVZUIpU6f+mPEO2+m5iTaA==
 
-"@frankencoin/zchf@^0.3.20":
-  version "0.3.20"
-  resolved "https://registry.yarnpkg.com/@frankencoin/zchf/-/zchf-0.3.20.tgz#839511e733d5f08e96d02072f7091c342b74e334"
-  integrity sha512-awD4GzIF97+Zbr7bpVZoy/U7PldihtwrFab2VnsOlmhfh1sVKZd9PKladXz+BwiB+6K8ssw0EwqEPr6doVtfjA==
+"@frankencoin/zchf@^0.3.21":
+  version "0.3.21"
+  resolved "https://registry.yarnpkg.com/@frankencoin/zchf/-/zchf-0.3.21.tgz#22efc655a51d9bc1f0356996b3a8233e11fdcaf0"
+  integrity sha512-U7FSpL2EUjF7PP+1B6q1QZK7uDifblBQERatmAOGp2M9Sbk1U3aQR7fXJQ7F/KV0I79o+dJZpyvwgzBu9MAUhQ==
   dependencies:
     ts-node "^10.9.1"
     typescript "^5.2.2"

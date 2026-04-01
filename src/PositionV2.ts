@@ -1,5 +1,5 @@
 import { ADDRESS, SavingsV2ABI } from '@frankencoin/zchf';
-import { ponder } from 'ponder:registry';
+import { ponder, type Context } from 'ponder:registry';
 import {
 	MintingHubV2MintingUpdateV2,
 	MintingHubV2OwnerTransfersV2,
@@ -10,6 +10,42 @@ import {
 import { Address } from 'viem';
 import { mainnet } from 'viem/chains';
 import { and, eq, gt } from 'ponder';
+import { normalizeAddress } from './utils/format';
+
+const CLONE_HELPER = normalizeAddress(ADDRESS[mainnet.id].cloneHelper);
+// keccak256("OwnershipTransferred(address,address)")
+const OWNERSHIP_TRANSFERRED_TOPIC = '0x8be0079c531659141344cd1fd0a4f28419497f9722a3daafe3b4186f6b6457e0' as const;
+
+/**
+ * If a MintingUpdate originates from a CloneHelper tx, the position's owner in the DB is still
+ * the CloneHelper (the 0x0→CloneHelper OwnershipTransferred log was already processed, but the
+ * CloneHelper→beneficiary transfer log comes later in the same tx).
+ * We fetch the receipt and find that second transfer to recover the actual beneficiary.
+ */
+async function resolvePositionOwner(
+	owner: Address,
+	positionAddress: Address,
+	txHash: `0x${string}`,
+	client: Context['client']
+): Promise<Address> {
+	if (owner !== CLONE_HELPER) return owner;
+
+	const receipt = await client.getTransactionReceipt({ hash: txHash });
+
+	for (const log of receipt.logs) {
+		if (
+			normalizeAddress(log.address) === positionAddress &&
+			log.topics[0] === OWNERSHIP_TRANSFERRED_TOPIC &&
+			log.topics[1] !== undefined &&
+			log.topics[2] !== undefined &&
+			normalizeAddress(('0x' + log.topics[1].slice(26)) as Address) === CLONE_HELPER
+		) {
+			return normalizeAddress(('0x' + log.topics[2].slice(26)) as Address);
+		}
+	}
+
+	return owner;
+}
 
 /*
 Events
@@ -21,14 +57,13 @@ PositionV2:OwnershipTransferred
 
 ponder.on('PositionV2:MintingUpdate', async ({ event, context }) => {
 	const { client } = context;
-	const { PositionV2, SavingsV2 } = context.contracts;
+	const { PositionV2 } = context.contracts;
 
-	// event MintingUpdateV2(uint256 collateral, uint256 price, uint256 minted);
 	const { collateral, price, minted } = event.args;
 	const positionAddress = event.log.address;
 
 	const position = await context.db.find(MintingHubV2PositionV2, {
-		position: positionAddress.toLowerCase() as Address,
+		position: normalizeAddress(positionAddress),
 	});
 
 	if (!position) {
@@ -44,7 +79,6 @@ ponder.on('PositionV2:MintingUpdate', async ({ event, context }) => {
 	}
 
 	// @dev: https://github.com/Frankencoin-ZCHF/ponder/issues/28
-	// position updates
 	let availableForClones = 0n;
 	let availableForMinting = 0n;
 	if (position.isOriginal) {
@@ -61,39 +95,22 @@ ponder.on('PositionV2:MintingUpdate', async ({ event, context }) => {
 		});
 	}
 
-	const cooldown = await client.readContract({
-		abi: PositionV2.abi,
-		address: positionAddress,
-		functionName: 'cooldown',
+	const [cooldown, isClosed, baseRatePPM] = await Promise.all([
+		client.readContract({ abi: PositionV2.abi, address: positionAddress, functionName: 'cooldown' }),
+		client.readContract({ abi: PositionV2.abi, address: positionAddress, functionName: 'isClosed' }),
+		client.readContract({ abi: SavingsV2ABI, address: ADDRESS[mainnet.id].savingsV2, functionName: 'currentRatePPM' }),
+	]);
+
+	await context.db.update(MintingHubV2PositionV2, { position: normalizeAddress(positionAddress) }).set({
+		collateralBalance: collateral,
+		price,
+		minted,
+		availableForMinting,
+		availableForClones,
+		cooldown: BigInt(cooldown),
+		closed: isClosed,
 	});
 
-	const isClosed = await client.readContract({
-		abi: PositionV2.abi,
-		address: positionAddress,
-		functionName: 'isClosed',
-	});
-
-	const baseRatePPM = await client.readContract({
-		abi: SavingsV2ABI,
-		address: ADDRESS[mainnet.id].savingsV2,
-		functionName: 'currentRatePPM',
-	});
-
-	await context.db
-		.update(MintingHubV2PositionV2, {
-			position: positionAddress.toLowerCase() as Address,
-		})
-		.set({
-			collateralBalance: collateral,
-			price,
-			minted,
-			availableForMinting,
-			availableForClones,
-			cooldown: BigInt(cooldown),
-			closed: isClosed,
-		});
-
-	// Recalculate V2 aggregates for this chain
 	const openPositions = await context.db.sql
 		.select()
 		.from(MintingHubV2PositionV2)
@@ -103,32 +120,20 @@ ponder.on('PositionV2:MintingUpdate', async ({ event, context }) => {
 
 	let totalMinted = 0n;
 	let annualInterests = 0n;
-
-	for (let p of openPositions) {
+	for (const p of openPositions) {
 		totalMinted += p.minted;
 		annualInterests += (p.minted * BigInt(p.riskPremiumPPM + Number(baseRatePPM))) / 1_000_000n;
 	}
 
-	// Update aggregate table
 	await context.db
 		.insert(PositionAggregatesV2)
-		.values({
-			chainId: context.chain.id,
-			totalMinted,
-			annualInterests,
-			updated: event.block.timestamp,
-		})
-		.onConflictDoUpdate(() => ({
-			totalMinted,
-			annualInterests,
-			updated: event.block.timestamp,
-		}));
+		.values({ chainId: context.chain.id, totalMinted, annualInterests, updated: event.block.timestamp })
+		.onConflictDoUpdate(() => ({ totalMinted, annualInterests, updated: event.block.timestamp }));
 
-	// update minting counter
 	const status = await context.db
 		.insert(MintingHubV2Status)
 		.values({
-			position: positionAddress.toLowerCase() as Address,
+			position: normalizeAddress(positionAddress),
 			ownerTransfersCounter: 0n,
 			mintingUpdatesCounter: 1n,
 			challengeStartedCounter: 0n,
@@ -139,53 +144,54 @@ ponder.on('PositionV2:MintingUpdate', async ({ event, context }) => {
 			mintingUpdatesCounter: current.mintingUpdatesCounter + 1n,
 		}));
 
+	const resolvedOwner = await resolvePositionOwner(
+		normalizeAddress(position.owner),
+		normalizeAddress(positionAddress),
+		event.transaction.hash,
+		context.client
+	);
+
 	const annualInterestPPM = baseRatePPM + position.riskPremiumPPM;
+	const isClone = normalizeAddress(position.original) !== normalizeAddress(position.position);
 
-	const getFeeTimeframe = function (): number {
-		const OneMonth = 60 * 60 * 24 * 30;
-		const secToExp = Math.floor(parseInt(position.expiration.toString()) - parseInt(event.block.timestamp.toString()));
-		return Math.max(OneMonth, secToExp);
+	const OneYear = 60 * 60 * 24 * 365;
+	const feeTimeframe = Math.floor(parseInt(position.expiration.toString()) - parseInt(event.block.timestamp.toString()));
+	const feePPM = BigInt(Math.floor((feeTimeframe * annualInterestPPM) / OneYear));
+	const getFeePaid = (amount: bigint): bigint => (feePPM * amount) / 1_000_000n;
+
+	const sharedFields = {
+		txHash: event.transaction.hash,
+		created: event.block.timestamp,
+		position: normalizeAddress(position.position),
+		owner: resolvedOwner,
+		isClone,
+		collateral: normalizeAddress(position.collateral),
+		collateralName: position.collateralName,
+		collateralSymbol: position.collateralSymbol,
+		collateralDecimals: position.collateralDecimals,
+		size: collateral,
+		price,
+		minted,
+		annualInterestPPM,
+		basePremiumPPM: baseRatePPM,
+		riskPremiumPPM: position.riskPremiumPPM,
+		reserveContribution: position.reserveContribution,
+		feeTimeframe,
+		feePPM: parseInt(feePPM.toString()),
 	};
 
-	const getFeePPM = function (): bigint {
-		const OneYear = 60 * 60 * 24 * 365;
-		const calc: number = (getFeeTimeframe() * (baseRatePPM + position.riskPremiumPPM)) / OneYear;
-		return BigInt(Math.floor(calc));
-	};
-
-	const getFeePaid = function (amount: bigint): bigint {
-		return (getFeePPM() * amount) / 1_000_000n;
-	};
-
-	if (status.mintingUpdatesCounter == 1n) {
+	if (status.mintingUpdatesCounter === 1n) {
 		await context.db.insert(MintingHubV2MintingUpdateV2).values({
 			count: 1n,
-			txHash: event.transaction.hash,
-			created: event.block.timestamp,
-			position: position.position.toLowerCase() as Address,
-			owner: position.owner.toLowerCase() as Address,
-			isClone: position.original.toLowerCase() != position.position.toLowerCase(),
-			collateral: position.collateral.toLowerCase() as Address,
-			collateralName: position.collateralName,
-			collateralSymbol: position.collateralSymbol,
-			collateralDecimals: position.collateralDecimals,
-			size: collateral,
-			price: price,
-			minted: minted,
+			...sharedFields,
 			sizeAdjusted: collateral,
 			priceAdjusted: price,
 			mintedAdjusted: minted,
-			annualInterestPPM: annualInterestPPM,
-			basePremiumPPM: baseRatePPM,
-			riskPremiumPPM: position.riskPremiumPPM,
-			reserveContribution: position.reserveContribution,
-			feeTimeframe: getFeeTimeframe(),
-			feePPM: parseInt(getFeePPM().toString()),
 			feePaid: getFeePaid(minted),
 		});
 	} else {
 		const prev = await context.db.find(MintingHubV2MintingUpdateV2, {
-			position: position.position.toLowerCase() as Address,
+			position: normalizeAddress(position.position),
 			count: status.mintingUpdatesCounter - 1n,
 		});
 		if (prev == null) throw new Error(`previous minting update not found.`);
@@ -193,31 +199,13 @@ ponder.on('PositionV2:MintingUpdate', async ({ event, context }) => {
 		const sizeAdjusted = collateral - prev.size;
 		const priceAdjusted = price - prev.price;
 		const mintedAdjusted = minted - prev.minted;
-		const basePremiumPPMAdjusted = baseRatePPM - prev.basePremiumPPM;
 
 		await context.db.insert(MintingHubV2MintingUpdateV2).values({
 			count: status.mintingUpdatesCounter,
-			txHash: event.transaction.hash,
-			created: event.block.timestamp,
-			position: position.position.toLowerCase() as Address,
-			owner: position.owner.toLowerCase() as Address,
-			isClone: position.original.toLowerCase() != position.position.toLowerCase(),
-			collateral: position.collateral.toLowerCase() as Address,
-			collateralName: position.collateralName,
-			collateralSymbol: position.collateralSymbol,
-			collateralDecimals: position.collateralDecimals,
-			size: collateral,
-			price: price,
-			minted: minted,
+			...sharedFields,
 			sizeAdjusted,
 			priceAdjusted,
 			mintedAdjusted,
-			annualInterestPPM,
-			basePremiumPPM: baseRatePPM,
-			riskPremiumPPM: position.riskPremiumPPM,
-			reserveContribution: position.reserveContribution,
-			feeTimeframe: getFeeTimeframe(),
-			feePPM: parseInt(getFeePPM().toString()),
 			feePaid: mintedAdjusted > 0n ? getFeePaid(mintedAdjusted) : 0n,
 		});
 	}
@@ -227,7 +215,7 @@ ponder.on('PositionV2:PositionDenied', async ({ event, context }) => {
 	const { client } = context;
 
 	const position = await context.db.find(MintingHubV2PositionV2, {
-		position: event.log.address.toLowerCase() as Address,
+		position: normalizeAddress(event.log.address),
 	});
 
 	const cooldown = await client.readContract({
@@ -238,23 +226,16 @@ ponder.on('PositionV2:PositionDenied', async ({ event, context }) => {
 
 	if (position) {
 		await context.db
-			.update(MintingHubV2PositionV2, {
-				position: event.log.address.toLowerCase() as Address,
-			})
-			.set({
-				cooldown: BigInt(cooldown),
-				denied: true,
-				denyDate: event.block.timestamp,
-			});
+			.update(MintingHubV2PositionV2, { position: normalizeAddress(event.log.address) })
+			.set({ cooldown: BigInt(cooldown), denied: true, denyDate: event.block.timestamp });
 	}
 });
 
 ponder.on('PositionV2:OwnershipTransferred', async ({ event, context }) => {
-	// update owner counter
 	const status = await context.db
 		.insert(MintingHubV2Status)
 		.values({
-			position: event.log.address.toLowerCase() as Address,
+			position: normalizeAddress(event.log.address),
 			ownerTransfersCounter: 1n,
 			mintingUpdatesCounter: 0n,
 			challengeStartedCounter: 0n,
@@ -267,25 +248,21 @@ ponder.on('PositionV2:OwnershipTransferred', async ({ event, context }) => {
 
 	await context.db.insert(MintingHubV2OwnerTransfersV2).values({
 		version: 2,
-		position: event.log.address.toLowerCase() as Address,
+		position: normalizeAddress(event.log.address),
 		count: status.ownerTransfersCounter,
 		created: event.block.timestamp,
-		previousOwner: event.args.previousOwner.toLowerCase() as Address,
-		newOwner: event.args.newOwner.toLowerCase() as Address,
+		previousOwner: normalizeAddress(event.args.previousOwner),
+		newOwner: normalizeAddress(event.args.newOwner),
 		txHash: event.transaction.hash,
 	});
 
 	const position = await context.db.find(MintingHubV2PositionV2, {
-		position: event.log.address.toLowerCase() as Address,
+		position: normalizeAddress(event.log.address),
 	});
 
 	if (position) {
 		await context.db
-			.update(MintingHubV2PositionV2, {
-				position: event.log.address.toLowerCase() as Address,
-			})
-			.set({
-				owner: event.args.newOwner.toLowerCase() as Address,
-			});
+			.update(MintingHubV2PositionV2, { position: normalizeAddress(event.log.address) })
+			.set({ owner: normalizeAddress(event.args.newOwner) });
 	}
 });
