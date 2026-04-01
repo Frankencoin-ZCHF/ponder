@@ -14,6 +14,7 @@ interface updateTransactionLogProps {
 	client: Context['client'];
 	db: Context['db'];
 	chainId: number;
+	blockNumber: bigint;
 	timestamp: bigint;
 	kind: string;
 	amount: bigint;
@@ -24,7 +25,7 @@ interface updateTransactionLogProps {
  * @dev: update transaction log for mainnet only
  * this function need a rebuild to reflect multichain data.
  */
-export async function updateTransactionLog({ client, db, chainId, timestamp, kind, amount, txHash }: updateTransactionLogProps) {
+export async function updateTransactionLog({ client, db, chainId, blockNumber, timestamp, kind, amount, txHash }: updateTransactionLogProps) {
 	if (chainId != mainnet.id) return;
 
 	const mainnetAddress = addr[mainnet.id];
@@ -87,28 +88,26 @@ export async function updateTransactionLog({ client, db, chainId, timestamp, kin
 	let currentSaveLeadRate: bigint = 0n;
 	let projectedInterests: bigint = 0n;
 
-	// Fetch mint lead rate from SavingsV2
-	try {
+	// Fetch mint lead rate from SavingsV2 (deployed at startMintingHubV2)
+	if (blockNumber >= BigInt(config[mainnet.id].startMintingHubV2)) {
 		const mintRatePPM = await client.readContract({
 			abi: SavingsV2ABI,
 			address: mainnetAddress.savingsV2,
 			functionName: 'currentRatePPM',
 		});
 		currentMintLeadRate = BigInt(mintRatePPM);
-	} catch (error) {
-		// currentMintLeadRate remains 0n
 	}
 
-	// Fetch save lead rate from SavingsReferral
-	try {
+	// Fetch save lead rate from SavingsReferral (deployed at startSavingsReferal)
+	if (blockNumber >= BigInt(config[mainnet.id].startSavingsReferal)) {
 		const saveRatePPM = await client.readContract({
 			abi: SavingsABI,
 			address: mainnetAddress.savingsReferral,
 			functionName: 'currentRatePPM',
 		});
 		currentSaveLeadRate = BigInt(saveRatePPM);
-	} catch (error) {
-		// Fallback: if save rate unavailable, use mint rate
+	} else {
+		// Fallback: if SavingsReferral not yet deployed, use mint rate
 		currentSaveLeadRate = currentMintLeadRate;
 	}
 

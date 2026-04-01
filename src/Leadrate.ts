@@ -55,6 +55,7 @@ ponder.on('Leadrate:RateChanged', async ({ event, context }) => {
 		client: context.client,
 		db: context.db,
 		chainId,
+		blockNumber: event.block.number,
 		timestamp: event.block.timestamp,
 		kind: 'Savings:RateChanged',
 		amount: parseEther(newRate.toString()),

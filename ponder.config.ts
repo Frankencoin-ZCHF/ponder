@@ -1,4 +1,4 @@
-import { createConfig, factory, mergeAbis } from 'ponder';
+import { createConfig, mergeAbis } from 'ponder';
 import { arbitrum, avalanche, base, gnosis, mainnet, optimism, polygon, sonic } from 'viem/chains';
 import { createPublicClient, erc20Abi, http } from 'viem';
 import {
@@ -44,6 +44,7 @@ export const config = {
 		pollingInterval: parseInt(process.env.POLLING_INTERVAL_MS || '30000'),
 		ethGetLogsBlockRange: 2000, // ~2s blocks
 		startBridgedFrankencoin: 72384538,
+		startSavingsReferal: 72993144,
 	},
 	[arbitrum.id]: {
 		rpc: `https://arb-mainnet.g.alchemy.com/v2/${process.env.ALCHEMY_RPC_KEY}`,
@@ -51,6 +52,7 @@ export const config = {
 		pollingInterval: parseInt(process.env.POLLING_INTERVAL_MS || '30000'),
 		ethGetLogsBlockRange: 10000, // ~250ms blocks — batch more to reduce request count
 		startBridgedFrankencoin: 343470012,
+		startSavingsReferal: 349273896,
 	},
 	[optimism.id]: {
 		rpc: `https://opt-mainnet.g.alchemy.com/v2/${process.env.ALCHEMY_RPC_KEY}`,
@@ -58,6 +60,7 @@ export const config = {
 		pollingInterval: parseInt(process.env.POLLING_INTERVAL_MS || '30000'),
 		ethGetLogsBlockRange: 2000, // ~2s blocks
 		startBridgedFrankencoin: 136678320,
+		startSavingsReferal: 137404676,
 	},
 	[base.id]: {
 		rpc: `https://base-mainnet.g.alchemy.com/v2/${process.env.ALCHEMY_RPC_KEY}`,
@@ -65,13 +68,15 @@ export const config = {
 		pollingInterval: parseInt(process.env.POLLING_INTERVAL_MS || '30000'),
 		ethGetLogsBlockRange: 2000, // ~2s blocks
 		startBridgedFrankencoin: 31080190,
+		startSavingsReferal: 31809565,
 	},
 	[avalanche.id]: {
 		rpc: `https://avax-mainnet.g.alchemy.com/v2/${process.env.ALCHEMY_RPC_KEY}`,
 		maxRequestsPerSecond: parseInt(process.env.MAX_REQUESTS_PER_SECOND || '10'),
 		pollingInterval: parseInt(process.env.POLLING_INTERVAL_MS || '30000'),
 		ethGetLogsBlockRange: 2000, // ~2s blocks
-		startBridgedFrankencoin: 63235410,
+		startBridgedFrankencoin: 63337938,
+		startSavingsReferal: 64919925,
 	},
 	[gnosis.id]: {
 		rpc: `https://gnosis-mainnet.g.alchemy.com/v2/${process.env.ALCHEMY_RPC_KEY}`,
@@ -79,6 +84,7 @@ export const config = {
 		pollingInterval: parseInt(process.env.POLLING_INTERVAL_MS || '30000'),
 		ethGetLogsBlockRange: 500, // ~5s blocks
 		startBridgedFrankencoin: 40394536,
+		startSavingsReferal: 40678291,
 	},
 	[sonic.id]: {
 		rpc: `https://sonic-mainnet.g.alchemy.com/v2/${process.env.ALCHEMY_RPC_KEY}`,
@@ -86,6 +92,7 @@ export const config = {
 		pollingInterval: parseInt(process.env.POLLING_INTERVAL_MS || '30000'),
 		ethGetLogsBlockRange: 5000, // ~500ms blocks
 		startBridgedFrankencoin: 31589491,
+		startSavingsReferal: 34961851,
 	},
 };
 
@@ -303,35 +310,35 @@ export default createConfig({
 			chain: {
 				[mainnet.name]: {
 					address: [addr[mainnet.id].savingsReferral],
-					startBlock: config[mainnet.id].startMintingHubV2,
+					startBlock: config[mainnet.id].startSavingsReferal,
 				},
 				[polygon.name]: {
 					address: [addr[polygon.id].ccipBridgedSavings],
-					startBlock: config[polygon.id].startBridgedFrankencoin,
+					startBlock: config[polygon.id].startSavingsReferal,
 				},
 				[arbitrum.name]: {
 					address: [addr[arbitrum.id].ccipBridgedSavings],
-					startBlock: config[arbitrum.id].startBridgedFrankencoin,
+					startBlock: config[arbitrum.id].startSavingsReferal,
 				},
 				[optimism.name]: {
 					address: [addr[optimism.id].ccipBridgedSavings],
-					startBlock: config[optimism.id].startBridgedFrankencoin,
+					startBlock: config[optimism.id].startSavingsReferal,
 				},
 				[base.name]: {
 					address: [addr[base.id].ccipBridgedSavings],
-					startBlock: config[base.id].startBridgedFrankencoin,
+					startBlock: config[base.id].startSavingsReferal,
 				},
 				[avalanche.name]: {
 					address: [addr[avalanche.id].ccipBridgedSavings],
-					startBlock: config[avalanche.id].startBridgedFrankencoin,
+					startBlock: config[avalanche.id].startSavingsReferal,
 				},
 				[gnosis.name]: {
 					address: [addr[gnosis.id].ccipBridgedSavings],
-					startBlock: config[gnosis.id].startBridgedFrankencoin,
+					startBlock: config[gnosis.id].startSavingsReferal,
 				},
 				[sonic.name]: {
 					address: [addr[sonic.id].ccipBridgedSavings],
-					startBlock: config[sonic.id].startBridgedFrankencoin,
+					startBlock: config[sonic.id].startSavingsReferal,
 				},
 			},
 		},
