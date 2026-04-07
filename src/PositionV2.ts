@@ -214,15 +214,10 @@ ponder.on('PositionV2:MintingUpdate', async ({ event, context }) => {
 ponder.on('PositionV2:PositionDenied', async ({ event, context }) => {
 	const { client } = context;
 
-	const position = await context.db.find(MintingHubV2PositionV2, {
-		position: normalizeAddress(event.log.address),
-	});
-
-	const cooldown = await client.readContract({
-		abi: context.contracts.PositionV2.abi,
-		address: event.log.address,
-		functionName: 'cooldown',
-	});
+	const [position, cooldown] = await Promise.all([
+		context.db.find(MintingHubV2PositionV2, { position: normalizeAddress(event.log.address) }),
+		client.readContract({ abi: context.contracts.PositionV2.abi, address: event.log.address, functionName: 'cooldown' }),
+	]);
 
 	if (position) {
 		await context.db
@@ -232,19 +227,22 @@ ponder.on('PositionV2:PositionDenied', async ({ event, context }) => {
 });
 
 ponder.on('PositionV2:OwnershipTransferred', async ({ event, context }) => {
-	const status = await context.db
-		.insert(MintingHubV2Status)
-		.values({
-			position: normalizeAddress(event.log.address),
-			ownerTransfersCounter: 1n,
-			mintingUpdatesCounter: 0n,
-			challengeStartedCounter: 0n,
-			challengeAvertedBidsCounter: 0n,
-			challengeSucceededBidsCounter: 0n,
-		})
-		.onConflictDoUpdate((current) => ({
-			ownerTransfersCounter: current.ownerTransfersCounter + 1n,
-		}));
+	const [status, position] = await Promise.all([
+		context.db
+			.insert(MintingHubV2Status)
+			.values({
+				position: normalizeAddress(event.log.address),
+				ownerTransfersCounter: 1n,
+				mintingUpdatesCounter: 0n,
+				challengeStartedCounter: 0n,
+				challengeAvertedBidsCounter: 0n,
+				challengeSucceededBidsCounter: 0n,
+			})
+			.onConflictDoUpdate((current) => ({
+				ownerTransfersCounter: current.ownerTransfersCounter + 1n,
+			})),
+		context.db.find(MintingHubV2PositionV2, { position: normalizeAddress(event.log.address) }),
+	]);
 
 	await context.db.insert(MintingHubV2OwnerTransfersV2).values({
 		version: 2,
@@ -254,10 +252,6 @@ ponder.on('PositionV2:OwnershipTransferred', async ({ event, context }) => {
 		previousOwner: normalizeAddress(event.args.previousOwner),
 		newOwner: normalizeAddress(event.args.newOwner),
 		txHash: event.transaction.hash,
-	});
-
-	const position = await context.db.find(MintingHubV2PositionV2, {
-		position: normalizeAddress(event.log.address),
 	});
 
 	if (position) {

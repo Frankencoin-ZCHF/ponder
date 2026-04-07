@@ -230,7 +230,7 @@ ponder.on('SavingsReferral:InterestCollected', async ({ event, context }) => {
 		}));
 
 	// referrer earnings indexing
-	if (referrer.toLowerCase() != zeroAddress && earnings > 0n) {
+	if (normalizeAddress(referrer) !== zeroAddress && earnings > 0n) {
 		await context.db
 			.insert(SavingsReferrerEarnings)
 			.values({

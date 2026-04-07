@@ -26,9 +26,8 @@ export async function indexERC20MintBurn(event: Event<'ERC20:Transfer'>, context
 	const equityContract: Address = ADDRESS[ChainMain.mainnet.id].equity;
 
 	let kindContract: string = 'Token';
-	const compare = (a: string, b: string) => a.toLowerCase() == b.toLowerCase();
-	if (compare(token, frankencoinContract)) kindContract = 'Frankencoin';
-	else if (compare(token, equityContract)) kindContract = 'Equity';
+	if (token === normalizeAddress(frankencoinContract)) kindContract = 'Frankencoin';
+	else if (token === normalizeAddress(equityContract)) kindContract = 'Equity';
 
 	// ### minting tokens ###
 	if (from == zeroAddress) {

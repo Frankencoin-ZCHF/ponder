@@ -7,7 +7,6 @@ import {
 	MintingHubV2PositionV2,
 	MintingHubV2Status,
 } from 'ponder:schema';
-import { Address } from 'viem';
 import { normalizeAddress } from './utils/format';
 
 /*
@@ -31,7 +30,7 @@ ponder.on('MintingHubV2:PositionOpened', async ({ event, context }) => {
 
 	const created: bigint = event.block.timestamp;
 
-	const isOriginal: boolean = parent.toLowerCase() === position.toLowerCase();
+	const isOriginal: boolean = normalizeAddress(parent) === normalizeAddress(position);
 	const isClone: boolean = !isOriginal;
 	const closed: boolean = false;
 	const denied: boolean = false;
@@ -184,7 +183,12 @@ ponder.on('MintingHubV2:ChallengeStarted', async ({ event, context }) => {
 	const { MintingHubV2, PositionV2 } = context.contracts;
 
 	const [challenges, period, liqPrice] = await Promise.all([
-		client.readContract({ abi: MintingHubV2.abi, address: MintingHubV2.address, functionName: 'challenges', args: [event.args.number] }),
+		client.readContract({
+			abi: MintingHubV2.abi,
+			address: MintingHubV2.address,
+			functionName: 'challenges',
+			args: [event.args.number],
+		}),
 		client.readContract({ abi: PositionV2.abi, address: event.args.position, functionName: 'challengePeriod' }),
 		client.readContract({ abi: PositionV2.abi, address: event.args.position, functionName: 'price' }),
 	]);
@@ -241,7 +245,12 @@ ponder.on('MintingHubV2:ChallengeAverted', async ({ event, context }) => {
 	const { MintingHubV2, PositionV2 } = context.contracts;
 
 	const [challenges, cooldown, liqPrice, challenge] = await Promise.all([
-		client.readContract({ abi: MintingHubV2.abi, address: MintingHubV2.address, functionName: 'challenges', args: [event.args.number] }),
+		client.readContract({
+			abi: MintingHubV2.abi,
+			address: MintingHubV2.address,
+			functionName: 'challenges',
+			args: [event.args.number],
+		}),
 		client.readContract({ abi: PositionV2.abi, address: event.args.position, functionName: 'cooldown' }),
 		client.readContract({ abi: PositionV2.abi, address: event.args.position, functionName: 'price' }),
 		context.db.find(MintingHubV2ChallengeV2, { position: normalizeAddress(event.args.position), number: event.args.number }),
@@ -314,7 +323,12 @@ ponder.on('MintingHubV2:ChallengeSucceeded', async ({ event, context }) => {
 	const { MintingHubV2, PositionV2 } = context.contracts;
 
 	const [challenges, cooldown, challenge] = await Promise.all([
-		client.readContract({ abi: MintingHubV2.abi, address: MintingHubV2.address, functionName: 'challenges', args: [event.args.number] }),
+		client.readContract({
+			abi: MintingHubV2.abi,
+			address: MintingHubV2.address,
+			functionName: 'challenges',
+			args: [event.args.number],
+		}),
 		client.readContract({ abi: PositionV2.abi, address: event.args.position, functionName: 'cooldown' }),
 		context.db.find(MintingHubV2ChallengeV2, { position: normalizeAddress(event.args.position), number: event.args.number }),
 	]);

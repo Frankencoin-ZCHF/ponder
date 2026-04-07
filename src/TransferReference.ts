@@ -1,6 +1,7 @@
 import { ponder, Context } from 'ponder:registry';
 import { CommonEcosystem, TransferReference } from 'ponder:schema';
 import { Address, Hash } from 'viem';
+import { normalizeAddress } from './utils/format';
 
 /*
 Events
@@ -135,5 +136,5 @@ async function getTargetAddress(client: Context['client'], hash: Hash): Promise<
 		throw new Error(`Invalid address extracted from CCIP data in transaction ${hash}: ${extracted}`);
 	}
 
-	return `0x${extracted.toLowerCase()}` as Address;
+	return normalizeAddress(`0x${extracted}`);
 }
