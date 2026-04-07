@@ -36,117 +36,46 @@ ponder.on('MintingHubV1:PositionOpened', async ({ event, context }) => {
 	const original: `0x${string}` = isOriginal ? position : (`0x${event.transaction.input.slice(34, 74)}` as `0x${string}`);
 
 	// ------------------------------------------------------------------
-	// CONST
-	const minimumCollateral = await client.readContract({
-		abi: PositionV1ABI,
-		address: position,
-		functionName: 'minimumCollateral',
-	});
-
-	const annualInterestPPM = await client.readContract({
-		abi: PositionV1ABI,
-		address: position,
-		functionName: 'annualInterestPPM',
-	});
-
-	const reserveContribution = await client.readContract({
-		abi: PositionV1ABI,
-		address: position,
-		functionName: 'reserveContribution',
-	});
-
-	const start = await client.readContract({
-		abi: PositionV1ABI,
-		address: position,
-		functionName: 'start',
-	});
-
-	const expiration = await client.readContract({
-		abi: PositionV1ABI,
-		address: position,
-		functionName: 'expiration',
-	});
-
-	const challengePeriod = await client.readContract({
-		abi: PositionV1ABI,
-		address: position,
-		functionName: 'challengePeriod',
-	});
-
-	// ------------------------------------------------------------------
-	// ZCHF ERC20
-	const zchfName = await client.readContract({
-		abi: ERC20ABI,
-		address: zchf,
-		functionName: 'name',
-	});
-
-	const zchfSymbol = await client.readContract({
-		abi: ERC20ABI,
-		address: zchf,
-		functionName: 'symbol',
-	});
-
-	const zchfDecimals = await client.readContract({
-		abi: ERC20ABI,
-		address: zchf,
-		functionName: 'decimals',
-	});
-
-	// ------------------------------------------------------------------
-	// COLLATERAL ERC20
-	const collateralName = await client.readContract({
-		abi: ERC20ABI,
-		address: collateral,
-		functionName: 'name',
-	});
-
-	const collateralSymbol = await client.readContract({
-		abi: ERC20ABI,
-		address: collateral,
-		functionName: 'symbol',
-	});
-
-	const collateralDecimals = await client.readContract({
-		abi: ERC20ABI,
-		address: collateral,
-		functionName: 'decimals',
-	});
-
-	const collateralBalance = await client.readContract({
-		abi: ERC20ABI,
-		address: collateral,
-		functionName: 'balanceOf',
-		args: [position],
-	});
-
-	// ------------------------------------------------------------------
-	// CHANGEABLE
-	// TODO: Keep in mind for developer, "limitForClones" is "limit" from SC
-	const limitForClones = await client.readContract({
-		abi: PositionV1ABI,
-		address: position,
-		functionName: 'limit',
-	});
-
-	// TODO: Keep in mind for developer, "availableForClones" is "limitForClones" from SC
-	const availableForClones = await client.readContract({
-		abi: PositionV1ABI,
-		address: position,
-		functionName: 'limitForClones',
-	});
-
-	const minted = await client.readContract({
-		abi: PositionV1ABI,
-		address: position,
-		functionName: 'minted',
-	});
-
-	const cooldown = await client.readContract({
-		abi: PositionV1ABI,
-		address: event.args.position,
-		functionName: 'cooldown',
-	});
+	// CONST + ERC20 + CHANGEABLE (all independent, fetch in parallel)
+	const [
+		minimumCollateral,
+		annualInterestPPM,
+		reserveContribution,
+		start,
+		expiration,
+		challengePeriod,
+		zchfName,
+		zchfSymbol,
+		zchfDecimals,
+		collateralName,
+		collateralSymbol,
+		collateralDecimals,
+		collateralBalance,
+		// TODO: Keep in mind for developer, "limitForClones" is "limit" from SC
+		limitForClones,
+		// TODO: Keep in mind for developer, "availableForClones" is "limitForClones" from SC
+		availableForClones,
+		minted,
+		cooldown,
+	] = await Promise.all([
+		client.readContract({ abi: PositionV1ABI, address: position, functionName: 'minimumCollateral' }),
+		client.readContract({ abi: PositionV1ABI, address: position, functionName: 'annualInterestPPM' }),
+		client.readContract({ abi: PositionV1ABI, address: position, functionName: 'reserveContribution' }),
+		client.readContract({ abi: PositionV1ABI, address: position, functionName: 'start' }),
+		client.readContract({ abi: PositionV1ABI, address: position, functionName: 'expiration' }),
+		client.readContract({ abi: PositionV1ABI, address: position, functionName: 'challengePeriod' }),
+		client.readContract({ abi: ERC20ABI, address: zchf, functionName: 'name' }),
+		client.readContract({ abi: ERC20ABI, address: zchf, functionName: 'symbol' }),
+		client.readContract({ abi: ERC20ABI, address: zchf, functionName: 'decimals' }),
+		client.readContract({ abi: ERC20ABI, address: collateral, functionName: 'name' }),
+		client.readContract({ abi: ERC20ABI, address: collateral, functionName: 'symbol' }),
+		client.readContract({ abi: ERC20ABI, address: collateral, functionName: 'decimals' }),
+		client.readContract({ abi: ERC20ABI, address: collateral, functionName: 'balanceOf', args: [position] }),
+		client.readContract({ abi: PositionV1ABI, address: position, functionName: 'limit' }),
+		client.readContract({ abi: PositionV1ABI, address: position, functionName: 'limitForClones' }),
+		client.readContract({ abi: PositionV1ABI, address: position, functionName: 'minted' }),
+		client.readContract({ abi: PositionV1ABI, address: position, functionName: 'cooldown' }),
+	]);
 
 	// ------------------------------------------------------------------
 	// CALC VALUES
@@ -159,17 +88,10 @@ ponder.on('MintingHubV1:PositionOpened', async ({ event, context }) => {
 	// ------------------------------------------------------------------
 	// If clone, update original position
 	if (isClone) {
-		const originalLimitForClones = await client.readContract({
-			abi: PositionV1ABI,
-			address: original,
-			functionName: 'limit',
-		});
-
-		const originalAvailableForClones = await client.readContract({
-			abi: PositionV1ABI,
-			address: original,
-			functionName: 'limitForClones',
-		});
+		const [originalLimitForClones, originalAvailableForClones] = await Promise.all([
+			client.readContract({ abi: PositionV1ABI, address: original, functionName: 'limit' }),
+			client.readContract({ abi: PositionV1ABI, address: original, functionName: 'limitForClones' }),
+		]);
 
 		await context.db.update(MintingHubV1PositionV1, { position: normalizeAddress(original) }).set({
 			limitForClones: originalLimitForClones,
@@ -261,24 +183,11 @@ ponder.on('MintingHubV1:ChallengeStarted', async ({ event, context }) => {
 	const { client } = context;
 	const { MintingHubV1 } = context.contracts;
 
-	const challenges = await client.readContract({
-		abi: MintingHubV1.abi,
-		address: MintingHubV1.address,
-		functionName: 'challenges',
-		args: [event.args.number],
-	});
-
-	const period = await client.readContract({
-		abi: PositionV1ABI,
-		address: event.args.position,
-		functionName: 'challengePeriod',
-	});
-
-	const liqPrice = await client.readContract({
-		abi: PositionV1ABI,
-		address: event.args.position,
-		functionName: 'price',
-	});
+	const [challenges, period, liqPrice] = await Promise.all([
+		client.readContract({ abi: MintingHubV1.abi, address: MintingHubV1.address, functionName: 'challenges', args: [event.args.number] }),
+		client.readContract({ abi: PositionV1ABI, address: event.args.position, functionName: 'challengePeriod' }),
+		client.readContract({ abi: PositionV1ABI, address: event.args.position, functionName: 'price' }),
+	]);
 
 	await context.db.insert(MintingHubV1ChallengeV1).values({
 		position: normalizeAddress(event.args.position),
@@ -331,29 +240,12 @@ ponder.on('MintingHubV1:ChallengeAverted', async ({ event, context }) => {
 	const { client } = context;
 	const { MintingHubV1 } = context.contracts;
 
-	const challenges = await client.readContract({
-		abi: MintingHubV1.abi,
-		address: MintingHubV1.address,
-		functionName: 'challenges',
-		args: [event.args.number],
-	});
-
-	const cooldown = await client.readContract({
-		abi: PositionV1ABI,
-		address: event.args.position,
-		functionName: 'cooldown',
-	});
-
-	const liqPrice = await client.readContract({
-		abi: PositionV1ABI,
-		address: event.args.position,
-		functionName: 'price',
-	});
-
-	const challenge = await context.db.find(MintingHubV1ChallengeV1, {
-		position: normalizeAddress(event.args.position),
-		number: event.args.number,
-	});
+	const [challenges, cooldown, liqPrice, challenge] = await Promise.all([
+		client.readContract({ abi: MintingHubV1.abi, address: MintingHubV1.address, functionName: 'challenges', args: [event.args.number] }),
+		client.readContract({ abi: PositionV1ABI, address: event.args.position, functionName: 'cooldown' }),
+		client.readContract({ abi: PositionV1ABI, address: event.args.position, functionName: 'price' }),
+		context.db.find(MintingHubV1ChallengeV1, { position: normalizeAddress(event.args.position), number: event.args.number }),
+	]);
 
 	if (!challenge) {
 		console.error('ChallengeV1 not found in ChallengeAverted event:', {
@@ -419,23 +311,11 @@ ponder.on('MintingHubV1:ChallengeSucceeded', async ({ event, context }) => {
 	const { client } = context;
 	const { MintingHubV1 } = context.contracts;
 
-	const challenges = await client.readContract({
-		abi: MintingHubV1.abi,
-		address: MintingHubV1.address,
-		functionName: 'challenges',
-		args: [event.args.number],
-	});
-
-	const cooldown = await client.readContract({
-		abi: PositionV1ABI,
-		address: event.args.position,
-		functionName: 'cooldown',
-	});
-
-	const challenge = await context.db.find(MintingHubV1ChallengeV1, {
-		position: normalizeAddress(event.args.position),
-		number: event.args.number,
-	});
+	const [challenges, cooldown, challenge] = await Promise.all([
+		client.readContract({ abi: MintingHubV1.abi, address: MintingHubV1.address, functionName: 'challenges', args: [event.args.number] }),
+		client.readContract({ abi: PositionV1ABI, address: event.args.position, functionName: 'cooldown' }),
+		context.db.find(MintingHubV1ChallengeV1, { position: normalizeAddress(event.args.position), number: event.args.number }),
+	]);
 
 	if (!challenge) {
 		console.error('ChallengeV1 not found in ChallengeSucceeded event:', {

@@ -59,72 +59,44 @@ export async function updateTransactionLog({ client, db, chainId, blockNumber, t
 	const totalWithdrawn = ecosystemData.get('Savings:TotalWithdrawn') ?? 0n;
 	const totalSavings = totalSaved + totalInterestCollected - totalWithdrawn;
 
-	const totalSupply = await client.readContract({
-		abi: FrankencoinABI,
-		address: mainnetAddress.frankencoin,
-		functionName: 'totalSupply',
-	});
+	const mintHubV2Started = blockNumber >= BigInt(config[mainnet.id].startMintingHubV2);
+	const savingsReferalStarted = blockNumber >= BigInt(config[mainnet.id].startSavingsReferal);
 
-	const totalEquity = await client.readContract({
-		abi: FrankencoinABI,
-		address: mainnetAddress.frankencoin,
-		functionName: 'equity',
-	});
-
-	const fpsTotalSupply = await client.readContract({
-		abi: EquityABI,
-		address: mainnetAddress.equity,
-		functionName: 'totalSupply',
-	});
-
-	const fpsPrice = await client.readContract({
-		abi: EquityABI,
-		address: mainnetAddress.equity,
-		functionName: 'price',
-	});
+	// Fetch all on-chain reads and db lookups in parallel
+	const [totalSupply, totalEquity, fpsTotalSupply, fpsPrice, mintRatePPM, saveRatePPM, v1Agg, v2Agg] = await Promise.all([
+		client.readContract({ abi: FrankencoinABI, address: mainnetAddress.frankencoin, functionName: 'totalSupply' }),
+		client.readContract({ abi: FrankencoinABI, address: mainnetAddress.frankencoin, functionName: 'equity' }),
+		client.readContract({ abi: EquityABI, address: mainnetAddress.equity, functionName: 'totalSupply' }),
+		client.readContract({ abi: EquityABI, address: mainnetAddress.equity, functionName: 'price' }),
+		// Fetch mint lead rate from SavingsV2 (deployed at startMintingHubV2)
+		mintHubV2Started
+			? client.readContract({ abi: SavingsV2ABI, address: mainnetAddress.savingsV2, functionName: 'currentRatePPM' })
+			: Promise.resolve(0n),
+		// Fetch save lead rate from SavingsReferral (deployed at startSavingsReferal)
+		savingsReferalStarted
+			? client.readContract({ abi: SavingsABI, address: mainnetAddress.savingsReferral, functionName: 'currentRatePPM' })
+			: Promise.resolve(0n),
+		// Read V1 aggregates (O(1) instead of O(n))
+		db.find(PositionAggregatesV1, { chainId }),
+		// Read V2 aggregates (O(1) instead of O(n))
+		db.find(PositionAggregatesV2, { chainId }),
+	]);
 
 	// Fetch both mint lead rate (for V2 positions) and save lead rate (for savings)
-	let currentMintLeadRate: bigint = 0n;
-	let currentSaveLeadRate: bigint = 0n;
-	let projectedInterests: bigint = 0n;
+	const currentMintLeadRate: bigint = BigInt(mintRatePPM);
+	// Fallback: if SavingsReferral not yet deployed, use mint rate
+	const currentSaveLeadRate: bigint = savingsReferalStarted ? BigInt(saveRatePPM) : currentMintLeadRate;
 
-	// Fetch mint lead rate from SavingsV2 (deployed at startMintingHubV2)
-	if (blockNumber >= BigInt(config[mainnet.id].startMintingHubV2)) {
-		const mintRatePPM = await client.readContract({
-			abi: SavingsV2ABI,
-			address: mainnetAddress.savingsV2,
-			functionName: 'currentRatePPM',
-		});
-		currentMintLeadRate = BigInt(mintRatePPM);
-	}
-
-	// Fetch save lead rate from SavingsReferral (deployed at startSavingsReferal)
-	if (blockNumber >= BigInt(config[mainnet.id].startSavingsReferal)) {
-		const saveRatePPM = await client.readContract({
-			abi: SavingsABI,
-			address: mainnetAddress.savingsReferral,
-			functionName: 'currentRatePPM',
-		});
-		currentSaveLeadRate = BigInt(saveRatePPM);
-	} else {
-		// Fallback: if SavingsReferral not yet deployed, use mint rate
-		currentSaveLeadRate = currentMintLeadRate;
-	}
+	const totalMintedV1 = v1Agg?.totalMinted ?? 0n;
+	const annualV1Interests = v1Agg?.annualInterests ?? 0n;
+	const totalMintedV2 = v2Agg?.totalMinted ?? 0n;
+	const annualV2Interests = v2Agg?.annualInterests ?? 0n;
 
 	// Calculate projected interests using save rate
+	let projectedInterests: bigint = 0n;
 	if (totalSavings > 0n && currentSaveLeadRate > 0) {
 		projectedInterests = (totalSavings * currentSaveLeadRate) / 1_000_000n;
 	}
-
-	// Read V1 aggregates (O(1) instead of O(n))
-	const v1Agg = await db.find(PositionAggregatesV1, { chainId });
-	const totalMintedV1 = v1Agg?.totalMinted ?? 0n;
-	const annualV1Interests = v1Agg?.annualInterests ?? 0n;
-
-	// Read V2 aggregates (O(1) instead of O(n))
-	const v2Agg = await db.find(PositionAggregatesV2, { chainId });
-	const totalMintedV2 = v2Agg?.totalMinted ?? 0n;
-	const annualV2Interests = v2Agg?.annualInterests ?? 0n;
 
 	// avg borrow interest
 	const annualV1BorrowRate = totalMintedV1 > 0n ? (annualV1Interests * parseEther('1')) / totalMintedV1 : 0n;

@@ -28,18 +28,10 @@ ponder.on('SavingsReferral:Saved', async ({ event, context }) => {
 	const module = event.log.address.toLowerCase() as Address;
 	const account: Address = event.args.account.toLowerCase() as Address;
 
-	const ratePPM = await client.readContract({
-		abi: LeadrateABI,
-		address: module,
-		functionName: 'currentRatePPM',
-	});
-
-	const [, , referrer, referrerFee] = await client.readContract({
-		abi: SavingsABI,
-		address: module,
-		functionName: 'savings',
-		args: [account],
-	});
+	const [ratePPM, [, , referrer, referrerFee]] = await Promise.all([
+		client.readContract({ abi: LeadrateABI, address: module, functionName: 'currentRatePPM' }),
+		client.readContract({ abi: SavingsABI, address: module, functionName: 'savings', args: [account] }),
+	]);
 
 	// update total saved
 	await context.db
@@ -163,18 +155,10 @@ ponder.on('SavingsReferral:InterestCollected', async ({ event, context }) => {
 	const module = event.log.address.toLowerCase() as Address;
 	const account: Address = event.args.account.toLowerCase() as Address;
 
-	const ratePPM = await client.readContract({
-		abi: LeadrateABI,
-		address: module,
-		functionName: 'currentRatePPM',
-	});
-
-	const [, , referrer, referrerFee] = await client.readContract({
-		abi: SavingsABI,
-		address: module,
-		functionName: 'savings',
-		args: [account],
-	});
+	const [ratePPM, [, , referrer, referrerFee]] = await Promise.all([
+		client.readContract({ abi: LeadrateABI, address: module, functionName: 'currentRatePPM' }),
+		client.readContract({ abi: SavingsABI, address: module, functionName: 'savings', args: [account] }),
+	]);
 
 	// update total interest collected
 	await context.db
@@ -284,18 +268,10 @@ ponder.on('SavingsReferral:Withdrawn', async ({ event, context }) => {
 	const module = event.log.address.toLowerCase() as Address;
 	const account: Address = event.args.account.toLowerCase() as Address;
 
-	const ratePPM = await client.readContract({
-		abi: LeadrateABI,
-		address: module,
-		functionName: 'currentRatePPM',
-	});
-
-	const [, , referrer, referrerFee] = await client.readContract({
-		abi: SavingsABI,
-		address: module,
-		functionName: 'savings',
-		args: [account],
-	});
+	const [ratePPM, [, , referrer, referrerFee]] = await Promise.all([
+		client.readContract({ abi: LeadrateABI, address: module, functionName: 'currentRatePPM' }),
+		client.readContract({ abi: SavingsABI, address: module, functionName: 'savings', args: [account] }),
+	]);
 
 	// update total withdrawn
 	await context.db

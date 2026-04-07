@@ -24,22 +24,12 @@ ponder.on('PositionV1:MintingUpdate', async ({ event, context }) => {
 	const { collateral, price, minted, limit } = event.args;
 	const positionAddress = event.log.address;
 
-	// position updates
-	const availableForClones = await client.readContract({
-		abi: context.contracts.PositionV1.abi,
-		address: positionAddress,
-		functionName: 'limitForClones',
-	});
-
-	const cooldown = await client.readContract({
-		abi: context.contracts.PositionV1.abi,
-		address: positionAddress,
-		functionName: 'cooldown',
-	});
-
-	const position = await context.db.find(MintingHubV1PositionV1, {
-		position: positionAddress.toLowerCase() as Address,
-	});
+	// position updates (all independent, fetch in parallel)
+	const [availableForClones, cooldown, position] = await Promise.all([
+		client.readContract({ abi: context.contracts.PositionV1.abi, address: positionAddress, functionName: 'limitForClones' }),
+		client.readContract({ abi: context.contracts.PositionV1.abi, address: positionAddress, functionName: 'cooldown' }),
+		context.db.find(MintingHubV1PositionV1, { position: positionAddress.toLowerCase() as Address }),
+	]);
 
 	if (position) {
 		const limitForPosition = (collateral * price) / BigInt(10 ** position.zchfDecimals);
@@ -122,59 +112,20 @@ ponder.on('PositionV1:MintingUpdate', async ({ event, context }) => {
 
 	// @dev: issue due to "wrong" event sequence within the smart contracts
 	if (position === null) {
-		const owner = await client.readContract({
-			abi: context.contracts.PositionV1.abi,
-			address: positionAddress,
-			functionName: 'owner',
-		});
+		const [owner, original, expiration, annualInterestPPM, reserveContribution, collateralAddress] = await Promise.all([
+			client.readContract({ abi: context.contracts.PositionV1.abi, address: positionAddress, functionName: 'owner' }),
+			client.readContract({ abi: context.contracts.PositionV1.abi, address: positionAddress, functionName: 'original' }),
+			client.readContract({ abi: context.contracts.PositionV1.abi, address: positionAddress, functionName: 'expiration' }),
+			client.readContract({ abi: context.contracts.PositionV1.abi, address: positionAddress, functionName: 'annualInterestPPM' }),
+			client.readContract({ abi: context.contracts.PositionV1.abi, address: positionAddress, functionName: 'reserveContribution' }),
+			client.readContract({ abi: context.contracts.PositionV1.abi, address: positionAddress, functionName: 'collateral' }),
+		]);
 
-		const original = await client.readContract({
-			abi: context.contracts.PositionV1.abi,
-			address: positionAddress,
-			functionName: 'original',
-		});
-
-		const expiration = await client.readContract({
-			abi: context.contracts.PositionV1.abi,
-			address: positionAddress,
-			functionName: 'expiration',
-		});
-
-		const annualInterestPPM = await client.readContract({
-			abi: context.contracts.PositionV1.abi,
-			address: positionAddress,
-			functionName: 'annualInterestPPM',
-		});
-
-		const reserveContribution = await client.readContract({
-			abi: context.contracts.PositionV1.abi,
-			address: positionAddress,
-			functionName: 'reserveContribution',
-		});
-
-		const collateralAddress = await client.readContract({
-			abi: context.contracts.PositionV1.abi,
-			address: positionAddress,
-			functionName: 'collateral',
-		});
-
-		const collateralName = await client.readContract({
-			abi: context.contracts.ERC20.abi,
-			address: collateralAddress,
-			functionName: 'name',
-		});
-
-		const collateralSymbol = await client.readContract({
-			abi: context.contracts.ERC20.abi,
-			address: collateralAddress,
-			functionName: 'symbol',
-		});
-
-		const collateralDecimals = await client.readContract({
-			abi: context.contracts.ERC20.abi,
-			address: collateralAddress,
-			functionName: 'decimals',
-		});
+		const [collateralName, collateralSymbol, collateralDecimals] = await Promise.all([
+			client.readContract({ abi: context.contracts.ERC20.abi, address: collateralAddress, functionName: 'name' }),
+			client.readContract({ abi: context.contracts.ERC20.abi, address: collateralAddress, functionName: 'symbol' }),
+			client.readContract({ abi: context.contracts.ERC20.abi, address: collateralAddress, functionName: 'decimals' }),
+		]);
 
 		missingPositionData = {
 			position: positionAddress,
