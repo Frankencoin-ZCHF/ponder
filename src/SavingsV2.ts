@@ -3,6 +3,7 @@ import { ponder } from 'ponder:registry';
 import { CommonEcosystem, SavingsActivity, SavingsMapping, SavingsStatus } from 'ponder:schema';
 import { Address } from 'viem';
 import { updateTransactionLog } from './lib/TransactionLog';
+import { normalizeAddress } from './utils/format';
 
 /*
 Events
@@ -18,8 +19,8 @@ ponder.on('SavingsV2:Saved', async ({ event, context }) => {
 
 	const updated = event.block.timestamp;
 	const chainId = context.chain.id;
-	const module = event.log.address.toLowerCase() as Address;
-	const account: Address = event.args.account.toLowerCase() as Address;
+	const module = normalizeAddress(event.log.address);
+	const account: Address = normalizeAddress(event.args.account);
 
 	const ratePPM = await client.readContract({
 		abi: LeadrateABI,
@@ -127,8 +128,8 @@ ponder.on('SavingsV2:InterestCollected', async ({ event, context }) => {
 
 	const updated = event.block.timestamp;
 	const chainId = context.chain.id;
-	const module = event.log.address.toLowerCase() as Address;
-	const account: Address = event.args.account.toLowerCase() as Address;
+	const module = normalizeAddress(event.log.address);
+	const account: Address = normalizeAddress(event.args.account);
 
 	const ratePPM = await client.readContract({
 		abi: LeadrateABI,
@@ -203,8 +204,8 @@ ponder.on('SavingsV2:Withdrawn', async ({ event, context }) => {
 
 	const updated = event.block.timestamp;
 	const chainId = context.chain.id;
-	const module = event.log.address.toLowerCase() as Address;
-	const account: Address = event.args.account.toLowerCase() as Address;
+	const module = normalizeAddress(event.log.address);
+	const account: Address = normalizeAddress(event.args.account);
 
 	const ratePPM = await client.readContract({
 		abi: LeadrateABI,

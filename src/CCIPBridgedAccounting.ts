@@ -4,6 +4,7 @@ import { CommonEcosystem, FrankencoinProfitLoss, BridgedAccountingReceivedSettle
 import { Address, erc20Abi, parseEther } from 'viem';
 import { mainnet } from 'viem/chains';
 import { updateTransactionLog } from './lib/TransactionLog';
+import { normalizeAddress } from './utils/format';
 
 /*
 Events to correct accounting. P/L events emitted on sidechain and on sync, needs to be deducted once
@@ -14,7 +15,7 @@ CCIPBridgedAccounting:ReceivedSettlement
 */
 
 ponder.on('CCIPBridgedAccounting:ReceivedProfits', async ({ event, context }) => {
-	const minter = event.log.address.toLowerCase() as Address; // CCIPBridgedAccounting
+	const minter = normalizeAddress(event.log.address); // CCIPBridgedAccounting
 	const fpsTotalSupply = await context.client.readContract({
 		abi: erc20Abi,
 		address: ADDRESS[mainnet.id].equity,
@@ -89,7 +90,7 @@ ponder.on('CCIPBridgedAccounting:ReceivedProfits', async ({ event, context }) =>
 
 ponder.on('CCIPBridgedAccounting:ReceivedLosses', async ({ event, context }) => {
 	const amount = event.args.losses;
-	const minter = event.log.address.toLowerCase() as Address; // CCIPBridgedAccounting
+	const minter = normalizeAddress(event.log.address); // CCIPBridgedAccounting
 	const fpsTotalSupply = await context.client.readContract({
 		abi: erc20Abi,
 		address: ADDRESS[mainnet.id].equity,

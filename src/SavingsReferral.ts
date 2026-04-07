@@ -10,6 +10,7 @@ import {
 } from 'ponder:schema';
 import { Address, zeroAddress } from 'viem';
 import { updateTransactionLog } from './lib/TransactionLog';
+import { normalizeAddress } from './utils/format';
 
 /*
 Events
@@ -25,8 +26,8 @@ ponder.on('SavingsReferral:Saved', async ({ event, context }) => {
 
 	const updated = event.block.timestamp;
 	const chainId = context.chain.id;
-	const module = event.log.address.toLowerCase() as Address;
-	const account: Address = event.args.account.toLowerCase() as Address;
+	const module = normalizeAddress(event.log.address);
+	const account: Address = normalizeAddress(event.args.account);
 
 	const [ratePPM, [, , referrer, referrerFee]] = await Promise.all([
 		client.readContract({ abi: LeadrateABI, address: module, functionName: 'currentRatePPM' }),
@@ -125,12 +126,12 @@ ponder.on('SavingsReferral:Saved', async ({ event, context }) => {
 			created: updated,
 			updated,
 			balance: mapping.balance,
-			referrer: referrer.toLowerCase() as Address,
+			referrer: normalizeAddress(referrer),
 			referrerFee,
 		})
 		.onConflictDoUpdate((current) => ({
 			updated,
-			referrer: referrer.toLowerCase() as Address,
+			referrer: normalizeAddress(referrer),
 			referrerFee,
 		}));
 
@@ -152,8 +153,8 @@ ponder.on('SavingsReferral:InterestCollected', async ({ event, context }) => {
 
 	const updated = event.block.timestamp;
 	const chainId = context.chain.id;
-	const module = event.log.address.toLowerCase() as Address;
-	const account: Address = event.args.account.toLowerCase() as Address;
+	const module = normalizeAddress(event.log.address);
+	const account: Address = normalizeAddress(event.args.account);
 
 	const [ratePPM, [, , referrer, referrerFee]] = await Promise.all([
 		client.readContract({ abi: LeadrateABI, address: module, functionName: 'currentRatePPM' }),
@@ -219,12 +220,12 @@ ponder.on('SavingsReferral:InterestCollected', async ({ event, context }) => {
 			created: updated,
 			updated,
 			balance: mapping.balance,
-			referrer: referrer.toLowerCase() as Address,
+			referrer: normalizeAddress(referrer),
 			referrerFee,
 		})
 		.onConflictDoUpdate((current) => ({
 			updated,
-			referrer: referrer.toLowerCase() as Address,
+			referrer: normalizeAddress(referrer),
 			referrerFee,
 		}));
 
@@ -238,7 +239,7 @@ ponder.on('SavingsReferral:InterestCollected', async ({ event, context }) => {
 				account,
 				created: updated,
 				updated,
-				referrer: referrer.toLowerCase() as Address,
+				referrer: normalizeAddress(referrer),
 				earnings: earnings,
 			})
 			.onConflictDoUpdate((current) => ({
@@ -265,8 +266,8 @@ ponder.on('SavingsReferral:Withdrawn', async ({ event, context }) => {
 
 	const updated = event.block.timestamp;
 	const chainId = context.chain.id;
-	const module = event.log.address.toLowerCase() as Address;
-	const account: Address = event.args.account.toLowerCase() as Address;
+	const module = normalizeAddress(event.log.address);
+	const account: Address = normalizeAddress(event.args.account);
 
 	const [ratePPM, [, , referrer, referrerFee]] = await Promise.all([
 		client.readContract({ abi: LeadrateABI, address: module, functionName: 'currentRatePPM' }),
@@ -332,12 +333,12 @@ ponder.on('SavingsReferral:Withdrawn', async ({ event, context }) => {
 			created: updated,
 			updated,
 			balance: mapping.balance,
-			referrer: referrer.toLowerCase() as Address,
+			referrer: normalizeAddress(referrer),
 			referrerFee,
 		})
 		.onConflictDoUpdate((current) => ({
 			updated,
-			referrer: referrer.toLowerCase() as Address,
+			referrer: normalizeAddress(referrer),
 			referrerFee,
 		}));
 
