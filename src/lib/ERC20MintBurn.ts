@@ -14,7 +14,7 @@ export async function indexERC20MintBurn(event: Event<'ERC20:Transfer'>, context
 	const chainId = context.chain.id;
 
 	// format: in seconds, same as blockchain timestamp
-	const date = timestampStartOfDay(String(updated * 1000n));
+	const date = timestampStartOfDay(parseInt(String(updated)));
 
 	let frankencoinContract: Address = zeroAddress;
 	if (chainId == ChainMain.mainnet.id) {
