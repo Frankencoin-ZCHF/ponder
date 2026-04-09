@@ -19,7 +19,12 @@ ponder.on('UniswapV3Pool:Swap', async ({ event, context }) => {
 			functionName: 'latestAnswer',
 		});
 		oracle = (oracle * 10n ** 18n) / 10n ** 8n;
-	} catch (error) {}
+	} catch (error) {
+		console.error('Failed to read oracle price from Chainlink:', {
+			error: error instanceof Error ? error.message : String(error),
+		});
+		// Continue with default oracle value (0n)
+	}
 
 	const existingRecords = await context.db.sql
 		.select({ maxCount: max(PriceDiscovery.count) })

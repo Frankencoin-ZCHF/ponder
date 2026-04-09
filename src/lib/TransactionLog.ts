@@ -1,15 +1,20 @@
-import { and, or, eq, gt, gte } from 'ponder';
+import { and, or, eq, gt, gte, inArray } from 'ponder';
 import { type Context } from 'ponder:registry';
-import { AnalyticTransactionLog, AnalyticDailyLog, CommonEcosystem, MintingHubV1PositionV1, MintingHubV2PositionV2 } from 'ponder:schema';
-import { EquityABI, FrankencoinABI, SavingsABI } from '@frankencoin/zchf';
+import { AnalyticTransactionLog, AnalyticDailyLog, CommonEcosystem, PositionAggregatesV1, PositionAggregatesV2 } from 'ponder:schema';
+import { EquityABI, FrankencoinABI, SavingsABI, SavingsV2ABI } from '@frankencoin/zchf';
 import { Address, parseEther, parseUnits } from 'viem';
 import { addr, config } from '../../ponder.config';
 import { mainnet } from 'viem/chains';
+
+// Time constants for efficient date calculations using BigInt arithmetic
+const ONE_DAY_SECONDS = 86400n;
+const ONE_YEAR_SECONDS = 365n * ONE_DAY_SECONDS;
 
 interface updateTransactionLogProps {
 	client: Context['client'];
 	db: Context['db'];
 	chainId: number;
+	blockNumber: bigint;
 	timestamp: bigint;
 	kind: string;
 	amount: bigint;
@@ -20,102 +25,77 @@ interface updateTransactionLogProps {
  * @dev: update transaction log for mainnet only
  * this function need a rebuild to reflect multichain data.
  */
-export async function updateTransactionLog({ client, db, chainId, timestamp, kind, amount, txHash }: updateTransactionLogProps) {
+export async function updateTransactionLog({ client, db, chainId, blockNumber, timestamp, kind, amount, txHash }: updateTransactionLogProps) {
 	if (chainId != mainnet.id) return;
 
 	const mainnetAddress = addr[mainnet.id];
 
-	// Get ecosystem data
-	const profitFees = await db.find(CommonEcosystem, { id: `Equity:Profits` });
-	const totalInflow = profitFees ? profitFees.amount : 0n;
-	const lossFees = await db.find(CommonEcosystem, { id: `Equity:Losses` });
-	const totalOutflow = lossFees ? lossFees.amount : 0n;
+	// Batch query for ecosystem data (single query instead of 8 sequential queries)
+	const ecosystemIds = [
+		'Equity:Profits',
+		'Equity:Losses',
+		'Equity:InvestedFeePaidPPM',
+		'Equity:RedeemedFeePaidPPM',
+		'Equity:EarningsPerFPS',
+		'Savings:TotalSaved',
+		'Savings:TotalInterestCollected',
+		'Savings:TotalWithdrawn',
+	];
 
-	const investedFeePaidPPM = await db.find(CommonEcosystem, { id: `Equity:InvestedFeePaidPPM` });
-	const investedFeePaid = investedFeePaidPPM ? investedFeePaidPPM.amount / 1_000_000n : 0n;
-	const redeemedFeePaidPPM = await db.find(CommonEcosystem, { id: `Equity:RedeemedFeePaidPPM` });
-	const redeemedFeePaid = redeemedFeePaidPPM ? redeemedFeePaidPPM.amount / 1_000_000n : 0n;
+	const ecosystemRecords = await db.sql.select().from(CommonEcosystem).where(inArray(CommonEcosystem.id, ecosystemIds));
+
+	// Create lookup map for O(1) access
+	const ecosystemData = new Map(ecosystemRecords.map((r) => [r.id, r.amount]));
+
+	// Extract values with defaults
+	const totalInflow = ecosystemData.get('Equity:Profits') ?? 0n;
+	const totalOutflow = ecosystemData.get('Equity:Losses') ?? 0n;
+	const investedFeePaid = (ecosystemData.get('Equity:InvestedFeePaidPPM') ?? 0n) / 1_000_000n;
+	const redeemedFeePaid = (ecosystemData.get('Equity:RedeemedFeePaidPPM') ?? 0n) / 1_000_000n;
 	const totalTradeFee = investedFeePaid + redeemedFeePaid;
-
-	const _earningsPerFPS = await db.find(CommonEcosystem, { id: `Equity:EarningsPerFPS` });
-	const earningsPerFPS = _earningsPerFPS ? _earningsPerFPS.amount : 0n;
-
-	const _totalSaved = await db.find(CommonEcosystem, { id: `Savings:TotalSaved` });
-	const totalSaved = _totalSaved ? _totalSaved.amount : 0n;
-	const _totalInterestCollected = await db.find(CommonEcosystem, { id: `Savings:TotalInterestCollected` });
-	const totalInterestCollected = _totalInterestCollected ? _totalInterestCollected.amount : 0n;
-	const _totalWithdrawn = await db.find(CommonEcosystem, { id: `Savings:TotalWithdrawn` });
-	const totalWithdrawn = _totalWithdrawn ? _totalWithdrawn.amount : 0n;
+	const earningsPerFPS = ecosystemData.get('Equity:EarningsPerFPS') ?? 0n;
+	const totalSaved = ecosystemData.get('Savings:TotalSaved') ?? 0n;
+	const totalInterestCollected = ecosystemData.get('Savings:TotalInterestCollected') ?? 0n;
+	const totalWithdrawn = ecosystemData.get('Savings:TotalWithdrawn') ?? 0n;
 	const totalSavings = totalSaved + totalInterestCollected - totalWithdrawn;
 
-	const totalSupply = await client.readContract({
-		abi: FrankencoinABI,
-		address: mainnetAddress.frankencoin,
-		functionName: 'totalSupply',
-	});
+	const mintHubV2Started = blockNumber >= BigInt(config[mainnet.id].startMintingHubV2);
+	const savingsReferalStarted = blockNumber >= BigInt(config[mainnet.id].startSavingsReferal);
 
-	const totalEquity = await client.readContract({
-		abi: FrankencoinABI,
-		address: mainnetAddress.frankencoin,
-		functionName: 'equity',
-	});
+	// Fetch all on-chain reads and db lookups in parallel
+	const [totalSupply, totalEquity, fpsTotalSupply, fpsPrice, mintRatePPM, saveRatePPM, v1Agg, v2Agg] = await Promise.all([
+		client.readContract({ abi: FrankencoinABI, address: mainnetAddress.frankencoin, functionName: 'totalSupply' }),
+		client.readContract({ abi: FrankencoinABI, address: mainnetAddress.frankencoin, functionName: 'equity' }),
+		client.readContract({ abi: EquityABI, address: mainnetAddress.equity, functionName: 'totalSupply' }),
+		client.readContract({ abi: EquityABI, address: mainnetAddress.equity, functionName: 'price' }),
+		// Fetch mint lead rate from SavingsV2 (deployed at startMintingHubV2)
+		mintHubV2Started
+			? client.readContract({ abi: SavingsV2ABI, address: mainnetAddress.savingsV2, functionName: 'currentRatePPM' })
+			: Promise.resolve(0n),
+		// Fetch save lead rate from SavingsReferral (deployed at startSavingsReferal)
+		savingsReferalStarted
+			? client.readContract({ abi: SavingsABI, address: mainnetAddress.savingsReferral, functionName: 'currentRatePPM' })
+			: Promise.resolve(0n),
+		// Read V1 aggregates (O(1) instead of O(n))
+		db.find(PositionAggregatesV1, { chainId }),
+		// Read V2 aggregates (O(1) instead of O(n))
+		db.find(PositionAggregatesV2, { chainId }),
+	]);
 
-	const fpsTotalSupply = await client.readContract({
-		abi: EquityABI,
-		address: mainnetAddress.equity,
-		functionName: 'totalSupply',
-	});
+	// Fetch both mint lead rate (for V2 positions) and save lead rate (for savings)
+	const currentMintLeadRate: bigint = BigInt(mintRatePPM);
+	// Fallback: if SavingsReferral not yet deployed, use mint rate
+	const currentSaveLeadRate: bigint = savingsReferalStarted ? BigInt(saveRatePPM) : currentMintLeadRate;
 
-	const fpsPrice = await client.readContract({
-		abi: EquityABI,
-		address: mainnetAddress.equity,
-		functionName: 'price',
-	});
+	const totalMintedV1 = v1Agg?.totalMinted ?? 0n;
+	const annualV1Interests = v1Agg?.annualInterests ?? 0n;
+	const totalMintedV2 = v2Agg?.totalMinted ?? 0n;
+	const annualV2Interests = v2Agg?.annualInterests ?? 0n;
 
-	let currentLeadRatePPM: number = 0;
-	let currentLeadRate: bigint = 0n;
+	// Calculate projected interests using save rate
 	let projectedInterests: bigint = 0n;
-
-	try {
-		if (totalSavings > 0n) {
-			const leadRatePPM = await client.readContract({
-				abi: SavingsABI,
-				address: mainnetAddress.savingsReferral,
-				functionName: 'currentRatePPM',
-			});
-
-			currentLeadRate = parseUnits(leadRatePPM.toString(), 12);
-			currentLeadRatePPM = leadRatePPM;
-			projectedInterests = (totalSavings * BigInt(leadRatePPM)) / 1_000_000n;
-		}
-	} catch (error) {}
-
-	// V1
-	const openPositionV1 = await db.sql
-		.select()
-		.from(MintingHubV1PositionV1)
-		.where(
-			and(eq(MintingHubV1PositionV1.closed, false), eq(MintingHubV1PositionV1.denied, false), gt(MintingHubV1PositionV1.minted, 0n))
-		);
-	let annualV1Interests: bigint = 0n;
-	let totalMintedV1: bigint = 0n;
-	for (let p of openPositionV1) {
-		annualV1Interests += (p.minted * BigInt(p.annualInterestPPM)) / 1_000_000n;
-		totalMintedV1 += p.minted;
-	}
-
-	// V2
-	const openPositionV2 = await db.sql
-		.select()
-		.from(MintingHubV2PositionV2)
-		.where(
-			and(eq(MintingHubV2PositionV2.closed, false), eq(MintingHubV2PositionV2.denied, false), gt(MintingHubV2PositionV2.minted, 0n))
-		);
-	let annualV2Interests: bigint = 0n;
-	let totalMintedV2: bigint = 0n;
-	for (let p of openPositionV2) {
-		annualV2Interests += (p.minted * BigInt(p.riskPremiumPPM + currentLeadRatePPM)) / 1_000_000n;
-		totalMintedV2 += p.minted;
+	if (totalSavings > 0n && currentSaveLeadRate > 0) {
+		projectedInterests = (totalSavings * currentSaveLeadRate) / 1_000_000n;
 	}
 
 	// avg borrow interest
@@ -126,13 +106,14 @@ export async function updateTransactionLog({ client, db, chainId, timestamp, kin
 	const annualNetEarnings = annualV1Interests + annualV2Interests - projectedInterests;
 
 	// calc realized earnings, rolling latest 365days
-	const last365dayObj = new Date(parseInt(timestamp.toString()) * 1000 - 365 * 24 * 60 * 60 * 1000);
-	const last365dayTimestamp = last365dayObj.setUTCHours(0, 0, 0, 0);
+	// Use BigInt arithmetic to avoid unnecessary conversions
+	const dayTimestamp = timestamp - (timestamp % ONE_DAY_SECONDS);
+	const last365dayTimestamp = dayTimestamp - ONE_YEAR_SECONDS;
 
 	const last356dayEntry = await db.sql
 		.select()
 		.from(AnalyticDailyLog)
-		.where(gte(AnalyticDailyLog.timestamp, BigInt(last365dayTimestamp)))
+		.where(gte(AnalyticDailyLog.timestamp, last365dayTimestamp))
 		.orderBy(AnalyticDailyLog.timestamp)
 		.limit(1);
 
@@ -177,7 +158,8 @@ export async function updateTransactionLog({ client, db, chainId, timestamp, kin
 		totalMintedV1,
 		totalMintedV2,
 
-		currentLeadRate,
+		currentMintLeadRate,
+		currentSaveLeadRate,
 		projectedInterests,
 		annualV1Interests,
 		annualV2Interests,
@@ -190,13 +172,14 @@ export async function updateTransactionLog({ client, db, chainId, timestamp, kin
 		earningsPerFPS,
 	});
 
-	const dateObj = new Date(parseInt(timestamp.toString()) * 1000);
-	const timestampDay = dateObj.setUTCHours(0, 0, 0, 0);
-	const dateString = dateObj.toISOString().split('T').at(0) || dateObj.toISOString();
+	// Use BigInt arithmetic to get day boundary (more efficient than Date manipulations)
+	const timestampDay = timestamp - (timestamp % ONE_DAY_SECONDS);
+	// Only convert to Date for string formatting
+	const dateString = new Date(Number(timestampDay) * 1000).toISOString().split('T')[0]!;
 
 	const dailyLogData = {
 		date: dateString,
-		timestamp: BigInt(timestampDay),
+		timestamp: timestampDay,
 		txHash: txHash as `0x${string}`,
 
 		totalInflow,
@@ -213,7 +196,8 @@ export async function updateTransactionLog({ client, db, chainId, timestamp, kin
 		totalMintedV1,
 		totalMintedV2,
 
-		currentLeadRate,
+		currentMintLeadRate,
+		currentSaveLeadRate,
 		projectedInterests,
 		annualV1Interests,
 		annualV2Interests,

@@ -3,20 +3,18 @@ import { ERC20Burn, ERC20Status, ERC20Mint, ERC20BalanceMapping, ERC20TotalSuppl
 import { Address, zeroAddress } from 'viem';
 import { updateTransactionLog } from './TransactionLog';
 import { ADDRESS, ChainMain } from '@frankencoin/zchf';
+import { normalizeAddress, timestampStartOfDay } from '../utils/format';
 
-export async function indexERC20MintBurn(
-	event: Event<'ERC20:Transfer' | 'ERC20PositionV1:Transfer' | 'ERC20PositionV2:Transfer'>,
-	context: Context<'ERC20:Transfer' | 'ERC20PositionV1:Transfer' | 'ERC20PositionV2:Transfer'>
-) {
-	const token = event.log.address.toLowerCase() as Address;
-	const from = event.args.from.toLowerCase() as Address;
-	const to = event.args.to.toLowerCase() as Address;
+export async function indexERC20MintBurn(event: Event<'ERC20:Transfer'>, context: Context<'ERC20:Transfer'>) {
+	const token = normalizeAddress(event.log.address);
+	const from = normalizeAddress(event.args.from);
+	const to = normalizeAddress(event.args.to);
 	const value = event.args.value;
 	const updated = event.block.timestamp;
 	const chainId = context.chain.id;
 
 	// format: in seconds, same as blockchain timestamp
-	const date = new Date(Number(updated * 1000n)).setUTCHours(0, 0, 0, 0) / 1000;
+	const date = timestampStartOfDay(parseInt(String(updated)));
 
 	let frankencoinContract: Address = zeroAddress;
 	if (chainId == ChainMain.mainnet.id) {
@@ -28,9 +26,8 @@ export async function indexERC20MintBurn(
 	const equityContract: Address = ADDRESS[ChainMain.mainnet.id].equity;
 
 	let kindContract: string = 'Token';
-	const compare = (a: string, b: string) => a.toLowerCase() == b.toLowerCase();
-	if (compare(token, frankencoinContract)) kindContract = 'Frankencoin';
-	else if (compare(token, equityContract)) kindContract = 'Equity';
+	if (token === normalizeAddress(frankencoinContract)) kindContract = 'Frankencoin';
+	else if (token === normalizeAddress(equityContract)) kindContract = 'Equity';
 
 	// ### minting tokens ###
 	if (from == zeroAddress) {
@@ -81,18 +78,6 @@ export async function indexERC20MintBurn(
 				supply: responseStatus.supply,
 			}));
 
-		// global updating
-		// await context.db
-		// 	.insert(CommonEcosystem)
-		// 	.values({
-		// 		id: 'Frankencoin:Mint',
-		// 		value: '',
-		// 		amount: value,
-		// 	})
-		// 	.onConflictDoUpdate((current) => ({
-		// 		amount: current.amount ? current.amount + value : value,
-		// 	}));
-
 		// balance updating
 		await context.db
 			.insert(ERC20BalanceMapping)
@@ -114,6 +99,7 @@ export async function indexERC20MintBurn(
 			client: context.client,
 			db: context.db,
 			chainId,
+			blockNumber: event.block.number,
 			timestamp: event.block.timestamp,
 			kind: `${kindContract}:Mint`,
 			amount: event.args.value,
@@ -170,18 +156,6 @@ export async function indexERC20MintBurn(
 				supply: responseStatus.supply,
 			}));
 
-		// // global updating
-		// await context.db
-		// 	.insert(CommonEcosystem)
-		// 	.values({
-		// 		id: 'Frankencoin:Burn',
-		// 		value: '',
-		// 		amount: value,
-		// 	})
-		// 	.onConflictDoUpdate((current) => ({
-		// 		amount: current.amount ? current.amount + value : value,
-		// 	}));
-
 		// mint burn mapper updating
 		await context.db
 			.insert(ERC20BalanceMapping)
@@ -203,6 +177,7 @@ export async function indexERC20MintBurn(
 			client: context.client,
 			db: context.db,
 			chainId,
+			blockNumber: event.block.number,
 			timestamp: event.block.timestamp,
 			kind: `${kindContract}:Burn`,
 			amount: event.args.value,

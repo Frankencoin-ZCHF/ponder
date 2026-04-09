@@ -10,6 +10,7 @@ import {
 } from 'ponder:schema';
 import { Address, zeroAddress } from 'viem';
 import { updateTransactionLog } from './lib/TransactionLog';
+import { normalizeAddress } from './utils/format';
 
 /*
 Events
@@ -25,21 +26,13 @@ ponder.on('SavingsReferral:Saved', async ({ event, context }) => {
 
 	const updated = event.block.timestamp;
 	const chainId = context.chain.id;
-	const module = event.log.address.toLowerCase() as Address;
-	const account: Address = event.args.account.toLowerCase() as Address;
+	const module = normalizeAddress(event.log.address);
+	const account: Address = normalizeAddress(event.args.account);
 
-	const ratePPM = await client.readContract({
-		abi: LeadrateABI,
-		address: module,
-		functionName: 'currentRatePPM',
-	});
-
-	const [, , referrer, referrerFee] = await client.readContract({
-		abi: SavingsABI,
-		address: module,
-		functionName: 'savings',
-		args: [account],
-	});
+	const [ratePPM, [, , referrer, referrerFee]] = await Promise.all([
+		client.readContract({ abi: LeadrateABI, address: module, functionName: 'currentRatePPM' }),
+		client.readContract({ abi: SavingsABI, address: module, functionName: 'savings', args: [account] }),
+	]);
 
 	// update total saved
 	await context.db
@@ -133,12 +126,12 @@ ponder.on('SavingsReferral:Saved', async ({ event, context }) => {
 			created: updated,
 			updated,
 			balance: mapping.balance,
-			referrer: referrer.toLowerCase() as Address,
+			referrer: normalizeAddress(referrer),
 			referrerFee,
 		})
 		.onConflictDoUpdate((current) => ({
 			updated,
-			referrer: referrer.toLowerCase() as Address,
+			referrer: normalizeAddress(referrer),
 			referrerFee,
 		}));
 
@@ -146,6 +139,7 @@ ponder.on('SavingsReferral:Saved', async ({ event, context }) => {
 		client: context.client,
 		db: context.db,
 		chainId,
+		blockNumber: event.block.number,
 		timestamp: event.block.timestamp,
 		kind: 'Savings:Saved',
 		amount: event.args.amount,
@@ -159,21 +153,13 @@ ponder.on('SavingsReferral:InterestCollected', async ({ event, context }) => {
 
 	const updated = event.block.timestamp;
 	const chainId = context.chain.id;
-	const module = event.log.address.toLowerCase() as Address;
-	const account: Address = event.args.account.toLowerCase() as Address;
+	const module = normalizeAddress(event.log.address);
+	const account: Address = normalizeAddress(event.args.account);
 
-	const ratePPM = await client.readContract({
-		abi: LeadrateABI,
-		address: module,
-		functionName: 'currentRatePPM',
-	});
-
-	const [, , referrer, referrerFee] = await client.readContract({
-		abi: SavingsABI,
-		address: module,
-		functionName: 'savings',
-		args: [account],
-	});
+	const [ratePPM, [, , referrer, referrerFee]] = await Promise.all([
+		client.readContract({ abi: LeadrateABI, address: module, functionName: 'currentRatePPM' }),
+		client.readContract({ abi: SavingsABI, address: module, functionName: 'savings', args: [account] }),
+	]);
 
 	// update total interest collected
 	await context.db
@@ -234,17 +220,17 @@ ponder.on('SavingsReferral:InterestCollected', async ({ event, context }) => {
 			created: updated,
 			updated,
 			balance: mapping.balance,
-			referrer: referrer.toLowerCase() as Address,
+			referrer: normalizeAddress(referrer),
 			referrerFee,
 		})
 		.onConflictDoUpdate((current) => ({
 			updated,
-			referrer: referrer.toLowerCase() as Address,
+			referrer: normalizeAddress(referrer),
 			referrerFee,
 		}));
 
 	// referrer earnings indexing
-	if (referrer.toLowerCase() != zeroAddress && earnings > 0n) {
+	if (normalizeAddress(referrer) !== zeroAddress && earnings > 0n) {
 		await context.db
 			.insert(SavingsReferrerEarnings)
 			.values({
@@ -253,7 +239,7 @@ ponder.on('SavingsReferral:InterestCollected', async ({ event, context }) => {
 				account,
 				created: updated,
 				updated,
-				referrer: referrer.toLowerCase() as Address,
+				referrer: normalizeAddress(referrer),
 				earnings: earnings,
 			})
 			.onConflictDoUpdate((current) => ({
@@ -266,6 +252,7 @@ ponder.on('SavingsReferral:InterestCollected', async ({ event, context }) => {
 		client: context.client,
 		db: context.db,
 		chainId,
+		blockNumber: event.block.number,
 		timestamp: event.block.timestamp,
 		kind: 'Savings:InterestCollected',
 		amount: event.args.interest,
@@ -279,21 +266,13 @@ ponder.on('SavingsReferral:Withdrawn', async ({ event, context }) => {
 
 	const updated = event.block.timestamp;
 	const chainId = context.chain.id;
-	const module = event.log.address.toLowerCase() as Address;
-	const account: Address = event.args.account.toLowerCase() as Address;
+	const module = normalizeAddress(event.log.address);
+	const account: Address = normalizeAddress(event.args.account);
 
-	const ratePPM = await client.readContract({
-		abi: LeadrateABI,
-		address: module,
-		functionName: 'currentRatePPM',
-	});
-
-	const [, , referrer, referrerFee] = await client.readContract({
-		abi: SavingsABI,
-		address: module,
-		functionName: 'savings',
-		args: [account],
-	});
+	const [ratePPM, [, , referrer, referrerFee]] = await Promise.all([
+		client.readContract({ abi: LeadrateABI, address: module, functionName: 'currentRatePPM' }),
+		client.readContract({ abi: SavingsABI, address: module, functionName: 'savings', args: [account] }),
+	]);
 
 	// update total withdrawn
 	await context.db
@@ -354,12 +333,12 @@ ponder.on('SavingsReferral:Withdrawn', async ({ event, context }) => {
 			created: updated,
 			updated,
 			balance: mapping.balance,
-			referrer: referrer.toLowerCase() as Address,
+			referrer: normalizeAddress(referrer),
 			referrerFee,
 		})
 		.onConflictDoUpdate((current) => ({
 			updated,
-			referrer: referrer.toLowerCase() as Address,
+			referrer: normalizeAddress(referrer),
 			referrerFee,
 		}));
 
@@ -367,6 +346,7 @@ ponder.on('SavingsReferral:Withdrawn', async ({ event, context }) => {
 		client: context.client,
 		db: context.db,
 		chainId,
+		blockNumber: event.block.number,
 		timestamp: event.block.timestamp,
 		kind: 'Savings:Withdrawn',
 		amount: event.args.amount,

@@ -1,9 +1,10 @@
 import { ADDRESS } from '@frankencoin/zchf';
 import { ponder } from 'ponder:registry';
 import { CommonEcosystem, FrankencoinMinter, FrankencoinProfitLoss } from 'ponder:schema';
-import { Address, erc20Abi, parseEther } from 'viem';
+import { erc20Abi, parseEther } from 'viem';
 import { mainnet } from 'viem/chains';
 import { updateTransactionLog } from './lib/TransactionLog';
+import { normalizeAddress } from './utils/format';
 
 /*
 Events
@@ -21,78 +22,47 @@ To perform a contract read on a different chain, you need to create a separate p
 */
 
 ponder.on('Frankencoin:Profit', async ({ event, context }) => {
-	const minter = event.args.reportingMinter.toLowerCase() as Address;
+	const minter = normalizeAddress(event.args.reportingMinter);
+	const isMainnet = context.chain.id === mainnet.id;
 
-	// upsert ProfitLossCounter
-	const counter = await context.db
-		.insert(CommonEcosystem)
-		.values({
-			id: 'Equity:ProfitLossCounter',
-			value: '',
-			amount: 1n,
-		})
-		.onConflictDoUpdate((current) => ({
-			amount: current.amount + 1n,
-		}));
-
-	// upsert ProfitCounter
-	await context.db
-		.insert(CommonEcosystem)
-		.values({
-			id: 'Equity:ProfitCounter',
-			value: '',
-			amount: 1n,
-		})
-		.onConflictDoUpdate((current) => ({
-			amount: current.amount + 1n,
-		}));
-
-	// upsert Profits
-	const profits = await context.db
-		.insert(CommonEcosystem)
-		.values({
-			id: 'Equity:Profits',
-			value: '',
-			amount: event.args.amount,
-		})
-		.onConflictDoUpdate((current) => ({
-			amount: current.amount + event.args.amount,
-		}));
-
-	// upsert Losses
-	const losses = await context.db
-		.insert(CommonEcosystem)
-		.values({
-			id: 'Equity:Losses',
-			value: '',
-			amount: 0n,
-		})
-		.onConflictDoUpdate((current) => ({
-			amount: current.amount + 0n,
-		}));
+	// upsert all independent counters + optional fpsTotalSupply read in parallel
+	const [counter, , profits, losses, fpsTotalSupply] = await Promise.all([
+		// upsert ProfitLossCounter
+		context.db
+			.insert(CommonEcosystem)
+			.values({ id: 'Equity:ProfitLossCounter', value: '', amount: 1n })
+			.onConflictDoUpdate((current) => ({ amount: current.amount + 1n })),
+		// upsert ProfitCounter
+		context.db
+			.insert(CommonEcosystem)
+			.values({ id: 'Equity:ProfitCounter', value: '', amount: 1n })
+			.onConflictDoUpdate((current) => ({ amount: current.amount + 1n })),
+		// upsert Profits
+		context.db
+			.insert(CommonEcosystem)
+			.values({ id: 'Equity:Profits', value: '', amount: event.args.amount })
+			.onConflictDoUpdate((current) => ({ amount: current.amount + event.args.amount })),
+		// upsert Losses
+		context.db
+			.insert(CommonEcosystem)
+			.values({ id: 'Equity:Losses', value: '', amount: 0n })
+			.onConflictDoUpdate((current) => ({ amount: current.amount + 0n })),
+		// read fpsTotalSupply if on mainnet
+		isMainnet
+			? context.client.readContract({ abi: erc20Abi, address: ADDRESS[mainnet.id].equity, functionName: 'totalSupply' })
+			: Promise.resolve(0n),
+	]);
 
 	let earningsPerFPS = { amount: 0n };
-	if (context.chain.id === mainnet.id) {
-		const fpsTotalSupply = await context.client.readContract({
-			abi: erc20Abi,
-			address: ADDRESS[mainnet.id].equity,
-			functionName: 'totalSupply',
-		});
-
+	if (isMainnet) {
 		const perToken = (event.args.amount * parseEther('1')) / fpsTotalSupply;
 		earningsPerFPS.amount = perToken;
 
 		// upsert EarningsPerFPS
 		await context.db
 			.insert(CommonEcosystem)
-			.values({
-				id: 'Equity:EarningsPerFPS',
-				value: '',
-				amount: perToken,
-			})
-			.onConflictDoUpdate((current) => ({
-				amount: current.amount + perToken,
-			}));
+			.values({ id: 'Equity:EarningsPerFPS', value: '', amount: perToken })
+			.onConflictDoUpdate((current) => ({ amount: current.amount + perToken }));
 	}
 
 	// flat indexing earnings
@@ -113,6 +83,7 @@ ponder.on('Frankencoin:Profit', async ({ event, context }) => {
 		client: context.client,
 		db: context.db,
 		chainId: context.chain.id,
+		blockNumber: event.block.number,
 		timestamp: event.block.timestamp,
 		kind: 'Equity:Profit',
 		amount: event.args.amount,
@@ -121,77 +92,47 @@ ponder.on('Frankencoin:Profit', async ({ event, context }) => {
 });
 
 ponder.on('Frankencoin:Loss', async ({ event, context }) => {
-	const minter = event.args.reportingMinter.toLowerCase() as Address;
+	const minter = normalizeAddress(event.args.reportingMinter);
+	const isMainnet = context.chain.id === mainnet.id;
 
-	// upsert ProfitLossCounter
-	const counter = await context.db
-		.insert(CommonEcosystem)
-		.values({
-			id: 'Equity:ProfitLossCounter',
-			value: '',
-			amount: 1n,
-		})
-		.onConflictDoUpdate((current) => ({
-			amount: current.amount + 1n,
-		}));
-
-	// upsert ProfitCounter
-	await context.db
-		.insert(CommonEcosystem)
-		.values({
-			id: 'Equity:LossCounter',
-			value: '',
-			amount: 1n,
-		})
-		.onConflictDoUpdate((current) => ({
-			amount: current.amount + 1n,
-		}));
-
-	// upsert Profits
-	const profits = await context.db
-		.insert(CommonEcosystem)
-		.values({
-			id: 'Equity:Profits',
-			value: '',
-			amount: 0n,
-		})
-		.onConflictDoUpdate((current) => ({
-			amount: current.amount + 0n,
-		}));
-
-	// upsert Losses
-	const losses = await context.db
-		.insert(CommonEcosystem)
-		.values({
-			id: 'Equity:Losses',
-			value: '',
-			amount: event.args.amount,
-		})
-		.onConflictDoUpdate((current) => ({
-			amount: current.amount + event.args.amount,
-		}));
+	// upsert all independent counters + optional fpsTotalSupply read in parallel
+	const [counter, , profits, losses, fpsTotalSupply] = await Promise.all([
+		// upsert ProfitLossCounter
+		context.db
+			.insert(CommonEcosystem)
+			.values({ id: 'Equity:ProfitLossCounter', value: '', amount: 1n })
+			.onConflictDoUpdate((current) => ({ amount: current.amount + 1n })),
+		// upsert LossCounter
+		context.db
+			.insert(CommonEcosystem)
+			.values({ id: 'Equity:LossCounter', value: '', amount: 1n })
+			.onConflictDoUpdate((current) => ({ amount: current.amount + 1n })),
+		// upsert Profits
+		context.db
+			.insert(CommonEcosystem)
+			.values({ id: 'Equity:Profits', value: '', amount: 0n })
+			.onConflictDoUpdate((current) => ({ amount: current.amount + 0n })),
+		// upsert Losses
+		context.db
+			.insert(CommonEcosystem)
+			.values({ id: 'Equity:Losses', value: '', amount: event.args.amount })
+			.onConflictDoUpdate((current) => ({ amount: current.amount + event.args.amount })),
+		// read fpsTotalSupply if on mainnet
+		isMainnet
+			? context.client.readContract({ abi: erc20Abi, address: ADDRESS[mainnet.id].equity, functionName: 'totalSupply' })
+			: Promise.resolve(0n),
+	]);
 
 	let earningsPerFPS = { amount: 0n };
-	if (context.chain.id === mainnet.id) {
-		const fpsTotalSupply = await context.client.readContract({
-			abi: erc20Abi,
-			address: ADDRESS[mainnet.id].equity,
-			functionName: 'totalSupply',
-		});
+	if (isMainnet) {
 		const perToken = -(event.args.amount * parseEther('1')) / fpsTotalSupply;
 		earningsPerFPS.amount = perToken;
 
 		// upsert EarningsPerFPS
 		await context.db
 			.insert(CommonEcosystem)
-			.values({
-				id: 'Equity:EarningsPerFPS',
-				value: '',
-				amount: perToken,
-			})
-			.onConflictDoUpdate((current) => ({
-				amount: current.amount + perToken,
-			}));
+			.values({ id: 'Equity:EarningsPerFPS', value: '', amount: perToken })
+			.onConflictDoUpdate((current) => ({ amount: current.amount + perToken }));
 	}
 
 	// flat indexing earnings
@@ -212,6 +153,7 @@ ponder.on('Frankencoin:Loss', async ({ event, context }) => {
 		client: context.client,
 		db: context.db,
 		chainId: context.chain.id,
+		blockNumber: event.block.number,
 		timestamp: event.block.timestamp,
 		kind: 'Equity:Loss',
 		amount: event.args.amount,
@@ -220,7 +162,7 @@ ponder.on('Frankencoin:Loss', async ({ event, context }) => {
 });
 
 ponder.on('Frankencoin:MinterApplied', async ({ event, context }) => {
-	const minter = event.args.minter.toLowerCase() as Address;
+	const minter = normalizeAddress(event.args.minter);
 
 	// upsert status
 	await context.db
@@ -262,7 +204,7 @@ ponder.on('Frankencoin:MinterApplied', async ({ event, context }) => {
 });
 
 ponder.on('Frankencoin:MinterDenied', async ({ event, context }) => {
-	const minter = event.args.minter.toLowerCase() as Address;
+	const minter = normalizeAddress(event.args.minter);
 
 	// upsert status
 	await context.db

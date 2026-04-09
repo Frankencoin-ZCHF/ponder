@@ -1,4 +1,4 @@
-import { createConfig, factory, mergeAbis } from 'ponder';
+import { createConfig, mergeAbis } from 'ponder';
 import { arbitrum, avalanche, base, gnosis, mainnet, optimism, polygon, sonic } from 'viem/chains';
 import { createPublicClient, erc20Abi, http } from 'viem';
 import {
@@ -25,8 +25,9 @@ export const config = {
 	// core deployment
 	[mainnet.id]: {
 		rpc: `https://eth-mainnet.g.alchemy.com/v2/${process.env.ALCHEMY_RPC_KEY}`,
-		maxRequestsPerSecond: parseInt(process.env.MAX_REQUESTS_PER_SECOND || '50'),
-		pollingInterval: 5_000,
+		maxRequestsPerSecond: parseInt(process.env.MAX_REQUESTS_PER_SECOND || '10'),
+		pollingInterval: parseInt(process.env.POLLING_INTERVAL_MS || '30000'),
+		ethGetLogsBlockRange: 500, // ~12s blocks
 		startFrankencoin: 18451518,
 		startMintingHubV1: 18451536,
 		startMintingHubV2: 21280757,
@@ -39,45 +40,59 @@ export const config = {
 	// multichain support
 	[polygon.id]: {
 		rpc: `https://polygon-mainnet.g.alchemy.com/v2/${process.env.ALCHEMY_RPC_KEY}`,
-		maxRequestsPerSecond: parseInt(process.env.MAX_REQUESTS_PER_SECOND || '50'),
-		pollingInterval: 5_000,
+		maxRequestsPerSecond: parseInt(process.env.MAX_REQUESTS_PER_SECOND || '10'),
+		pollingInterval: parseInt(process.env.POLLING_INTERVAL_MS || '30000'),
+		ethGetLogsBlockRange: 2000, // ~2s blocks
 		startBridgedFrankencoin: 72384538,
+		startSavingsReferal: 72993144,
 	},
 	[arbitrum.id]: {
 		rpc: `https://arb-mainnet.g.alchemy.com/v2/${process.env.ALCHEMY_RPC_KEY}`,
-		maxRequestsPerSecond: parseInt(process.env.MAX_REQUESTS_PER_SECOND || '50'),
-		pollingInterval: 5_000,
+		maxRequestsPerSecond: parseInt(process.env.MAX_REQUESTS_PER_SECOND || '10'),
+		pollingInterval: parseInt(process.env.POLLING_INTERVAL_MS || '30000'),
+		ethGetLogsBlockRange: 10000, // ~250ms blocks — batch more to reduce request count
 		startBridgedFrankencoin: 343470012,
+		startSavingsReferal: 349273896,
 	},
 	[optimism.id]: {
 		rpc: `https://opt-mainnet.g.alchemy.com/v2/${process.env.ALCHEMY_RPC_KEY}`,
-		maxRequestsPerSecond: parseInt(process.env.MAX_REQUESTS_PER_SECOND || '50'),
-		pollingInterval: 5_000,
+		maxRequestsPerSecond: parseInt(process.env.MAX_REQUESTS_PER_SECOND || '10'),
+		pollingInterval: parseInt(process.env.POLLING_INTERVAL_MS || '30000'),
+		ethGetLogsBlockRange: 2000, // ~2s blocks
 		startBridgedFrankencoin: 136678320,
+		startSavingsReferal: 137404676,
 	},
 	[base.id]: {
 		rpc: `https://base-mainnet.g.alchemy.com/v2/${process.env.ALCHEMY_RPC_KEY}`,
-		maxRequestsPerSecond: parseInt(process.env.MAX_REQUESTS_PER_SECOND || '50'),
-		pollingInterval: 5_000,
+		maxRequestsPerSecond: parseInt(process.env.MAX_REQUESTS_PER_SECOND || '10'),
+		pollingInterval: parseInt(process.env.POLLING_INTERVAL_MS || '30000'),
+		ethGetLogsBlockRange: 2000, // ~2s blocks
 		startBridgedFrankencoin: 31080190,
+		startSavingsReferal: 31809565,
 	},
 	[avalanche.id]: {
 		rpc: `https://avax-mainnet.g.alchemy.com/v2/${process.env.ALCHEMY_RPC_KEY}`,
-		maxRequestsPerSecond: parseInt(process.env.MAX_REQUESTS_PER_SECOND || '50'),
-		pollingInterval: 5_000,
-		startBridgedFrankencoin: 63235410,
+		maxRequestsPerSecond: parseInt(process.env.MAX_REQUESTS_PER_SECOND || '10'),
+		pollingInterval: parseInt(process.env.POLLING_INTERVAL_MS || '30000'),
+		ethGetLogsBlockRange: 2000, // ~2s blocks
+		startBridgedFrankencoin: 63337938,
+		startSavingsReferal: 64919925,
 	},
 	[gnosis.id]: {
 		rpc: `https://gnosis-mainnet.g.alchemy.com/v2/${process.env.ALCHEMY_RPC_KEY}`,
-		maxRequestsPerSecond: parseInt(process.env.MAX_REQUESTS_PER_SECOND || '50'),
-		pollingInterval: 5_000,
+		maxRequestsPerSecond: parseInt(process.env.MAX_REQUESTS_PER_SECOND || '10'),
+		pollingInterval: parseInt(process.env.POLLING_INTERVAL_MS || '30000'),
+		ethGetLogsBlockRange: 500, // ~5s blocks
 		startBridgedFrankencoin: 40394536,
+		startSavingsReferal: 40678291,
 	},
 	[sonic.id]: {
 		rpc: `https://sonic-mainnet.g.alchemy.com/v2/${process.env.ALCHEMY_RPC_KEY}`,
-		maxRequestsPerSecond: parseInt(process.env.MAX_REQUESTS_PER_SECOND || '50'),
-		pollingInterval: 5_000,
+		maxRequestsPerSecond: parseInt(process.env.MAX_REQUESTS_PER_SECOND || '10'),
+		pollingInterval: parseInt(process.env.POLLING_INTERVAL_MS || '30000'),
+		ethGetLogsBlockRange: 5000, // ~500ms blocks
 		startBridgedFrankencoin: 31589491,
+		startSavingsReferal: 34961851,
 	},
 };
 
@@ -99,6 +114,7 @@ export default createConfig({
 			id: mainnet.id,
 			maxRequestsPerSecond: config[mainnet.id].maxRequestsPerSecond,
 			pollingInterval: config[mainnet.id].pollingInterval,
+			ethGetLogsBlockRange: config[mainnet.id].ethGetLogsBlockRange,
 			rpc: http(config[mainnet.id].rpc),
 		},
 
@@ -107,42 +123,49 @@ export default createConfig({
 			id: polygon.id,
 			maxRequestsPerSecond: config[polygon.id].maxRequestsPerSecond,
 			pollingInterval: config[polygon.id].pollingInterval,
+			ethGetLogsBlockRange: config[polygon.id].ethGetLogsBlockRange,
 			rpc: http(config[polygon.id].rpc),
 		},
 		[arbitrum.name]: {
 			id: arbitrum.id,
 			maxRequestsPerSecond: config[arbitrum.id].maxRequestsPerSecond,
 			pollingInterval: config[arbitrum.id].pollingInterval,
+			ethGetLogsBlockRange: config[arbitrum.id].ethGetLogsBlockRange,
 			rpc: http(config[arbitrum.id].rpc),
 		},
 		[optimism.name]: {
 			id: optimism.id,
 			maxRequestsPerSecond: config[optimism.id].maxRequestsPerSecond,
 			pollingInterval: config[optimism.id].pollingInterval,
+			ethGetLogsBlockRange: config[optimism.id].ethGetLogsBlockRange,
 			rpc: http(config[optimism.id].rpc),
 		},
 		[base.name]: {
 			id: base.id,
 			maxRequestsPerSecond: config[base.id].maxRequestsPerSecond,
 			pollingInterval: config[base.id].pollingInterval,
+			ethGetLogsBlockRange: config[base.id].ethGetLogsBlockRange,
 			rpc: http(config[base.id].rpc),
 		},
 		[avalanche.name]: {
 			id: avalanche.id,
 			maxRequestsPerSecond: config[avalanche.id].maxRequestsPerSecond,
 			pollingInterval: config[avalanche.id].pollingInterval,
+			ethGetLogsBlockRange: config[avalanche.id].ethGetLogsBlockRange,
 			rpc: http(config[avalanche.id].rpc),
 		},
 		[gnosis.name]: {
 			id: gnosis.id,
 			maxRequestsPerSecond: config[gnosis.id].maxRequestsPerSecond,
 			pollingInterval: config[gnosis.id].pollingInterval,
+			ethGetLogsBlockRange: config[gnosis.id].ethGetLogsBlockRange,
 			rpc: http(config[gnosis.id].rpc),
 		},
 		[sonic.name]: {
 			id: sonic.id,
 			maxRequestsPerSecond: config[sonic.id].maxRequestsPerSecond,
 			pollingInterval: config[sonic.id].pollingInterval,
+			ethGetLogsBlockRange: config[sonic.id].ethGetLogsBlockRange,
 			rpc: http(config[sonic.id].rpc),
 		},
 	},
@@ -287,35 +310,35 @@ export default createConfig({
 			chain: {
 				[mainnet.name]: {
 					address: [addr[mainnet.id].savingsReferral],
-					startBlock: config[mainnet.id].startMintingHubV2,
+					startBlock: config[mainnet.id].startSavingsReferal,
 				},
 				[polygon.name]: {
 					address: [addr[polygon.id].ccipBridgedSavings],
-					startBlock: config[polygon.id].startBridgedFrankencoin,
+					startBlock: config[polygon.id].startSavingsReferal,
 				},
 				[arbitrum.name]: {
 					address: [addr[arbitrum.id].ccipBridgedSavings],
-					startBlock: config[arbitrum.id].startBridgedFrankencoin,
+					startBlock: config[arbitrum.id].startSavingsReferal,
 				},
 				[optimism.name]: {
 					address: [addr[optimism.id].ccipBridgedSavings],
-					startBlock: config[optimism.id].startBridgedFrankencoin,
+					startBlock: config[optimism.id].startSavingsReferal,
 				},
 				[base.name]: {
 					address: [addr[base.id].ccipBridgedSavings],
-					startBlock: config[base.id].startBridgedFrankencoin,
+					startBlock: config[base.id].startSavingsReferal,
 				},
 				[avalanche.name]: {
 					address: [addr[avalanche.id].ccipBridgedSavings],
-					startBlock: config[avalanche.id].startBridgedFrankencoin,
+					startBlock: config[avalanche.id].startSavingsReferal,
 				},
 				[gnosis.name]: {
 					address: [addr[gnosis.id].ccipBridgedSavings],
-					startBlock: config[gnosis.id].startBridgedFrankencoin,
+					startBlock: config[gnosis.id].startSavingsReferal,
 				},
 				[sonic.name]: {
 					address: [addr[sonic.id].ccipBridgedSavings],
-					startBlock: config[sonic.id].startBridgedFrankencoin,
+					startBlock: config[sonic.id].startSavingsReferal,
 				},
 			},
 		},
@@ -363,28 +386,6 @@ export default createConfig({
 					startBlock: config[sonic.id].startBridgedFrankencoin,
 				},
 			},
-		},
-
-		ERC20PositionV1: {
-			abi: erc20Abi,
-			chain: mainnet.name,
-			address: factory({
-				address: addr[mainnet.id].mintingHubV1,
-				event: openPositionEventV1,
-				parameter: 'collateral',
-			}),
-			startBlock: process.env.INDEX_ERC20POSITION_V1 == 'true' ? config[mainnet.id].startMintingHubV1 : Number.MAX_SAFE_INTEGER,
-		},
-
-		ERC20PositionV2: {
-			abi: erc20Abi,
-			chain: mainnet.name,
-			address: factory({
-				address: addr[mainnet.id].mintingHubV2,
-				event: openPositionEventV2,
-				parameter: 'collateral',
-			}),
-			startBlock: process.env.INDEX_ERC20POSITION_V1 == 'true' ? config[mainnet.id].startMintingHubV2 : Number.MAX_SAFE_INTEGER,
 		},
 
 		// ### CROSS CHAIN SUPPORT ###

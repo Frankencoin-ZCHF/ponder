@@ -8,6 +8,7 @@ import {
 	MintingHubV1Status,
 } from 'ponder:schema';
 import { Address } from 'viem';
+import { normalizeAddress } from './utils/format';
 
 /*
 Events
@@ -35,117 +36,46 @@ ponder.on('MintingHubV1:PositionOpened', async ({ event, context }) => {
 	const original: `0x${string}` = isOriginal ? position : (`0x${event.transaction.input.slice(34, 74)}` as `0x${string}`);
 
 	// ------------------------------------------------------------------
-	// CONST
-	const minimumCollateral = await client.readContract({
-		abi: PositionV1ABI,
-		address: position,
-		functionName: 'minimumCollateral',
-	});
-
-	const annualInterestPPM = await client.readContract({
-		abi: PositionV1ABI,
-		address: position,
-		functionName: 'annualInterestPPM',
-	});
-
-	const reserveContribution = await client.readContract({
-		abi: PositionV1ABI,
-		address: position,
-		functionName: 'reserveContribution',
-	});
-
-	const start = await client.readContract({
-		abi: PositionV1ABI,
-		address: position,
-		functionName: 'start',
-	});
-
-	const expiration = await client.readContract({
-		abi: PositionV1ABI,
-		address: position,
-		functionName: 'expiration',
-	});
-
-	const challengePeriod = await client.readContract({
-		abi: PositionV1ABI,
-		address: position,
-		functionName: 'challengePeriod',
-	});
-
-	// ------------------------------------------------------------------
-	// ZCHF ERC20
-	const zchfName = await client.readContract({
-		abi: ERC20ABI,
-		address: zchf,
-		functionName: 'name',
-	});
-
-	const zchfSymbol = await client.readContract({
-		abi: ERC20ABI,
-		address: zchf,
-		functionName: 'symbol',
-	});
-
-	const zchfDecimals = await client.readContract({
-		abi: ERC20ABI,
-		address: zchf,
-		functionName: 'decimals',
-	});
-
-	// ------------------------------------------------------------------
-	// COLLATERAL ERC20
-	const collateralName = await client.readContract({
-		abi: ERC20ABI,
-		address: collateral,
-		functionName: 'name',
-	});
-
-	const collateralSymbol = await client.readContract({
-		abi: ERC20ABI,
-		address: collateral,
-		functionName: 'symbol',
-	});
-
-	const collateralDecimals = await client.readContract({
-		abi: ERC20ABI,
-		address: collateral,
-		functionName: 'decimals',
-	});
-
-	const collateralBalance = await client.readContract({
-		abi: ERC20ABI,
-		address: collateral,
-		functionName: 'balanceOf',
-		args: [position],
-	});
-
-	// ------------------------------------------------------------------
-	// CHANGEABLE
-	// TODO: Keep in mind for developer, "limitForClones" is "limit" from SC
-	const limitForClones = await client.readContract({
-		abi: PositionV1ABI,
-		address: position,
-		functionName: 'limit',
-	});
-
-	// TODO: Keep in mind for developer, "availableForClones" is "limitForClones" from SC
-	const availableForClones = await client.readContract({
-		abi: PositionV1ABI,
-		address: position,
-		functionName: 'limitForClones',
-	});
-
-	const minted = await client.readContract({
-		abi: PositionV1ABI,
-		address: position,
-		functionName: 'minted',
-	});
-
-	const cooldown = await client.readContract({
-		abi: PositionV1ABI,
-		address: event.args.position,
-		functionName: 'cooldown',
-	});
+	// CONST + ERC20 + CHANGEABLE (all independent, fetch in parallel)
+	const [
+		minimumCollateral,
+		annualInterestPPM,
+		reserveContribution,
+		start,
+		expiration,
+		challengePeriod,
+		zchfName,
+		zchfSymbol,
+		zchfDecimals,
+		collateralName,
+		collateralSymbol,
+		collateralDecimals,
+		collateralBalance,
+		// TODO: Keep in mind for developer, "limitForClones" is "limit" from SC
+		limitForClones,
+		// TODO: Keep in mind for developer, "availableForClones" is "limitForClones" from SC
+		availableForClones,
+		minted,
+		cooldown,
+	] = await Promise.all([
+		client.readContract({ abi: PositionV1ABI, address: position, functionName: 'minimumCollateral' }),
+		client.readContract({ abi: PositionV1ABI, address: position, functionName: 'annualInterestPPM' }),
+		client.readContract({ abi: PositionV1ABI, address: position, functionName: 'reserveContribution' }),
+		client.readContract({ abi: PositionV1ABI, address: position, functionName: 'start' }),
+		client.readContract({ abi: PositionV1ABI, address: position, functionName: 'expiration' }),
+		client.readContract({ abi: PositionV1ABI, address: position, functionName: 'challengePeriod' }),
+		client.readContract({ abi: ERC20ABI, address: zchf, functionName: 'name' }),
+		client.readContract({ abi: ERC20ABI, address: zchf, functionName: 'symbol' }),
+		client.readContract({ abi: ERC20ABI, address: zchf, functionName: 'decimals' }),
+		client.readContract({ abi: ERC20ABI, address: collateral, functionName: 'name' }),
+		client.readContract({ abi: ERC20ABI, address: collateral, functionName: 'symbol' }),
+		client.readContract({ abi: ERC20ABI, address: collateral, functionName: 'decimals' }),
+		client.readContract({ abi: ERC20ABI, address: collateral, functionName: 'balanceOf', args: [position] }),
+		client.readContract({ abi: PositionV1ABI, address: position, functionName: 'limit' }),
+		client.readContract({ abi: PositionV1ABI, address: position, functionName: 'limitForClones' }),
+		client.readContract({ abi: PositionV1ABI, address: position, functionName: 'minted' }),
+		client.readContract({ abi: PositionV1ABI, address: position, functionName: 'cooldown' }),
+	]);
 
 	// ------------------------------------------------------------------
 	// CALC VALUES
@@ -158,19 +88,12 @@ ponder.on('MintingHubV1:PositionOpened', async ({ event, context }) => {
 	// ------------------------------------------------------------------
 	// If clone, update original position
 	if (isClone) {
-		const originalLimitForClones = await client.readContract({
-			abi: PositionV1ABI,
-			address: original,
-			functionName: 'limit',
-		});
+		const [originalLimitForClones, originalAvailableForClones] = await Promise.all([
+			client.readContract({ abi: PositionV1ABI, address: original, functionName: 'limit' }),
+			client.readContract({ abi: PositionV1ABI, address: original, functionName: 'limitForClones' }),
+		]);
 
-		const originalAvailableForClones = await client.readContract({
-			abi: PositionV1ABI,
-			address: original,
-			functionName: 'limitForClones',
-		});
-
-		await context.db.update(MintingHubV1PositionV1, { position: original.toLowerCase() as Address }).set({
+		await context.db.update(MintingHubV1PositionV1, { position: normalizeAddress(original) }).set({
 			limitForClones: originalLimitForClones,
 			availableForClones: originalAvailableForClones,
 		});
@@ -181,7 +104,7 @@ ponder.on('MintingHubV1:PositionOpened', async ({ event, context }) => {
 	// ------------------------------------------------------------------
 	// Create position entry for DB
 	await context.db.insert(MintingHubV1PositionV1).values({
-		position: position.toLowerCase() as Address,
+		position: normalizeAddress(position),
 		owner,
 		zchf,
 		collateral,
@@ -191,6 +114,7 @@ ponder.on('MintingHubV1:PositionOpened', async ({ event, context }) => {
 		isOriginal,
 		isClone,
 		denied,
+		denyDate: 0n,
 		closed,
 		original,
 
@@ -235,7 +159,7 @@ ponder.on('MintingHubV1:PositionOpened', async ({ event, context }) => {
 	await context.db
 		.insert(MintingHubV1Status)
 		.values({
-			position: event.args.position.toLowerCase() as Address,
+			position: normalizeAddress(event.args.position),
 			ownerTransfersCounter: 0n,
 			mintingUpdatesCounter: 0n,
 			challengeStartedCounter: 0n,
@@ -259,27 +183,14 @@ ponder.on('MintingHubV1:ChallengeStarted', async ({ event, context }) => {
 	const { client } = context;
 	const { MintingHubV1 } = context.contracts;
 
-	const challenges = await client.readContract({
-		abi: MintingHubV1.abi,
-		address: MintingHubV1.address,
-		functionName: 'challenges',
-		args: [event.args.number],
-	});
-
-	const period = await client.readContract({
-		abi: PositionV1ABI,
-		address: event.args.position,
-		functionName: 'challengePeriod',
-	});
-
-	const liqPrice = await client.readContract({
-		abi: PositionV1ABI,
-		address: event.args.position,
-		functionName: 'price',
-	});
+	const [challenges, period, liqPrice] = await Promise.all([
+		client.readContract({ abi: MintingHubV1.abi, address: MintingHubV1.address, functionName: 'challenges', args: [event.args.number] }),
+		client.readContract({ abi: PositionV1ABI, address: event.args.position, functionName: 'challengePeriod' }),
+		client.readContract({ abi: PositionV1ABI, address: event.args.position, functionName: 'price' }),
+	]);
 
 	await context.db.insert(MintingHubV1ChallengeV1).values({
-		position: event.args.position.toLowerCase() as Address,
+		position: normalizeAddress(event.args.position),
 		number: event.args.number,
 		txHash: event.transaction.hash,
 
@@ -312,7 +223,7 @@ ponder.on('MintingHubV1:ChallengeStarted', async ({ event, context }) => {
 	await context.db
 		.insert(MintingHubV1Status)
 		.values({
-			position: event.args.position.toLowerCase() as Address,
+			position: normalizeAddress(event.args.position),
 			ownerTransfersCounter: 0n,
 			mintingUpdatesCounter: 0n,
 			challengeStartedCounter: 1n,
@@ -329,46 +240,37 @@ ponder.on('MintingHubV1:ChallengeAverted', async ({ event, context }) => {
 	const { client } = context;
 	const { MintingHubV1 } = context.contracts;
 
-	const challenges = await client.readContract({
-		abi: MintingHubV1.abi,
-		address: MintingHubV1.address,
-		functionName: 'challenges',
-		args: [event.args.number],
-	});
+	const [challenges, cooldown, liqPrice, challenge] = await Promise.all([
+		client.readContract({ abi: MintingHubV1.abi, address: MintingHubV1.address, functionName: 'challenges', args: [event.args.number] }),
+		client.readContract({ abi: PositionV1ABI, address: event.args.position, functionName: 'cooldown' }),
+		client.readContract({ abi: PositionV1ABI, address: event.args.position, functionName: 'price' }),
+		context.db.find(MintingHubV1ChallengeV1, { position: normalizeAddress(event.args.position), number: event.args.number }),
+	]);
 
-	const cooldown = await client.readContract({
-		abi: PositionV1ABI,
-		address: event.args.position,
-		functionName: 'cooldown',
-	});
+	if (!challenge) {
+		console.error('ChallengeV1 not found in ChallengeAverted event:', {
+			position: event.args.position,
+			number: event.args.number,
+			size: event.args.size,
+			txHash: event.transaction.hash,
+			blockNumber: event.block.number,
+		});
+		throw new Error('ChallengeV1 not found');
+	}
 
-	const liqPrice = await client.readContract({
-		abi: PositionV1ABI,
-		address: event.args.position,
-		functionName: 'price',
-	});
-
-	const challenge = await context.db.find(MintingHubV1ChallengeV1, {
-		position: event.args.position.toLowerCase() as Address,
-		number: event.args.number,
-	});
-
-	if (!challenge) throw new Error('ChallengeV1 not found');
-
-	const _price: number = parseInt(liqPrice.toString());
-	const _size: number = parseInt(event.args.size.toString());
-	const _amount: number = (_price / 1e18) * _size;
+	// Keep as bigint throughout calculations to preserve precision
+	const _amount = (liqPrice * event.args.size) / BigInt(10 ** 18);
 
 	// create ChallengeBidV1 entry
 	await context.db.insert(MintingHubV1ChallengeBidV1).values({
-		position: event.args.position.toLowerCase() as Address,
+		position: normalizeAddress(event.args.position),
 		number: event.args.number,
 		numberBid: challenge.bids,
 		txHash: event.transaction.hash,
 		bidder: event.transaction.from,
 		created: event.block.timestamp,
 		bidType: 'Averted',
-		bid: BigInt(_amount),
+		bid: _amount,
 		price: liqPrice,
 		filledSize: event.args.size,
 		acquiredCollateral: 0n,
@@ -377,7 +279,7 @@ ponder.on('MintingHubV1:ChallengeAverted', async ({ event, context }) => {
 
 	// update ChallengeV1 related changes
 	await context.db
-		.update(MintingHubV1ChallengeV1, { position: event.args.position.toLowerCase() as Address, number: event.args.number })
+		.update(MintingHubV1ChallengeV1, { position: normalizeAddress(event.args.position), number: event.args.number })
 		.set((current) => ({
 			bids: current.bids + 1n,
 			filledSize: current.filledSize + event.args.size,
@@ -385,7 +287,7 @@ ponder.on('MintingHubV1:ChallengeAverted', async ({ event, context }) => {
 		}));
 
 	// update PositionV1 related changes
-	await context.db.update(MintingHubV1PositionV1, { position: event.args.position.toLowerCase() as Address }).set({ cooldown });
+	await context.db.update(MintingHubV1PositionV1, { position: normalizeAddress(event.args.position) }).set({ cooldown });
 
 	// ------------------------------------------------------------------
 	// COMMON
@@ -400,7 +302,7 @@ ponder.on('MintingHubV1:ChallengeAverted', async ({ event, context }) => {
 			amount: current.amount + 1n,
 		}));
 
-	await context.db.update(MintingHubV1Status, { position: event.args.position.toLowerCase() as Address }).set((current) => ({
+	await context.db.update(MintingHubV1Status, { position: normalizeAddress(event.args.position) }).set((current) => ({
 		challengeAvertedBidsCounter: current.challengeAvertedBidsCounter + 1n,
 	}));
 });
@@ -409,33 +311,31 @@ ponder.on('MintingHubV1:ChallengeSucceeded', async ({ event, context }) => {
 	const { client } = context;
 	const { MintingHubV1 } = context.contracts;
 
-	const challenges = await client.readContract({
-		abi: MintingHubV1.abi,
-		address: MintingHubV1.address,
-		functionName: 'challenges',
-		args: [event.args.number],
-	});
+	const [challenges, cooldown, challenge] = await Promise.all([
+		client.readContract({ abi: MintingHubV1.abi, address: MintingHubV1.address, functionName: 'challenges', args: [event.args.number] }),
+		client.readContract({ abi: PositionV1ABI, address: event.args.position, functionName: 'cooldown' }),
+		context.db.find(MintingHubV1ChallengeV1, { position: normalizeAddress(event.args.position), number: event.args.number }),
+	]);
 
-	const cooldown = await client.readContract({
-		abi: PositionV1ABI,
-		address: event.args.position,
-		functionName: 'cooldown',
-	});
+	if (!challenge) {
+		console.error('ChallengeV1 not found in ChallengeSucceeded event:', {
+			position: event.args.position,
+			number: event.args.number,
+			bid: event.args.bid,
+			challengeSize: event.args.challengeSize,
+			acquiredCollateral: event.args.acquiredCollateral,
+			txHash: event.transaction.hash,
+			blockNumber: event.block.number,
+		});
+		throw new Error('ChallengeV1 not found');
+	}
 
-	const challenge = await context.db.find(MintingHubV1ChallengeV1, {
-		position: event.args.position.toLowerCase() as Address,
-		number: event.args.number,
-	});
-
-	if (!challenge) throw new Error('ChallengeV1 not found');
-
-	const _bid: number = parseInt(event.args.bid.toString());
-	const _size: number = parseInt(event.args.challengeSize.toString());
-	const _price: number = (_bid * 10 ** 18) / _size;
+	// Keep as bigint throughout calculations to preserve precision
+	const _price = (event.args.bid * BigInt(10 ** 18)) / event.args.challengeSize;
 
 	// create ChallengeBidV1 entry
 	await context.db.insert(MintingHubV1ChallengeBidV1).values({
-		position: event.args.position.toLowerCase() as Address,
+		position: normalizeAddress(event.args.position),
 		number: event.args.number,
 		numberBid: challenge.bids,
 		txHash: event.transaction.hash,
@@ -443,7 +343,7 @@ ponder.on('MintingHubV1:ChallengeSucceeded', async ({ event, context }) => {
 		created: event.block.timestamp,
 		bidType: 'Succeeded',
 		bid: event.args.bid,
-		price: BigInt(_price),
+		price: _price,
 		filledSize: event.args.challengeSize,
 		acquiredCollateral: event.args.acquiredCollateral,
 		challengeSize: challenge.size,
@@ -451,7 +351,7 @@ ponder.on('MintingHubV1:ChallengeSucceeded', async ({ event, context }) => {
 
 	// update ChallengeV1 related changes
 	await context.db
-		.update(MintingHubV1ChallengeV1, { position: event.args.position.toLowerCase() as Address, number: event.args.number })
+		.update(MintingHubV1ChallengeV1, { position: normalizeAddress(event.args.position), number: event.args.number })
 		.set((current) => ({
 			bids: current.bids + 1n,
 			acquiredCollateral: current.acquiredCollateral + event.args.acquiredCollateral,
@@ -460,7 +360,7 @@ ponder.on('MintingHubV1:ChallengeSucceeded', async ({ event, context }) => {
 		}));
 
 	// update PositionV1 related changes
-	await context.db.update(MintingHubV1PositionV1, { position: event.args.position.toLowerCase() as Address }).set({ cooldown });
+	await context.db.update(MintingHubV1PositionV1, { position: normalizeAddress(event.args.position) }).set({ cooldown });
 
 	// ------------------------------------------------------------------
 	// COMMON
@@ -475,7 +375,7 @@ ponder.on('MintingHubV1:ChallengeSucceeded', async ({ event, context }) => {
 			amount: current.amount + 1n,
 		}));
 
-	await context.db.update(MintingHubV1Status, { position: event.args.position.toLowerCase() as Address }).set((current) => ({
+	await context.db.update(MintingHubV1Status, { position: normalizeAddress(event.args.position) }).set((current) => ({
 		challengeSucceededBidsCounter: current.challengeSucceededBidsCounter + 1n,
 	}));
 });

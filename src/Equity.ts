@@ -30,116 +30,80 @@ ponder.on('Equity:Trade', async ({ event, context }) => {
 
 	// invested or redeemed
 	if (shares > 0n) {
-		// cnt invested
-		await context.db
-			.insert(CommonEcosystem)
-			.values({
-				id: 'Equity:InvestedCounter',
-				value: '',
-				amount: 1n,
-			})
-			.onConflictDoUpdate((current) => ({
-				amount: current.amount + 1n,
-			}));
-
-		// accum.
-		await context.db
-			.insert(CommonEcosystem)
-			.values({
-				id: 'Equity:Invested',
-				value: '',
-				amount: amount,
-			})
-			.onConflictDoUpdate((current) => ({
-				amount: current.amount + amount,
-			}));
-
-		// calc fee PPM for raw data
-		await context.db
-			.insert(CommonEcosystem)
-			.values({
-				id: 'Equity:InvestedFeePaidPPM',
-				value: '',
-				amount: amount * 3000n,
-			})
-			.onConflictDoUpdate((current) => ({
-				amount: current.amount + amount * 3000n,
-			}));
-
-		// update trades, unique key
-		await context.db.insert(EquityTrade).values({
-			kind: 'Invested',
-			count: counter.amount,
-			trader,
-			amount,
-			shares,
-			price,
-			created: time,
-			txHash: event.transaction.hash,
-		});
+		await Promise.all([
+			// cnt invested
+			context.db
+				.insert(CommonEcosystem)
+				.values({ id: 'Equity:InvestedCounter', value: '', amount: 1n })
+				.onConflictDoUpdate((current) => ({ amount: current.amount + 1n })),
+			// accum.
+			context.db
+				.insert(CommonEcosystem)
+				.values({ id: 'Equity:Invested', value: '', amount: amount })
+				.onConflictDoUpdate((current) => ({ amount: current.amount + amount })),
+			// calc fee PPM for raw data
+			context.db
+				.insert(CommonEcosystem)
+				.values({ id: 'Equity:InvestedFeePaidPPM', value: '', amount: amount * 3000n })
+				.onConflictDoUpdate((current) => ({ amount: current.amount + amount * 3000n })),
+			// update trades, unique key
+			context.db.insert(EquityTrade).values({
+				kind: 'Invested',
+				count: counter.amount,
+				trader,
+				amount,
+				shares,
+				price,
+				created: time,
+				txHash: event.transaction.hash,
+			}),
+		]);
 
 		await updateTransactionLog({
 			client: context.client,
 			db: context.db,
 			chainId: context.chain.id,
+			blockNumber: event.block.number,
 			timestamp: event.block.timestamp,
 			kind: 'Equity:Invested',
 			amount,
 			txHash: event.transaction.hash,
 		});
 	} else {
-		// cnt redeemed
-		await context.db
-			.insert(CommonEcosystem)
-			.values({
-				id: 'Equity:RedeemedCounter',
-				value: '',
-				amount: 1n,
-			})
-			.onConflictDoUpdate((current) => ({
-				amount: current.amount + 1n,
-			}));
-
-		// accum.
-		await context.db
-			.insert(CommonEcosystem)
-			.values({
-				id: 'Equity:Redeemed',
-				value: '',
-				amount: amount,
-			})
-			.onConflictDoUpdate((current) => ({
-				amount: current.amount + amount,
-			}));
-
-		// calc fee PPM for raw data
-		await context.db
-			.insert(CommonEcosystem)
-			.values({
-				id: 'Equity:RedeemedFeePaidPPM',
-				value: '',
-				amount: amount * 3000n,
-			})
-			.onConflictDoUpdate((current) => ({
-				amount: current.amount + amount * 3000n,
-			}));
-
-		// update trades, unique key
-		await context.db.insert(EquityTrade).values({
-			kind: 'Redeemed',
-			count: counter.amount,
-			trader,
-			amount,
-			shares,
-			price,
-			created: time,
-			txHash: event.transaction.hash,
-		});
+		await Promise.all([
+			// cnt redeemed
+			context.db
+				.insert(CommonEcosystem)
+				.values({ id: 'Equity:RedeemedCounter', value: '', amount: 1n })
+				.onConflictDoUpdate((current) => ({ amount: current.amount + 1n })),
+			// accum.
+			context.db
+				.insert(CommonEcosystem)
+				.values({ id: 'Equity:Redeemed', value: '', amount: amount })
+				.onConflictDoUpdate((current) => ({ amount: current.amount + amount })),
+			// calc fee PPM for raw data
+			context.db
+				.insert(CommonEcosystem)
+				.values({ id: 'Equity:RedeemedFeePaidPPM', value: '', amount: amount * 3000n })
+				.onConflictDoUpdate((current) => ({ amount: current.amount + amount * 3000n })),
+			// update trades, unique key
+			context.db.insert(EquityTrade).values({
+				kind: 'Redeemed',
+				count: counter.amount,
+				trader,
+				amount,
+				shares,
+				price,
+				created: time,
+				txHash: event.transaction.hash,
+			}),
+		]);
 
 		await updateTransactionLog({
 			client: context.client,
 			db: context.db,
 			chainId: context.chain.id,
+			blockNumber: event.block.number,
 			timestamp: event.block.timestamp,
 			kind: 'Equity:Redeemed',
 			amount,

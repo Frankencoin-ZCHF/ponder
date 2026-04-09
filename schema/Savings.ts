@@ -33,7 +33,7 @@ export const LeadrateRateChanged = onchainTable(
 		created: t.bigint().notNull(),
 		blockheight: t.bigint().notNull(),
 		count: t.bigint().notNull(),
-		module: t.text().notNull(),
+		module: t.hex().notNull(),
 		txHash: t.hex().notNull(),
 		approvedRate: t.integer().notNull(),
 	}),
@@ -49,7 +49,7 @@ export const LeadRateProposed = onchainTable(
 		created: t.bigint().notNull(),
 		blockheight: t.bigint().notNull(),
 		count: t.bigint().notNull(),
-		module: t.text().notNull(),
+		module: t.hex().notNull(),
 		txHash: t.hex().notNull(),
 		proposer: t.hex().notNull(),
 		nextRate: t.integer().notNull(),
@@ -66,8 +66,8 @@ export const SavingsMapping = onchainTable(
 	'SavingsMapping',
 	(t) => ({
 		chainId: t.integer().notNull(),
-		module: t.text().notNull(),
-		account: t.text().notNull(),
+		module: t.hex().notNull(),
+		account: t.hex().notNull(),
 		created: t.bigint().notNull(), // first timestamp
 		updated: t.bigint().notNull(), // latest timestamp
 		save: t.bigint().notNull(), // accum. into savings
@@ -87,8 +87,8 @@ export const SavingsActivity = onchainTable(
 	'SavingsActivity',
 	(t) => ({
 		chainId: t.integer().notNull(),
-		module: t.text().notNull(),
-		account: t.text().notNull(),
+		module: t.hex().notNull(),
+		account: t.hex().notNull(),
 		created: t.bigint().notNull(),
 		blockheight: t.bigint(),
 		count: t.bigint().notNull(), // accum. counter, saved + interest. + withdrawn
@@ -110,12 +110,12 @@ export const SavingsReferrerMapping = onchainTable(
 	'SavingsReferrerMapping',
 	(t) => ({
 		chainId: t.integer().notNull(),
-		module: t.text().notNull(),
-		account: t.text().notNull(),
+		module: t.hex().notNull(),
+		account: t.hex().notNull(),
 		created: t.bigint().notNull(), // first timestamp
 		updated: t.bigint().notNull(), // latest timestamp
 		balance: t.bigint().notNull(),
-		referrer: t.text().notNull(),
+		referrer: t.hex().notNull(),
 		referrerFee: t.integer().notNull(),
 	}),
 	(table) => ({
@@ -127,11 +127,11 @@ export const SavingsReferrerEarnings = onchainTable(
 	'SavingsReferrerEarnings',
 	(t) => ({
 		chainId: t.integer().notNull(),
-		module: t.text().notNull(),
-		account: t.text().notNull(),
+		module: t.hex().notNull(),
+		account: t.hex().notNull(),
 		created: t.bigint().notNull(), // first timestamp
 		updated: t.bigint().notNull(), // latest timestamp
-		referrer: t.text().notNull(),
+		referrer: t.hex().notNull(),
 		earnings: t.bigint().notNull(),
 	}),
 	(table) => ({
