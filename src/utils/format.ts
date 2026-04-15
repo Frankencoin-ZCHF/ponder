@@ -29,6 +29,6 @@ export function timestampToSeconds(ms: number | string) {
 	return String(Math.floor(Number(ms) / 1000));
 }
 
-export function timestampStartOfDay(ms: number | string) {
-	return String(Number(ms) - (Number(ms) % 86_400_000));
+export function timestampStartOfDay(seconds: number | string) {
+	return String(Number(seconds) - (Number(seconds) % 86_400));
 }
