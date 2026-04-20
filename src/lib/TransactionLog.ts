@@ -54,13 +54,13 @@ export async function updateTransactionLog({ client, db, chainId, blockNumber, t
 	const redeemedFeePaid = (ecosystemData.get('Equity:RedeemedFeePaidPPM') ?? 0n) / 1_000_000n;
 	const totalTradeFee = investedFeePaid + redeemedFeePaid;
 	const earningsPerFPS = ecosystemData.get('Equity:EarningsPerFPS') ?? 0n;
+	const mintHubV2Started = blockNumber >= BigInt(config[mainnet.id].startMintingHubV2);
+	const savingsReferalStarted = blockNumber >= BigInt(config[mainnet.id].startSavingsReferal);
+
 	const totalSaved = ecosystemData.get('Savings:TotalSaved') ?? 0n;
 	const totalInterestCollected = ecosystemData.get('Savings:TotalInterestCollected') ?? 0n;
 	const totalWithdrawn = ecosystemData.get('Savings:TotalWithdrawn') ?? 0n;
-	const totalSavings = totalSaved + totalInterestCollected - totalWithdrawn;
-
-	const mintHubV2Started = blockNumber >= BigInt(config[mainnet.id].startMintingHubV2);
-	const savingsReferalStarted = blockNumber >= BigInt(config[mainnet.id].startSavingsReferal);
+	const totalSavings = mintHubV2Started ? totalSaved + totalInterestCollected - totalWithdrawn : 0n;
 
 	// Fetch all on-chain reads and db lookups in parallel
 	const [totalSupply, totalEquity, fpsTotalSupply, fpsPrice, mintRatePPM, saveRatePPM, v1Agg, v2Agg] = await Promise.all([
