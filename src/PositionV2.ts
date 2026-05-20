@@ -123,6 +123,20 @@ ponder.on('PositionV2:MintingUpdate', async ({ event, context }) => {
 		client
 	);
 
+	if (event.log.address == normalizeAddress('0x422050f743582bf753b4D6BF571FA1808A9D70e6')) {
+		console.log({
+			args: event.args,
+			resolvedOwner,
+		});
+	}
+
+	if (event.log.address == normalizeAddress('0xabe499cdb61a76a8bFAa49822035DbE9a04aEDCf')) {
+		console.log({
+			args: event.args,
+			resolvedOwner,
+		});
+	}
+
 	const sharedFields = {
 		txHash: event.transaction.hash,
 		created: event.block.timestamp,

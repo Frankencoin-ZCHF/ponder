@@ -172,7 +172,7 @@ export default createConfig({
 	},
 	contracts: {
 		// ### NATIVE CONTRACT ###
-		Frankencoin: {
+		/*Frankencoin: {
 			// Core
 			abi: FrankencoinABI,
 			chain: {
@@ -234,7 +234,7 @@ export default createConfig({
 				parameter: 'position',
 			},
 			startBlock: config[mainnet.id].startMintingHubV1,
-		},
+		},*/
 		MintingHubV2: {
 			// V2
 			chain: mainnet.name,
@@ -252,7 +252,7 @@ export default createConfig({
 				parameter: 'position',
 			},
 			startBlock: config[mainnet.id].startMintingHubV2,
-		},
+		} /*
 		SavingsV2: {
 			// V2
 			chain: mainnet.name,
@@ -472,6 +472,6 @@ export default createConfig({
 					startBlock: config[sonic.id].startBridgedFrankencoin,
 				},
 			},
-		},
+		},*/,
 	},
 });
