@@ -48,3 +48,4 @@ export const ethereum3 = {
 	},
 } as const satisfies Chain;
 ```
+
