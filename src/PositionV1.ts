@@ -5,6 +5,7 @@ import {
 	MintingHubV1PositionV1,
 	MintingHubV1Status,
 	PositionAggregatesV1,
+	PositionAggregatesV1History,
 } from 'ponder:schema';
 import { Address } from 'viem';
 import { and, eq, gt } from 'ponder';
@@ -82,6 +83,17 @@ ponder.on('PositionV1:MintingUpdate', async ({ event, context }) => {
 			annualInterests,
 			updated: event.block.timestamp,
 		}));
+
+	// Flat history snapshot
+	await context.db
+		.insert(PositionAggregatesV1History)
+		.values({
+			chainId: context.chain.id,
+			updated: event.block.timestamp,
+			totalMinted,
+			annualInterests,
+		})
+		.onConflictDoUpdate(() => ({ totalMinted, annualInterests }));
 
 	// update minting counter
 	const status = await context.db

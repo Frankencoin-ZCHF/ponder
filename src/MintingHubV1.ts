@@ -4,14 +4,10 @@ import {
 	CommonEcosystem,
 	MintingHubV1ChallengeBidV1,
 	MintingHubV1ChallengeV1,
-	MintingHubV1MintingUpdateV1,
-	MintingHubV1OwnerTransfersV1,
 	MintingHubV1PositionV1,
 	MintingHubV1Status,
 } from 'ponder:schema';
-import { Address, decodeAbiParameters } from 'viem';
 import { normalizeAddress } from './utils/format';
-import { MINTING_UPDATE_TOPIC_V1, OWNERSHIP_TRANSFERRED_TOPIC } from './utils/ownership';
 
 /*
 Events

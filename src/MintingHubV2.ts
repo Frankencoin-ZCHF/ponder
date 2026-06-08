@@ -1,18 +1,14 @@
-import { ADDRESS, ERC20ABI, SavingsV2ABI } from '@frankencoin/zchf';
+import { ERC20ABI } from '@frankencoin/zchf';
 import { ponder } from 'ponder:registry';
 import {
 	CommonEcosystem,
 	MintingHubV2ChallengeBidV2,
 	MintingHubV2ChallengeV2,
-	MintingHubV2MintingUpdateV2,
-	MintingHubV2OwnerTransfersV2,
 	MintingHubV2PositionV2,
 	MintingHubV2Status,
 } from 'ponder:schema';
-import { decodeAbiParameters } from 'viem';
-import { mainnet } from 'viem/chains';
 import { normalizeAddress } from './utils/format';
-import { MINTING_UPDATE_TOPIC_V2, OWNERSHIP_TRANSFERRED_TOPIC, resolvePositionOwner } from './utils/ownership';
+import { resolvePositionOwner } from './utils/ownership';
 
 /*
 Events
