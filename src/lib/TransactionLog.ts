@@ -26,6 +26,7 @@ interface updateTransactionLogProps {
  * this function need a rebuild to reflect multichain data.
  */
 export async function updateTransactionLog({ client, db, chainId, blockNumber, timestamp, kind, amount, txHash }: updateTransactionLogProps) {
+	if (process.env.ENABLE_TRANSACTION_LOG !== 'true') return;
 	if (chainId != mainnet.id) return;
 
 	const mainnetAddress = addr[mainnet.id];
