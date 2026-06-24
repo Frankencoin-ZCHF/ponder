@@ -1,5 +1,5 @@
 import { ADDRESS, SavingsV2ABI } from '@frankencoin/zchf';
-import { ponder, type Context } from 'ponder:registry';
+import { ponder } from 'ponder:registry';
 import {
 	MintingHubV2MintingUpdateV2,
 	MintingHubV2OwnerTransfersV2,

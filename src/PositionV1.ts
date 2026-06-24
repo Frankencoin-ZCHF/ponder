@@ -7,7 +7,6 @@ import {
 	PositionAggregatesV1,
 	PositionAggregatesV1History,
 } from 'ponder:schema';
-import { Address } from 'viem';
 import { and, eq, gt } from 'ponder';
 import { normalizeAddress } from './utils/format';
 
@@ -256,26 +255,15 @@ ponder.on('PositionV1:MintingUpdate', async ({ event, context }) => {
 ponder.on('PositionV1:PositionDenied', async ({ event, context }) => {
 	const { client } = context;
 
-	const position = await context.db.find(MintingHubV1PositionV1, {
-		position: normalizeAddress(event.log.address),
-	});
-
-	const cooldown = await client.readContract({
-		abi: context.contracts.PositionV1.abi,
-		address: event.log.address,
-		functionName: 'cooldown',
-	});
+	const [position, cooldown] = await Promise.all([
+		context.db.find(MintingHubV1PositionV1, { position: normalizeAddress(event.log.address) }),
+		client.readContract({ abi: context.contracts.PositionV1.abi, address: event.log.address, functionName: 'cooldown' }),
+	]);
 
 	if (position) {
 		await context.db
-			.update(MintingHubV1PositionV1, {
-				position: normalizeAddress(event.log.address),
-			})
-			.set({
-				cooldown,
-				denied: true,
-				denyDate: event.block.timestamp,
-			});
+			.update(MintingHubV1PositionV1, { position: normalizeAddress(event.log.address) })
+			.set({ cooldown, denied: true, denyDate: event.block.timestamp });
 	}
 });
 

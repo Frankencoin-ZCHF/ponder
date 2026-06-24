@@ -8,6 +8,7 @@ import {
 	MintingHubV1Status,
 } from 'ponder:schema';
 import { normalizeAddress } from './utils/format';
+import { maxUint256 } from 'viem';
 
 /*
 Events
@@ -30,7 +31,6 @@ ponder.on('MintingHubV1:PositionOpened', async ({ event, context }) => {
 	const isOriginal: boolean = !event.transaction.input.includes('0x5cb47919');
 	const isClone: boolean = !isOriginal;
 	const closed: boolean = false;
-	const denied: boolean = false;
 
 	const original: `0x${string}` = isOriginal ? position : (`0x${event.transaction.input.slice(34, 74)}` as `0x${string}`);
 
@@ -81,6 +81,8 @@ ponder.on('MintingHubV1:PositionOpened', async ({ event, context }) => {
 	// const priceAdjusted = price / BigInt(10 ** (36 - collateralDecimals));
 	const limitForPosition = (collateralBalance * price) / BigInt(10 ** zchfDecimals);
 	const availableForPosition = limitForPosition - minted;
+	// V1 deny() sets cooldown = type(uint256).max
+	const denied = cooldown === maxUint256;
 
 	// ------------------------------------------------------------------
 	// ------------------------------------------------------------------

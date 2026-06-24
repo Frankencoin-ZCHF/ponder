@@ -9,6 +9,7 @@ import {
 } from 'ponder:schema';
 import { normalizeAddress } from './utils/format';
 import { resolvePositionOwner } from './utils/ownership';
+import { maxUint256 } from 'viem';
 
 /*
 Events
@@ -34,7 +35,6 @@ ponder.on('MintingHubV2:PositionOpened', async ({ event, context }) => {
 	const isOriginal: boolean = normalizeAddress(parent) === normalizeAddress(position);
 	const isClone: boolean = !isOriginal;
 	const closed: boolean = false;
-	const denied: boolean = false;
 
 	// ------------------------------------------------------------------
 	// CONST + COLLATERAL ERC20 + CHANGEABLE (all independent, fetch in parallel)
@@ -92,6 +92,8 @@ ponder.on('MintingHubV2:PositionOpened', async ({ event, context }) => {
 	// const priceAdjusted = price / BigInt(10 ** (36 - collateralDecimals));
 	const limitForPosition = (collateralBalance * price) / BigInt(10 ** zchfDecimals);
 	const availableForPosition = limitForPosition - minted;
+	// V2 deny() sets cooldown = type(uint40).max
+	const denied = BigInt(cooldown) === maxUint256;
 
 	// ------------------------------------------------------------------
 	// ------------------------------------------------------------------
