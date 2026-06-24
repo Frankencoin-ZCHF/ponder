@@ -9,6 +9,7 @@ import {
 } from 'ponder:schema';
 import { and, eq, gt } from 'ponder';
 import { normalizeAddress } from './utils/format';
+import { ERC20ABI } from '@frankencoin/zchf';
 
 /*
 Events
@@ -134,9 +135,9 @@ ponder.on('PositionV1:MintingUpdate', async ({ event, context }) => {
 		]);
 
 		const [collateralName, collateralSymbol, collateralDecimals] = await Promise.all([
-			client.readContract({ abi: context.contracts.ERC20.abi, address: collateralAddress, functionName: 'name' }),
-			client.readContract({ abi: context.contracts.ERC20.abi, address: collateralAddress, functionName: 'symbol' }),
-			client.readContract({ abi: context.contracts.ERC20.abi, address: collateralAddress, functionName: 'decimals' }),
+			client.readContract({ abi: ERC20ABI, address: collateralAddress, functionName: 'name' }),
+			client.readContract({ abi: ERC20ABI, address: collateralAddress, functionName: 'symbol' }),
+			client.readContract({ abi: ERC20ABI, address: collateralAddress, functionName: 'decimals' }),
 		]);
 
 		missingPositionData = {
