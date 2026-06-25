@@ -4,6 +4,7 @@
 	"private": false,
 	"license": "MIT",
 	"scripts": {
+		"postinstall": "patch-package",
 		"dev": "yarn install && ponder dev --disable-ui",
 		"dev:ui": "yarn install && ponder dev",
 		"start": "ponder start",
@@ -11,6 +12,8 @@
 		"lint": "eslint .",
 		"eslint-config-ponder": "workspace:*",
 		"typecheck": "tsc",
+		"db:backup": "bash scripts/backup/db-dump.sh",
+		"db:restore": "bash scripts/backup/db-restore.sh",
 		"infra:up": "docker stack deploy -c stack.testing.yml frankencoin-ponder",
 		"infra:down": "docker stack remove frankencoin-ponder"
 	},
@@ -24,6 +27,7 @@
 		"@types/node": "^25.4.0",
 		"@types/pg": "^8.20.0",
 		"eslint": "^9.39.4",
+		"patch-package": "^8.0.1",
 		"typescript": "^5.9.3"
 	},
 	"engines": {
