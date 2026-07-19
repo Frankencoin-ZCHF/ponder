@@ -31,6 +31,10 @@ if [ "$(echo "$confirm" | tr '[:upper:]' '[:lower:]')" != "y" ]; then
   exit 0
 fi
 
+# Remap localhost to host.docker.internal so pg_restore (inside a container) can reach the host
+DOCKER_TARGET_DB="${TARGET_DB/localhost/host.docker.internal}"
+DOCKER_TARGET_DB="${DOCKER_TARGET_DB/127.0.0.1/host.docker.internal}"
+
 docker run --rm \
   -v "${SCRIPT_DIR}:/backup" \
   postgres:18.4 \
@@ -39,7 +43,7 @@ docker run --rm \
     --no-privileges \
     --clean \
     --if-exists \
-    -d "$TARGET_DB" \
+    -d "$DOCKER_TARGET_DB" \
     "/backup/${DUMP_FILE}"
 
 echo "Done."
