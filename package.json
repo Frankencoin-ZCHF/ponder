@@ -11,6 +11,8 @@
 		"lint": "eslint .",
 		"eslint-config-ponder": "workspace:*",
 		"typecheck": "tsc",
+		"db:backup": "bash scripts/backup/db-dump.sh",
+		"db:restore": "bash scripts/backup/db-restore.sh",
 		"infra:up": "docker stack deploy -c stack.testing.yml frankencoin-ponder",
 		"infra:down": "docker stack remove frankencoin-ponder"
 	},
