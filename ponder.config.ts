@@ -109,6 +109,13 @@ const openPositionEventV2 = MintingHubV2ABI.find((a) => a.type === 'event' && a.
 if (openPositionEventV2 === undefined) throw new Error('openPositionEventV2 not found.');
 
 export default createConfig({
+	database: {
+		kind: 'postgres',
+		connectionString: process.env.DATABASE_URL,
+		poolConfig: {
+			max: 100,
+		},
+	},
 	chains: {
 		// ### NATIVE CHAIN SUPPORT ###
 		[mainnet.name]: {
@@ -172,7 +179,7 @@ export default createConfig({
 	},
 	contracts: {
 		// ### NATIVE CONTRACT ###
-		Frankencoin: {
+		/*Frankencoin: {
 			// Core
 			abi: FrankencoinABI,
 			chain: {
@@ -216,7 +223,7 @@ export default createConfig({
 			abi: EquityABI,
 			address: addr[mainnet.id].equity,
 			startBlock: config[mainnet.id].startFrankencoin,
-		},
+		},*/
 		MintingHubV1: {
 			// V1
 			chain: mainnet.name,
@@ -253,7 +260,7 @@ export default createConfig({
 			}),
 			startBlock: config[mainnet.id].startMintingHubV2,
 		},
-		SavingsV2: {
+		/*SavingsV2: {
 			// V2
 			chain: mainnet.name,
 			abi: SavingsV2ABI,
@@ -472,6 +479,6 @@ export default createConfig({
 					startBlock: config[sonic.id].startBridgedFrankencoin,
 				},
 			},
-		},
+		},*/
 	},
 });
