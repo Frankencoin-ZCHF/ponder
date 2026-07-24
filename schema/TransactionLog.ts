@@ -14,6 +14,7 @@ export const AnalyticTransactionLog = onchainTable(
 		totalOutflow: t.bigint().notNull(),
 
 		totalEquity: t.bigint().notNull(),
+		totalSavings: t.bigint().notNull(),
 
 		fpsTotalSupply: t.bigint().notNull(),
 		fpsPrice: t.bigint().notNull(), // smart contract price
@@ -42,6 +43,7 @@ export const AnalyticDailyLog = onchainTable(
 		totalOutflow: t.bigint().notNull(),
 
 		totalEquity: t.bigint().notNull(),
+		totalSavings: t.bigint().notNull(),
 
 		fpsTotalSupply: t.bigint().notNull(),
 		fpsPrice: t.bigint().notNull(), // smart contract price
