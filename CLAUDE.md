@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Ponder-based blockchain indexer for Frankencoin (ZCHF). Indexes events from Ethereum mainnet and 7 L2s (Polygon, Arbitrum, Optimism, Base, Avalanche, Gnosis, Sonic) and exposes data via a GraphQL API.
 
-**Ponder version:** 0.16.6  
+**Ponder version:** 0.17.0  
 **Deployments:** `ponder.frankencoin.com` (main) · `ponder.test.frankencoin.com` (test)
 
 ## Environment
@@ -98,4 +98,4 @@ ponder.on('Contract:EventName', async ({ event, context }) => {
 - **Upserts:** `onConflictDoUpdate((current) => ({ field: current.field + delta }))` — current state is always passed as a callback argument, not read separately.
 - **Flat history tables** use `(chainId, updated)` as PK with `onConflictDoUpdate` to handle multiple events in the same block.
 - **Schema changes require `yarn codegen`** before TypeScript will accept the new types.
-- **Factory sync:** Ponder 0.15.0 fixed the factory child-address miss bug. A clean re-index after upgrading to 0.16.6 resolves any stale state left from older versions.
+- **Factory sync:** Ponder 0.17.0 fixed the factory same-batch child-address miss bug (previously worked around with a local patch, now removed). A clean re-index after upgrading resolves any stale state left from older versions.
