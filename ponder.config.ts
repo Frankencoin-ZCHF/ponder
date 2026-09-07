@@ -23,6 +23,7 @@ import {
 	BridgedVotesABI,
 	MinterGovernanceABI,
 } from '@frankencoin/zchf';
+import { AmplifiedPositionABI, UNISWAP_AMPLIFIER_ADDRESS, UniswapAmplifierABI } from './abis/UniswapAmplifier';
 
 export const addr = ADDRESS;
 
@@ -41,6 +42,7 @@ export const config = {
 		startCCIP: 22623055,
 		startUniswapPoolV3: 19122801,
 		startFCSGovernance: 25852506, // FCS deploy block (mainnetVotes/interestGovernance/minterGovernance/ccipGovernance share it — same tx)
+		startAmplifier: 25795552, // UniswapAmplifier deploy block
 	},
 
 	// multichain support
@@ -56,7 +58,9 @@ export const config = {
 	[arbitrum.id]: {
 		rpc: `https://arb-mainnet.g.alchemy.com/v2/${process.env.ALCHEMY_RPC_KEY}`,
 		maxRequestsPerSecond: parseInt(process.env.MAX_REQUESTS_PER_SECOND || '10'),
-		pollingInterval: parseInt(process.env.POLLING_INTERVAL_MS || '30000'),
+		// Ponder's realtime sync ingests at most 50 blocks per poll. Arbitrum produces ~4 blocks/s,
+		// so with a 30s poll (1.7 blocks/s ceiling) it falls behind permanently. 4s gives 12.5 blocks/s.
+		pollingInterval: Math.min(parseInt(process.env.POLLING_INTERVAL_MS || '30000'), 4000),
 		ethGetLogsBlockRange: 10000, // ~250ms blocks — batch more to reduce request count
 		startBridgedFrankencoin: 343470012,
 		startSavingsReferal: 349273896,
@@ -70,6 +74,7 @@ export const config = {
 		startBridgedFrankencoin: 136678320,
 		startSavingsReferal: 137404676,
 		startFCSGovernance: 156162581, // minterGovernance/ccipGovernance/bridgedVotes deploy block (GovernanceFactory.deploy(fcsmainnet) tx)
+		startAmplifier: 155811236, // UniswapAmplifier deploy block
 	},
 	[base.id]: {
 		rpc: `https://base-mainnet.g.alchemy.com/v2/${process.env.ALCHEMY_RPC_KEY}`,
@@ -101,7 +106,8 @@ export const config = {
 	[sonic.id]: {
 		rpc: `https://sonic-mainnet.g.alchemy.com/v2/${process.env.ALCHEMY_RPC_KEY}`,
 		maxRequestsPerSecond: parseInt(process.env.MAX_REQUESTS_PER_SECOND || '10'),
-		pollingInterval: parseInt(process.env.POLLING_INTERVAL_MS || '30000'),
+		// Sonic produces ~1-2 blocks/s, close to the 50-blocks-per-poll ceiling at 30s. 10s gives 5 blocks/s.
+		pollingInterval: Math.min(parseInt(process.env.POLLING_INTERVAL_MS || '30000'), 10000),
 		ethGetLogsBlockRange: 5000, // ~500ms blocks
 		startBridgedFrankencoin: 31589491,
 		startSavingsReferal: 34961851,
@@ -119,6 +125,9 @@ if (openPositionEventV1 === undefined) throw new Error('openPositionEventV1 not 
 
 const openPositionEventV2 = MintingHubV2ABI.find((a) => a.type === 'event' && a.name === 'PositionOpened');
 if (openPositionEventV2 === undefined) throw new Error('openPositionEventV2 not found.');
+
+const amplifiedPositionCreatedEvent = UniswapAmplifierABI.find((a) => a.type === 'event' && a.name === 'AmplifiedPositionCreated');
+if (amplifiedPositionCreatedEvent === undefined) throw new Error('amplifiedPositionCreatedEvent not found.');
 
 export default createConfig({
 	chains: {
@@ -400,6 +409,44 @@ export default createConfig({
 				},
 			},
 		},
+
+		// ### AMPLIFIER (mainnet + optimism) ###
+		UniswapAmplifier: {
+			abi: UniswapAmplifierABI,
+			chain: {
+				[mainnet.name]: {
+					address: UNISWAP_AMPLIFIER_ADDRESS[mainnet.id],
+					startBlock: config[mainnet.id].startAmplifier,
+				},
+				[optimism.name]: {
+					address: UNISWAP_AMPLIFIER_ADDRESS[optimism.id],
+					startBlock: config[optimism.id].startAmplifier,
+				},
+			},
+		},
+		AmplifiedPosition: {
+			// EIP-1167 clones, factory-discovered from UniswapAmplifier:AmplifiedPositionCreated
+			abi: AmplifiedPositionABI,
+			chain: {
+				[mainnet.name]: {
+					address: factory({
+						address: UNISWAP_AMPLIFIER_ADDRESS[mainnet.id],
+						event: amplifiedPositionCreatedEvent,
+						parameter: 'position',
+					}),
+					startBlock: config[mainnet.id].startAmplifier,
+				},
+				[optimism.name]: {
+					address: factory({
+						address: UNISWAP_AMPLIFIER_ADDRESS[optimism.id],
+						event: amplifiedPositionCreatedEvent,
+						parameter: 'position',
+					}),
+					startBlock: config[optimism.id].startAmplifier,
+				},
+			},
+		},
+
 		// ### COMMON CONTRACTS ###
 		UniswapV3Pool: {
 			chain: mainnet.name,
