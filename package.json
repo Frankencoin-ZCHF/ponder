@@ -18,7 +18,7 @@
 		"postinstall": "patch-package"
 	},
 	"dependencies": {
-		"@frankencoin/zchf": "^0.3.21",
+		"@frankencoin/zchf": "^0.3.29",
 		"hono": "^4.12.6",
 		"ponder": "^0.17.0",
 		"viem": "^2.55.11"

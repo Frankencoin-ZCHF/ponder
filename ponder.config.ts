@@ -18,10 +18,11 @@ import {
 	BridgeAccountingABI,
 	TransferReferenceABI,
 	CrossChainReferenceABI,
+	FCSABI,
+	MainnetVotesABI,
+	BridgedVotesABI,
+	MinterGovernanceABI,
 } from '@frankencoin/zchf';
-// TODO: delete this import once @frankencoin/zchf exports FCS/MainnetVotes/BridgedVotes/MinterGovernance
-// ABIs (Phase 2 of the FCS rollout guideline) — import them from '@frankencoin/zchf' above instead.
-import { FCSABI, MainnetVotesABI, BridgedVotesABI, MinterGovernanceABI } from './src/abis/fcs';
 
 export const addr = ADDRESS;
 
@@ -39,7 +40,7 @@ export const config = {
 		startSavingsReferal: 22536327,
 		startCCIP: 22623055,
 		startUniswapPoolV3: 19122801,
-		startFCSGovernance: 22678761, // TODO: placeholder (reused from startTransferReference) — replace with actual FCS/MainnetVotes deploy block once deployed (Phase 1)
+		startFCSGovernance: 25852506, // FCS deploy block (mainnetVotes/interestGovernance/minterGovernance/ccipGovernance share it — same tx)
 	},
 
 	// multichain support
@@ -50,7 +51,7 @@ export const config = {
 		ethGetLogsBlockRange: 5000, // ~2s blocks
 		startBridgedFrankencoin: 72384538,
 		startSavingsReferal: 72993144,
-		startFCSGovernance: 72993144, // TODO: placeholder (reused from startSavingsReferal) — replace with actual BridgedVotes/MinterGovernance deploy block once deployed (Phase 1)
+		startFCSGovernance: 92807414, // minterGovernance/ccipGovernance/bridgedVotes deploy block (GovernanceFactory.deploy(fcsmainnet) tx)
 	},
 	[arbitrum.id]: {
 		rpc: `https://arb-mainnet.g.alchemy.com/v2/${process.env.ALCHEMY_RPC_KEY}`,
@@ -59,7 +60,7 @@ export const config = {
 		ethGetLogsBlockRange: 10000, // ~250ms blocks — batch more to reduce request count
 		startBridgedFrankencoin: 343470012,
 		startSavingsReferal: 349273896,
-		startFCSGovernance: 349273896, // TODO: placeholder (reused from startSavingsReferal) — replace with actual BridgedVotes/MinterGovernance deploy block once deployed (Phase 1)
+		startFCSGovernance: 499275377, // minterGovernance/ccipGovernance/bridgedVotes deploy block (GovernanceFactory.deploy(fcsmainnet) tx)
 	},
 	[optimism.id]: {
 		rpc: `https://opt-mainnet.g.alchemy.com/v2/${process.env.ALCHEMY_RPC_KEY}`,
@@ -68,7 +69,7 @@ export const config = {
 		ethGetLogsBlockRange: 5000, // ~2s blocks
 		startBridgedFrankencoin: 136678320,
 		startSavingsReferal: 137404676,
-		startFCSGovernance: 137404676, // TODO: placeholder (reused from startSavingsReferal) — replace with actual BridgedVotes/MinterGovernance deploy block once deployed (Phase 1)
+		startFCSGovernance: 156162581, // minterGovernance/ccipGovernance/bridgedVotes deploy block (GovernanceFactory.deploy(fcsmainnet) tx)
 	},
 	[base.id]: {
 		rpc: `https://base-mainnet.g.alchemy.com/v2/${process.env.ALCHEMY_RPC_KEY}`,
@@ -77,7 +78,7 @@ export const config = {
 		ethGetLogsBlockRange: 5000, // ~2s blocks
 		startBridgedFrankencoin: 31080190,
 		startSavingsReferal: 31809565,
-		startFCSGovernance: 31809565, // TODO: placeholder (reused from startSavingsReferal) — replace with actual BridgedVotes/MinterGovernance deploy block once deployed (Phase 1)
+		startFCSGovernance: 50558425, // minterGovernance/ccipGovernance/bridgedVotes deploy block (GovernanceFactory.deploy(fcsmainnet) tx)
 	},
 	[avalanche.id]: {
 		rpc: `https://avax-mainnet.g.alchemy.com/v2/${process.env.ALCHEMY_RPC_KEY}`,
@@ -86,7 +87,7 @@ export const config = {
 		ethGetLogsBlockRange: 5000, // ~2s blocks
 		startBridgedFrankencoin: 63337938,
 		startSavingsReferal: 64919925,
-		startFCSGovernance: 64919925, // TODO: placeholder (reused from startSavingsReferal) — replace with actual BridgedVotes/MinterGovernance deploy block once deployed (Phase 1)
+		startFCSGovernance: 93888083, // minterGovernance/ccipGovernance/bridgedVotes deploy block (GovernanceFactory.deploy(fcsmainnet) tx)
 	},
 	[gnosis.id]: {
 		rpc: `https://gnosis-mainnet.g.alchemy.com/v2/${process.env.ALCHEMY_RPC_KEY}`,
@@ -95,7 +96,7 @@ export const config = {
 		ethGetLogsBlockRange: 5000, // ~5s blocks
 		startBridgedFrankencoin: 40394536,
 		startSavingsReferal: 40678291,
-		startFCSGovernance: 40678291, // TODO: placeholder (reused from startSavingsReferal) — replace with actual BridgedVotes/MinterGovernance deploy block once deployed (Phase 1)
+		startFCSGovernance: 47958834, // minterGovernance/ccipGovernance/bridgedVotes deploy block (GovernanceFactory.deploy(fcsmainnet) tx)
 	},
 	[sonic.id]: {
 		rpc: `https://sonic-mainnet.g.alchemy.com/v2/${process.env.ALCHEMY_RPC_KEY}`,
@@ -104,7 +105,7 @@ export const config = {
 		ethGetLogsBlockRange: 5000, // ~500ms blocks
 		startBridgedFrankencoin: 31589491,
 		startSavingsReferal: 34961851,
-		startFCSGovernance: 34961851, // TODO: placeholder (reused from startSavingsReferal) — replace with actual BridgedVotes/MinterGovernance deploy block once deployed (Phase 1)
+		startFCSGovernance: 78327147, // minterGovernance/ccipGovernance/bridgedVotes deploy block (GovernanceFactory.deploy(fcsmainnet) tx)
 	},
 };
 
@@ -229,11 +230,11 @@ export default createConfig({
 			startBlock: config[mainnet.id].startFrankencoin,
 		},
 		FCS: {
-			// mainnet-only ERC-4626 vault wrapping Equity 1:1 — NOT YET DEPLOYED (Phase 1 pending)
+			// mainnet-only ERC-4626 vault wrapping Equity 1:1
 			chain: mainnet.name,
-			abi: FCSABI, // TODO: replace with FCSABI from '@frankencoin/zchf' (Phase 2)
-			address: zeroAddress, // TODO: replace with addr[mainnet.id].fcs once deployed (Phase 1) and exported (Phase 2)
-			startBlock: config[mainnet.id].startFCSGovernance, // TODO: replace placeholder with actual FCS deploy block
+			abi: FCSABI,
+			address: addr[mainnet.id].fcs,
+			startBlock: config[mainnet.id].startFCSGovernance,
 		},
 		MintingHubV1: {
 			// V1
@@ -362,40 +363,40 @@ export default createConfig({
 			},
 		},
 		MinterGovernance: {
-			// one instance per chain (all 8) — NOT YET DEPLOYED (Phase 1 pending)
-			abi: MinterGovernanceABI, // TODO: replace with @frankencoin/zchf export (Phase 2)
+			// one instance per chain (all 8)
+			abi: MinterGovernanceABI,
 			chain: {
 				[mainnet.name]: {
-					address: zeroAddress, // TODO: replace with real address once deployed
-					startBlock: config[mainnet.id].startFCSGovernance, // TODO: replace placeholder with actual deploy block
+					address: addr[mainnet.id].minterGovernance,
+					startBlock: config[mainnet.id].startFCSGovernance,
 				},
 				[polygon.name]: {
-					address: zeroAddress, // TODO: replace with real address once deployed
-					startBlock: config[polygon.id].startFCSGovernance, // TODO: replace placeholder with actual deploy block
+					address: addr[polygon.id].minterGovernance,
+					startBlock: config[polygon.id].startFCSGovernance,
 				},
 				[arbitrum.name]: {
-					address: zeroAddress, // TODO: replace with real address once deployed
-					startBlock: config[arbitrum.id].startFCSGovernance, // TODO: replace placeholder with actual deploy block
+					address: addr[arbitrum.id].minterGovernance,
+					startBlock: config[arbitrum.id].startFCSGovernance,
 				},
 				[optimism.name]: {
-					address: zeroAddress, // TODO: replace with real address once deployed
-					startBlock: config[optimism.id].startFCSGovernance, // TODO: replace placeholder with actual deploy block
+					address: addr[optimism.id].minterGovernance,
+					startBlock: config[optimism.id].startFCSGovernance,
 				},
 				[base.name]: {
-					address: zeroAddress, // TODO: replace with real address once deployed
-					startBlock: config[base.id].startFCSGovernance, // TODO: replace placeholder with actual deploy block
+					address: addr[base.id].minterGovernance,
+					startBlock: config[base.id].startFCSGovernance,
 				},
 				[avalanche.name]: {
-					address: zeroAddress, // TODO: replace with real address once deployed
-					startBlock: config[avalanche.id].startFCSGovernance, // TODO: replace placeholder with actual deploy block
+					address: addr[avalanche.id].minterGovernance,
+					startBlock: config[avalanche.id].startFCSGovernance,
 				},
 				[gnosis.name]: {
-					address: zeroAddress, // TODO: replace with real address once deployed
-					startBlock: config[gnosis.id].startFCSGovernance, // TODO: replace placeholder with actual deploy block
+					address: addr[gnosis.id].minterGovernance,
+					startBlock: config[gnosis.id].startFCSGovernance,
 				},
 				[sonic.name]: {
-					address: zeroAddress, // TODO: replace with real address once deployed
-					startBlock: config[sonic.id].startFCSGovernance, // TODO: replace placeholder with actual deploy block
+					address: addr[sonic.id].minterGovernance,
+					startBlock: config[sonic.id].startFCSGovernance,
 				},
 			},
 		},
@@ -411,7 +412,7 @@ export default createConfig({
 			abi: erc20Abi,
 			chain: {
 				[mainnet.name]: {
-					address: [addr[mainnet.id].frankencoin, addr[mainnet.id].equity, zeroAddress], // TODO: replace zeroAddress with FCS address once deployed (Phase 1) and exported (Phase 2)
+					address: [addr[mainnet.id].frankencoin, addr[mainnet.id].equity, addr[mainnet.id].fcs],
 					startBlock: config[mainnet.id].startFrankencoin,
 				},
 				[polygon.name]: {
@@ -489,44 +490,44 @@ export default createConfig({
 		// MainnetVotes is single-instance mainnet-only (like Equity/FCS above), and BridgedVotes is the
 		// first contract in this codebase deployed on the 7 L2s with mainnet deliberately excluded.
 		MainnetVotes: {
-			// mainnet-only, single instance, CCIPSender (auto-deployed by FCS's constructor) — NOT YET DEPLOYED
+			// mainnet-only, single instance, CCIPSender (auto-deployed by FCS's constructor)
 			chain: mainnet.name,
-			abi: MainnetVotesABI, // TODO: replace with @frankencoin/zchf export (Phase 2)
-			address: zeroAddress, // TODO: replace with addr[mainnet.id].mainnetVotes once deployed (Phase 1) and exported (Phase 2)
-			startBlock: config[mainnet.id].startFCSGovernance, // TODO: replace placeholder with actual deploy block
+			abi: MainnetVotesABI,
+			address: addr[mainnet.id].mainnetVotes,
+			startBlock: config[mainnet.id].startFCSGovernance,
 		},
 
 		BridgedVotes: {
-			// one instance per L2 (7 chains — NOT mainnet), CCIPReceiver — NOT YET DEPLOYED
-			abi: BridgedVotesABI, // TODO: replace with @frankencoin/zchf export (Phase 2)
+			// one instance per L2 (7 chains — NOT mainnet), CCIPReceiver
+			abi: BridgedVotesABI,
 			chain: {
 				[polygon.name]: {
-					address: zeroAddress, // TODO: replace with real address once deployed
-					startBlock: config[polygon.id].startFCSGovernance, // TODO: replace placeholder with actual deploy block
+					address: addr[polygon.id].bridgedVotes,
+					startBlock: config[polygon.id].startFCSGovernance,
 				},
 				[arbitrum.name]: {
-					address: zeroAddress, // TODO: replace with real address once deployed
-					startBlock: config[arbitrum.id].startFCSGovernance, // TODO: replace placeholder with actual deploy block
+					address: addr[arbitrum.id].bridgedVotes,
+					startBlock: config[arbitrum.id].startFCSGovernance,
 				},
 				[optimism.name]: {
-					address: zeroAddress, // TODO: replace with real address once deployed
-					startBlock: config[optimism.id].startFCSGovernance, // TODO: replace placeholder with actual deploy block
+					address: addr[optimism.id].bridgedVotes,
+					startBlock: config[optimism.id].startFCSGovernance,
 				},
 				[base.name]: {
-					address: zeroAddress, // TODO: replace with real address once deployed
-					startBlock: config[base.id].startFCSGovernance, // TODO: replace placeholder with actual deploy block
+					address: addr[base.id].bridgedVotes,
+					startBlock: config[base.id].startFCSGovernance,
 				},
 				[avalanche.name]: {
-					address: zeroAddress, // TODO: replace with real address once deployed
-					startBlock: config[avalanche.id].startFCSGovernance, // TODO: replace placeholder with actual deploy block
+					address: addr[avalanche.id].bridgedVotes,
+					startBlock: config[avalanche.id].startFCSGovernance,
 				},
 				[gnosis.name]: {
-					address: zeroAddress, // TODO: replace with real address once deployed
-					startBlock: config[gnosis.id].startFCSGovernance, // TODO: replace placeholder with actual deploy block
+					address: addr[gnosis.id].bridgedVotes,
+					startBlock: config[gnosis.id].startFCSGovernance,
 				},
 				[sonic.name]: {
-					address: zeroAddress, // TODO: replace with real address once deployed
-					startBlock: config[sonic.id].startFCSGovernance, // TODO: replace placeholder with actual deploy block
+					address: addr[sonic.id].bridgedVotes,
+					startBlock: config[sonic.id].startFCSGovernance,
 				},
 				// no [mainnet.name] entry — BridgedVotes is not deployed on mainnet, see MainnetVotes above
 			},
