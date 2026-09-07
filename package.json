@@ -17,7 +17,7 @@
 		"infra:down": "docker stack remove frankencoin-ponder"
 	},
 	"dependencies": {
-		"@frankencoin/zchf": "^0.3.29",
+		"@frankencoin/zchf": "^0.3.30",
 		"hono": "^4.12.6",
 		"ponder": "^0.17.9",
 		"viem": "^2.55.11"
