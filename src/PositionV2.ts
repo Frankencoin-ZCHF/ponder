@@ -12,6 +12,7 @@ import { mainnet } from 'viem/chains';
 import { and, eq, gt } from 'ponder';
 import { normalizeAddress } from './utils/format';
 import { resolvePositionOwner } from './utils/ownership';
+import { readWithFallback } from './utils/rpc';
 
 /*
 Events
@@ -45,20 +46,23 @@ ponder.on('PositionV2:MintingUpdate', async ({ event, context }) => {
 	}
 
 	// @dev: https://github.com/Frankencoin-ZCHF/ponder/issues/28
+	// Both views read collateral.balanceOf(this) internally (availableForMinting on a clone delegates to the
+	// original's availableForClones), so a collateral that reverts on balanceOf makes them revert. Treated as
+	// untrusted reads with a 0 fallback; every other position view used here is storage-only.
 	let availableForClones = 0n;
 	let availableForMinting = 0n;
 	if (position.isOriginal) {
-		availableForClones = await client.readContract({
-			abi: PositionV2.abi,
-			address: positionAddress,
-			functionName: 'availableForClones',
-		});
+		availableForClones = await readWithFallback(
+			() => client.readContract({ abi: PositionV2.abi, address: positionAddress, functionName: 'availableForClones' }),
+			0n,
+			'position.availableForClones'
+		);
 	} else {
-		availableForMinting = await client.readContract({
-			abi: PositionV2.abi,
-			address: positionAddress,
-			functionName: 'availableForMinting',
-		});
+		availableForMinting = await readWithFallback(
+			() => client.readContract({ abi: PositionV2.abi, address: positionAddress, functionName: 'availableForMinting' }),
+			0n,
+			'position.availableForMinting'
+		);
 	}
 
 	const [cooldown, isClosed, baseRatePPM] = await Promise.all([
