@@ -1,7 +1,8 @@
 import { ponder, Context } from 'ponder:registry';
 import { CommonEcosystem, TransferReference } from 'ponder:schema';
-import { Address, Hash, zeroAddress } from 'viem';
+import { Address, Hash, Hex, zeroAddress } from 'viem';
 import { normalizeAddress } from './utils/format';
+import { getCCIPV2Recipient } from './lib/CCIPV2Recipient';
 
 /*
 Events
@@ -30,7 +31,7 @@ ponder.on('TransferReference:CrossTransfer', async ({ event, context }) => {
 			amount: current.amount + 1n,
 		}));
 
-	const target = await getTargetAddress(context.client, event.transaction.hash);
+	const target = await getTargetAddress(context.client, event.transaction.hash, event.args.toChain, event.args.to);
 
 	await context.db.insert(TransferReference).values({
 		chainId: context.chain.id,
@@ -91,7 +92,7 @@ ponder.on(
 				amount: current.amount + 1n,
 			}));
 
-		const target = await getTargetAddress(context.client, event.transaction.hash);
+		const target = await getTargetAddress(context.client, event.transaction.hash, event.args.toChain, event.args.to);
 
 		await context.db.insert(TransferReference).values({
 			chainId: context.chain.id,
@@ -115,9 +116,13 @@ const CCIPSendRequested = '0xd0c3c799bf9e2639de44391e7f524d229b2b55f5b1ea94b2bf7
 const CCIPMessageSent = '0x192442a2b2adb6a7948f097023cb6b57d29d3a7a5dd33e6666d33c39cc456f32';
 
 // @dev: extracts the recipient address from the CCIP event in the same transaction;
-// supports both CCIPSendRequested (v1, slot 3) and CCIPMessageSent (v1.5+, slot 6)
-async function getTargetAddress(client: Context['client'], hash: Hash): Promise<Address> {
+// supports CCIP v2, CCIPSendRequested (v1, slot 3), and CCIPMessageSent (v1.5, slot 6)
+async function getTargetAddress(client: Context['client'], hash: Hash, targetChain: bigint, indexedRecipient: Hex): Promise<Address> {
 	const tx = await client.getTransactionReceipt({ hash });
+	for (const log of tx.logs) {
+		const recipient = getCCIPV2Recipient(log, targetChain, indexedRecipient);
+		if (recipient !== undefined) return normalizeAddress(recipient);
+	}
 
 	let slotIndex: number | undefined;
 	let logData: string | undefined;
