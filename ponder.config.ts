@@ -78,8 +78,11 @@ export const config = {
 	[base.id]: {
 		rpc: `https://base-mainnet.g.alchemy.com/v2/${process.env.ALCHEMY_RPC_KEY}`,
 		maxRequestsPerSecond: parseInt(process.env.MAX_REQUESTS_PER_SECOND || '10'),
-		pollingInterval: parseInt(process.env.POLLING_INTERVAL_MS || '30000'),
-		ethGetLogsBlockRange: 5000, // ~2s blocks
+		// Base moved from 2s to 200ms blocks (~5 blocks/s; verified on-chain 2026-11-09). Ponder's realtime sync
+		// ingests at most 50 blocks per poll, so the 30s default (1.7 blocks/s ceiling) fell permanently behind
+		// (~2.5 days lag at the time of the fix). 4s gives a 12.5 blocks/s ceiling.
+		pollingInterval: Math.min(parseInt(process.env.POLLING_INTERVAL_MS || '30000'), 4000),
+		ethGetLogsBlockRange: 10000, // ~200ms blocks — batch more to reduce request count
 	},
 	[avalanche.id]: {
 		// Alchemy's Avalanche node intermittently returns logs inconsistent with block.logsBloom. Ponder retries
@@ -130,7 +133,7 @@ export default createConfig({
 			maxRequestsPerSecond: config[mainnet.id].maxRequestsPerSecond,
 			pollingInterval: config[mainnet.id].pollingInterval,
 			ethGetLogsBlockRange: config[mainnet.id].ethGetLogsBlockRange,
-			rpc: http(config[mainnet.id].rpc),
+			rpc: config[mainnet.id].rpc,
 		},
 
 		// ### MULTI CHAIN SUPPORT ###
@@ -139,28 +142,28 @@ export default createConfig({
 			maxRequestsPerSecond: config[polygon.id].maxRequestsPerSecond,
 			pollingInterval: config[polygon.id].pollingInterval,
 			ethGetLogsBlockRange: config[polygon.id].ethGetLogsBlockRange,
-			rpc: http(config[polygon.id].rpc),
+			rpc: config[polygon.id].rpc,
 		},
 		[arbitrum.name]: {
 			id: arbitrum.id,
 			maxRequestsPerSecond: config[arbitrum.id].maxRequestsPerSecond,
 			pollingInterval: config[arbitrum.id].pollingInterval,
 			ethGetLogsBlockRange: config[arbitrum.id].ethGetLogsBlockRange,
-			rpc: http(config[arbitrum.id].rpc),
+			rpc: config[arbitrum.id].rpc,
 		},
 		[optimism.name]: {
 			id: optimism.id,
 			maxRequestsPerSecond: config[optimism.id].maxRequestsPerSecond,
 			pollingInterval: config[optimism.id].pollingInterval,
 			ethGetLogsBlockRange: config[optimism.id].ethGetLogsBlockRange,
-			rpc: http(config[optimism.id].rpc),
+			rpc: config[optimism.id].rpc,
 		},
 		[base.name]: {
 			id: base.id,
 			maxRequestsPerSecond: config[base.id].maxRequestsPerSecond,
 			pollingInterval: config[base.id].pollingInterval,
 			ethGetLogsBlockRange: config[base.id].ethGetLogsBlockRange,
-			rpc: http(config[base.id].rpc),
+			rpc: config[base.id].rpc,
 		},
 		[avalanche.name]: {
 			id: avalanche.id,
@@ -174,14 +177,14 @@ export default createConfig({
 			maxRequestsPerSecond: config[gnosis.id].maxRequestsPerSecond,
 			pollingInterval: config[gnosis.id].pollingInterval,
 			ethGetLogsBlockRange: config[gnosis.id].ethGetLogsBlockRange,
-			rpc: http(config[gnosis.id].rpc),
+			rpc: config[gnosis.id].rpc,
 		},
 		[sonic.name]: {
 			id: sonic.id,
 			maxRequestsPerSecond: config[sonic.id].maxRequestsPerSecond,
 			pollingInterval: config[sonic.id].pollingInterval,
 			ethGetLogsBlockRange: config[sonic.id].ethGetLogsBlockRange,
-			rpc: http(config[sonic.id].rpc),
+			rpc: config[sonic.id].rpc,
 		},
 	},
 	contracts: {
